@@ -13,7 +13,6 @@ import numpy as np
 # local imports
 from .__base import RealKernel
 from .__distances import sqdist
-
 from ..utils.models import Printable
 
 # exported symbols
@@ -28,7 +27,7 @@ class SEARD(RealKernel, Printable):
     def _params(self):
         return (
             ('ell', np.exp(self._logell)),
-            ('sf', np.exp(self._logsf)))
+            ('sf', np.exp(self._logsf)),)
 
     def get(self, X1, X2=None):
         D = sqdist(np.exp(self._logell), X1, X2)
