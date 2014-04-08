@@ -45,6 +45,26 @@ class ExactGP(GPModel):
         y = y
         self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
 
+    def _posterior(self, X, diag=True):
+        # make sure our inputs are correctly sized.
+        X = self._kernel.transform(X)
+
+        # grab the prior mean and variance.
+        mu = np.zeros(X.shape[0])
+        s2 = self._kernel.dget(X) if diag else self._kernel.get(X)
+
+        if self._X is not None:
+            K = self._kernel.get(self._X, X)
+            V = sla.solve_triangular(self._R, K, trans=True)
+
+            # add the contribution to the mean coming from the posterior and
+            # subtract off the information gained in the posterior from the
+            # prior variance.
+            mu += np.dot(V.T, self._a)
+            s2 -= np.sum(V**2, axis=0) if diag else np.dot(V.T, V)
+
+        return mu, s2
+
 
 def chol_update(A, B, C, a, b):
     n = A.shape[0]

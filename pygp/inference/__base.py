@@ -49,3 +49,7 @@ class GPModel(Parameterized):
     @abc.abstractmethod
     def _update(self):
         pass
+
+    @abc.abstractmethod
+    def _posterior(self, X, diag=True):
+        pass
