@@ -11,6 +11,7 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+import scipy.linalg as sla
 import scipy.special as ss
 import abc
 
@@ -56,6 +57,20 @@ class GPModel(Parameterized):
             b2 = ss.erfinv(2*(1-0.5*(1-ci))-1)
             er = np.sqrt(2*b2*s2)
             return mu, mu-er, mu+er
+
+    def sample(self, X, n=None):
+        X = self._kernel.transform(X)
+        flatten = (n is None)
+        n = 1 if flatten else n
+        p = len(X)
+
+        # add a tiny amount to the diagonal to make the cholesky of Sigma stable
+        # and then add this correlated noise onto mu to get the sample.
+        mu, Sigma = self._posterior(X, diag=False)
+        Sigma += 1e-10 * np.eye(p)
+        f = mu[None] + np.dot(np.random.normal(size=(n,p)), sla.cholesky(Sigma))
+
+        return f.ravel() if flatten else f
 
     @abc.abstractmethod
     def _update(self):

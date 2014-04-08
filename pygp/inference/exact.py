@@ -46,9 +46,6 @@ class ExactGP(GPModel):
         self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
 
     def _posterior(self, X, diag=True):
-        # make sure our inputs are correctly sized.
-        X = self._kernel.transform(X)
-
         # grab the prior mean and variance.
         mu = np.zeros(X.shape[0])
         s2 = self._kernel.dget(X) if diag else self._kernel.get(X)

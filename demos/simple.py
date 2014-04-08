@@ -30,6 +30,7 @@ if __name__ == '__main__':
     xmin = -1.5
     xmax = 2.2
     xt = np.linspace(xmin, xmax, 500)
+    ft = gp.sample(xt[:,None], n=3)
     mu, lo, hi = gp.predict(xt[:,None], ci=0.95)
 
     # plot it.
@@ -37,6 +38,8 @@ if __name__ == '__main__':
     pl.clf()
     pl.fill_between(xt, lo, hi, color='k', alpha=0.1)
     pl.plot(xt, mu, color='k')
+    pl.plot(xt, ft.T)
+    pl.axis('tight')
     pl.axis(xmin=xmin, xmax=xmax)
     pl.scatter(X.ravel(), y, color='b', s=20)
     pl.draw()
