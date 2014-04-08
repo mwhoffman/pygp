@@ -29,6 +29,16 @@ class GPModel(Parameterized):
         self._X = None
         self._y = None
 
+    def __repr__(self):
+        models = [repr(self._likelihood),
+                  repr(self._kernel)]
+
+        string = self.__class__.__name__ + '('
+        joiner = ',\n' + (len(string) * ' ')
+        string += joiner.join(models) + ')'
+
+        return string
+
     def add_data(self, X, y):
         X = self._kernel.transform(X)
         y = self._likelihood.transform(y)
