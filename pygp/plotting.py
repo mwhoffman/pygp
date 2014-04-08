@@ -16,12 +16,12 @@ __all__ = ['gpplot']
 
 
 def gpplot(gp, xmin=None, xmax=None, nsamples=None, mean=True, data=True,
-               error=True, ci=0.95, spaghetti=False):
+               error=True, delta=0.05, spaghetti=False):
     xmin = xmin or gp._X[:,0].min()
     xmax = xmax or gp._X[:,0].max()
 
     x = np.linspace(xmin, xmax, 500)
-    mu, lo, hi = gp.predict(x[:,None], ci=ci)
+    mu, lo, hi = gp.predict(x[:,None], delta=delta)
 
     ax = pl.gca()
     ax.cla()

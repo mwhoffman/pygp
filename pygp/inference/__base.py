@@ -58,15 +58,12 @@ class GPModel(Parameterized):
             self._y = np.r_[self._y, y]
             self._update()
 
-    def predict(self, X, ci=None):
+    def predict(self, X, delta=0.05):
         X = self._kernel.transform(X)
-        mu, s2 = self._posterior(X)
-        if ci is None:
-            return mu, s2
-        else:
-            b2 = ss.erfinv(2*(1-0.5*(1-ci))-1)
-            er = np.sqrt(2*b2*s2)
-            return mu, mu-er, mu+er
+        mu, s2 = self.posterior(X)
+        b2 = ss.erfinv(1-delta)
+        er = np.sqrt(2*b2*s2)
+        return mu, mu-er, mu+er
 
     def sample(self, X, n=None):
         X = self._kernel.transform(X)
@@ -76,7 +73,7 @@ class GPModel(Parameterized):
 
         # add a tiny amount to the diagonal to make the cholesky of Sigma stable
         # and then add this correlated noise onto mu to get the sample.
-        mu, Sigma = self._posterior(X, diag=False)
+        mu, Sigma = self.posterior(X, diag=False)
         Sigma += 1e-10 * np.eye(p)
         f = mu[None] + np.dot(np.random.normal(size=(n,p)), sla.cholesky(Sigma))
 
@@ -87,5 +84,5 @@ class GPModel(Parameterized):
         pass
 
     @abc.abstractmethod
-    def _posterior(self, X, diag=True):
+    def posterior(self, X, diag=True):
         pass

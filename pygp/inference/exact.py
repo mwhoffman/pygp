@@ -45,7 +45,7 @@ class ExactGP(GPModel):
         y = y
         self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
 
-    def _posterior(self, X, diag=True):
+    def posterior(self, X, diag=True):
         # grab the prior mean and variance.
         mu = np.zeros(X.shape[0])
         s2 = self._kernel.dget(X) if diag else self._kernel.get(X)
