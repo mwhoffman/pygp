@@ -24,10 +24,12 @@ class Kernel(Parameterized):
     Kernel interface.
     """
     @abc.abstractmethod
-    def get(self): pass
+    def get(self, x1, x2=None):
+        pass
 
     @abc.abstractmethod
-    def dget(self): pass
+    def dget(self, x1):
+        pass
 
 
 def sqdist(ell, x1, x2=None):
