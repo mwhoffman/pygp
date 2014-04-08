@@ -16,12 +16,35 @@ from .__distances import sqdist
 from ..utils.models import Printable
 
 # exported symbols
-__all__ = ['SEARD']
+__all__ = ['SEARD', 'SEIso']
 
 
 class SEARD(RealKernel, Printable):
     def __init__(self, ell, sf):
         self._logell = np.log(np.ravel(ell))
+        self._logsf = np.log(sf)
+
+    def _params(self):
+        return (
+            ('ell', np.exp(self._logell)),
+            ('sf', np.exp(self._logsf)),)
+
+    def get(self, X1, X2=None):
+        D = sqdist(np.exp(self._logell), X1, X2)
+        return np.exp(self._logsf*2 - 0.5*D)
+
+    def dget(self, X1):
+        return np.exp(self._logsf*2) * np.ones(len(X1))
+
+
+# NOTE: the definitions of the ARD and Iso kernels are basically the same, and
+# will remain so until I implement the gradients. Trying to generalize this code
+# seems to make the kernel a lot messier to read, so I'll leave it this way
+# until I come up with a nicer way to do things.
+
+class SEIso(RealKernel, Printable):
+    def __init__(self, ell, sf):
+        self._logell = np.log(float(ell))
         self._logsf = np.log(sf)
 
     def _params(self):

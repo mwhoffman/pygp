@@ -13,7 +13,7 @@ import numpy as np
 # local imports
 from .exact import ExactGP
 from ..likelihoods import Gaussian
-from ..kernels import SEARD
+from ..kernels import SEARD, SEIso
 from ..utils.models import Printable
 
 # exported symbols
@@ -25,14 +25,10 @@ __all__ = ['BasicGP']
 
 class BasicGP(Printable, ExactGP):
     def __init__(self, sn, ell, sf):
-        if np.iterable(ell):
-            kernel = SEARD(ell, sf)
-        else:
-            # FIXME: add the SEIso kernel and use it here if the length scale
-            # parameter is not iterable.
-            raise NotImplementedError('no support for SEIso kernel yet')
-
         likelihood = Gaussian(sn)
+        Kernel = SEARD if np.iterable(ell) else SEIso
+        kernel = Kernel(ell, sf)
+
         super(BasicGP, self).__init__(likelihood, kernel)
 
     def _params(self):

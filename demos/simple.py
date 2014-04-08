@@ -13,7 +13,7 @@ if __name__ == '__main__':
     sf  = 1.13604778127
 
     # create our GP model.
-    gp = pgi.BasicGP(sn, [ell], sf)
+    gp = pgi.BasicGP(sn, ell, sf)
 
     # load the data.
     cdir = os.path.abspath(os.path.dirname(__file__))
