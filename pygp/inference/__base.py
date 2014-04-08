@@ -11,6 +11,7 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+import scipy.special as ss
 import abc
 
 # local imports
@@ -45,6 +46,16 @@ class GPModel(Parameterized):
             self._X = np.r_[self._X, X]
             self._y = np.r_[self._y, y]
             self._update()
+
+    def predict(self, X, ci=None):
+        X = self._kernel.transform(X)
+        mu, s2 = self._posterior(X)
+        if ci is None:
+            return mu, s2
+        else:
+            b2 = ss.erfinv(2*(1-0.5*(1-ci))-1)
+            er = np.sqrt(2*b2*s2)
+            return mu, mu-er, mu+er
 
     @abc.abstractmethod
     def _update(self):

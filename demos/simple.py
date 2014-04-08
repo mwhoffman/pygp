@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import matplotlib.pyplot as pl
 
 import pygp.likelihoods as pgl
 import pygp.kernels as pgk
@@ -24,3 +25,18 @@ if __name__ == '__main__':
 
     # add data to the model.
     gp.add_data(X, y)
+
+    # for some test points get the mean and 95% credible interval.
+    xmin = -1.5
+    xmax = 2.2
+    xt = np.linspace(xmin, xmax, 500)
+    mu, lo, hi = gp.predict(xt[:,None], ci=0.95)
+
+    # plot it.
+    pl.figure(1)
+    pl.clf()
+    pl.fill_between(xt, lo, hi, color='k', alpha=0.1)
+    pl.plot(xt, mu, color='k')
+    pl.axis(xmin=xmin, xmax=xmax)
+    pl.scatter(X.ravel(), y, color='b', s=20)
+    pl.draw()
