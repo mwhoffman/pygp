@@ -11,7 +11,9 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from .__base import RealKernel, sqdist
+from .__base import RealKernel
+from .__distances import sqdist
+
 from ..utils.models import Printable
 
 # exported symbols
