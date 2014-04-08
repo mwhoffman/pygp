@@ -37,3 +37,25 @@ class ExactGP(GPModel):
         y = self._y
         self._R = sla.cholesky(K)
         self._a = sla.solve_triangular(self._R, y, trans=True)
+
+    def _updateinc(self, X, y):
+        sn2 = np.exp(self._likelihood._logsigma*2)
+        Kss = self._kernel.get(X) + sn2 * np.eye(len(X))
+        Kxs = self._kernel.get(self._X, X)
+        y = y
+        self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
+
+
+def chol_update(A, B, C, a, b):
+    n = A.shape[0]
+    m = C.shape[0]
+
+    B = sla.solve_triangular(A, B, trans=True)
+    C = sla.cholesky(C - np.dot(B.T, B))
+    c = np.dot(B.T, a)
+
+    # grow the new cholesky and use then use this to grow the vector a.
+    A = np.r_[np.c_[A, B], np.c_[np.zeros((m,n)), C]]
+    a = np.r_[a, sla.solve_triangular(C, b-c, trans=True)]
+
+    return A, a

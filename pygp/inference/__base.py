@@ -36,6 +36,11 @@ class GPModel(Parameterized):
             self._y = y.copy()
             self._update()
 
+        elif hasattr(self, '_updateinc'):
+            self._updateinc(X, y)
+            self._X = np.r_[self._X, X]
+            self._y = np.r_[self._y, y]
+
         else:
             self._X = np.r_[self._X, X]
             self._y = np.r_[self._y, y]
