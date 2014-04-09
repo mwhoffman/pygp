@@ -39,6 +39,10 @@ class GPModel(Parameterized):
 
         return string
 
+    @property
+    def ndata(self):
+        return 0 if (self._X is None) else self._X.shape[0]
+
     def add_data(self, X, y):
         X = self._kernel.transform(X)
         y = self._likelihood.transform(y)
