@@ -29,6 +29,13 @@ class SEARD(RealKernel, Printable):
             ('ell', np.exp(self._logell)),
             ('sf', np.exp(self._logsf)),)
 
+    def get_hyper(self):
+        return np.r_[self._logell, self._logsf]
+
+    def set_hyper(self, hyper):
+        self._logell = hyper[:len(self._logell)]
+        self._logsf  = hyper[-1]
+
     def get(self, X1, X2=None):
         D = sqdist(np.exp(self._logell), X1, X2)
         return np.exp(self._logsf*2 - 0.5*D)
@@ -51,6 +58,13 @@ class SEIso(RealKernel, Printable):
         return (
             ('ell', np.exp(self._logell)),
             ('sf', np.exp(self._logsf)),)
+
+    def get_hyper(self):
+        return np.r_[self._logell, self._logsf]
+
+    def set_hyper(self, hyper):
+        self._logell = hyper[0]
+        self._logsf  = hyper[1]
 
     def get(self, X1, X2=None):
         D = sqdist(np.exp(self._logell), X1, X2)
