@@ -106,3 +106,7 @@ class GPModel(Parameterized):
     @abc.abstractmethod
     def posterior(self, X, diag=True):
         pass
+
+    @abc.abstractmethod
+    def nloglikelihood(self):
+        pass

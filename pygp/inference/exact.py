@@ -62,6 +62,12 @@ class ExactGP(GPModel):
 
         return mu, s2
 
+    def nloglikelihood(self):
+        nlZ = 0.5 * np.inner(self._a, self._a)
+        nlZ += 0.5 * self.ndata*np.log(2*np.pi)
+        nlZ += np.sum(np.log(self._R.diagonal()))
+        return nlZ
+
 
 def chol_update(A, B, C, a, b):
     n = A.shape[0]
