@@ -29,6 +29,9 @@ class GPModel(Parameterized):
         self._X = None
         self._y = None
 
+        self.nhyper = self._likelihood.nhyper + \
+                      self._kernel.nhyper
+
     def __repr__(self):
         models = [repr(self._likelihood),
                   repr(self._kernel)]
@@ -38,6 +41,19 @@ class GPModel(Parameterized):
         string += joiner.join(models) + ')'
 
         return string
+
+    def get_hyper(self):
+        # NOTE: if subclasses define any "inference" hyperparameters they can
+        # implement their own get/set methods and call super().
+        return np.r_[self._likelihood.get_hyper(),
+                     self._kernel.get_hyper()]
+
+    def set_hyper(self, hyper):
+        a = 0
+        for model in [self._likelihood, self._kernel]:
+            model.set_hyper(hyper[a:a+model.nhyper])
+            a += model.nhyper
+        self._update()
 
     @property
     def ndata(self):

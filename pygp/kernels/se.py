@@ -23,6 +23,7 @@ class SEARD(RealKernel, Printable):
     def __init__(self, ell, sf):
         self._logell = np.log(np.ravel(ell))
         self._logsf = np.log(sf)
+        self.nhyper = len(self._logell)+1
 
     def _params(self):
         return (
@@ -53,6 +54,7 @@ class SEIso(RealKernel, Printable):
     def __init__(self, ell, sf):
         self._logell = np.log(float(ell))
         self._logsf = np.log(sf)
+        self.nhyper = 2
 
     def _params(self):
         return (

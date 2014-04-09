@@ -21,7 +21,14 @@ __all__ = ['Gaussian']
 class Gaussian(RealLikelihood, Printable):
     def __init__(self, sigma):
         self._logsigma = np.log(float(sigma))
+        self.nhyper = 1
 
     def _params(self):
         return (
             ('sigma', np.exp(self._logsigma)),)
+
+    def get_hyper(self):
+        return np.r_[self._logsigma]
+
+    def set_hyper(self, hyper):
+        self._logsigma = hyper[0]
