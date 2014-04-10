@@ -17,8 +17,8 @@ __all__ = ['gpplot']
 
 def gpplot(gp, xmin=None, xmax=None, nsamples=None, mean=True, data=True,
                error=True, delta=0.05, spaghetti=False):
-    xmin = xmin or gp._X[:,0].min()
-    xmax = xmax or gp._X[:,0].max()
+    xmin = gp._X[:,0].min() if (xmin is None) else xmin
+    xmax = gp._X[:,0].max() if (xmax is None) else xmax
 
     x = np.linspace(xmin, xmax, 500)
     mu, lo, hi = gp.predict(x[:,None], delta=delta)
@@ -39,7 +39,7 @@ def gpplot(gp, xmin=None, xmax=None, nsamples=None, mean=True, data=True,
     if mean:
         ax.plot(x, mu, color='k', zorder=2, lw=2)
 
-    if data:
+    if data and gp._X is not None:
         ax.scatter(gp._X.ravel(), gp._y, color='b', s=30, zorder=3)
 
     ax.axis('tight')
