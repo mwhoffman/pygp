@@ -12,7 +12,7 @@ import numpy as np
 import scipy.spatial.distance as ssd
 
 # exported symbols
-__all__ = ['sqdist', 'sqdist_per_dim']
+__all__ = ['dist', 'sqdist', 'dist_per_dim', 'sqdist_per_dim']
 
 
 def sqdist(ell, X1, X2=None):
@@ -40,3 +40,12 @@ def sqdist_per_dim(ell, X1, X2=None):
         X2 = X2/ell
     for i in xrange(X1.shape[1]):
         yield ssd.cdist(X1[:,i,None], X2[:,i,None])
+
+
+def dist(ell, X1, X2=None):
+    return np.sqrt(sqdist(ell, X1, X2))
+
+
+def dist_per_dim(ell, X1, X2=None):
+    for D in sqdist_per_dim(ell, X1, X2):
+        yield np.sqrt(D)
