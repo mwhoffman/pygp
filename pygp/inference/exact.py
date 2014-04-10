@@ -62,11 +62,24 @@ class ExactGP(GPModel):
 
         return mu, s2
 
-    def nloglikelihood(self):
-        nlZ = 0.5 * np.inner(self._a, self._a)
-        nlZ += 0.5 * self.ndata*np.log(2*np.pi)
+    def nloglikelihood(self, grad=False):
+        nlZ  = 0.5 * np.inner(self._a, self._a)
+        nlZ += 0.5 * np.log(2*np.pi) * self.ndata
         nlZ += np.sum(np.log(self._R.diagonal()))
-        return nlZ
+
+        # bail early if we don't need the gradient.
+        if not grad:
+            return nlZ
+
+        alpha = sla.solve_triangular(self._R, self._a, trans=False)
+        Q = sla.cho_solve((self._R, False), np.eye(self.ndata))
+        Q -= np.outer(alpha, alpha)
+
+        # gradient wrt components of each model.
+        lgrad = np.exp(self._likelihood._logsigma*2) * np.trace(Q)
+        kgrad = [0.5*np.sum(Q*dK) for dK in self._kernel.grad(self._X)]
+
+        return nlZ, np.r_[lgrad, kgrad]
 
 
 def chol_update(A, B, C, a, b):
