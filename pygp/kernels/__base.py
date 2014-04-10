@@ -31,6 +31,14 @@ class Kernel(Parameterized):
         pass
 
     @abc.abstractmethod
+    def grad(self, X1, X2=None):
+        pass
+
+    @abc.abstractmethod
+    def dgrad(self, X):
+        pass
+
+    @abc.abstractmethod
     def transform(self, X):
         pass
 

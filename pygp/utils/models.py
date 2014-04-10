@@ -15,14 +15,22 @@ import abc
 __all__ = ['Parameterized', 'Printable']
 
 
-class Parameterized:
+class Parameterized(object):
     """
     Interface for objects that are parameterized by some set of hyperparameters.
     """
     __metaclass__ = abc.ABCMeta
 
+    @abc.abstractmethod
+    def get_hyper(self):
+        pass
 
-class Printable:
+    @abc.abstractmethod
+    def set_hyper(self, hyper):
+        pass
+
+
+class Printable(object):
     """
     Interface for objects which can be pretty-printed as a function of their
     hyperparameters.

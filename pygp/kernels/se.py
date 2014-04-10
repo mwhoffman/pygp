@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from .__base import RealKernel
-from .__distances import sqdist
+from .__distances import sqdist, sqdist_per_dim
 from ..utils.models import Printable
 
 # exported symbols
@@ -23,11 +23,19 @@ class SEARD(RealKernel, Printable):
     def __init__(self, ell, sf):
         self._logell = np.log(np.ravel(ell))
         self._logsf = np.log(sf)
+        self.nhyper = len(self._logell)+1
 
     def _params(self):
         return (
             ('ell', np.exp(self._logell)),
             ('sf', np.exp(self._logsf)),)
+
+    def get_hyper(self):
+        return np.r_[self._logell, self._logsf]
+
+    def set_hyper(self, hyper):
+        self._logell = hyper[:len(self._logell)]
+        self._logsf  = hyper[-1]
 
     def get(self, X1, X2=None):
         D = sqdist(np.exp(self._logell), X1, X2)
@@ -35,6 +43,21 @@ class SEARD(RealKernel, Printable):
 
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
+
+    def grad(self, X1, X2=None):
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        for D in sqdist_per_dim(ell, X1, X2):
+            D *= sf2 * np.exp(-0.5*D)
+            yield D
+        yield 2*self.get(X1, X2)
+
+    def dgrad(self, X):
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        for i in xrange(len(ell)):
+            yield np.zeros(len(X))
+        yield 2 * sf2 * np.ones(len(X))
 
 
 # NOTE: the definitions of the ARD and Iso kernels are basically the same, and
@@ -46,11 +69,19 @@ class SEIso(RealKernel, Printable):
     def __init__(self, ell, sf):
         self._logell = np.log(float(ell))
         self._logsf = np.log(sf)
+        self.nhyper = 2
 
     def _params(self):
         return (
             ('ell', np.exp(self._logell)),
             ('sf', np.exp(self._logsf)),)
+
+    def get_hyper(self):
+        return np.r_[self._logell, self._logsf]
+
+    def set_hyper(self, hyper):
+        self._logell = hyper[0]
+        self._logsf  = hyper[1]
 
     def get(self, X1, X2=None):
         D = sqdist(np.exp(self._logell), X1, X2)
@@ -58,3 +89,16 @@ class SEIso(RealKernel, Printable):
 
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
+
+    def grad(self, X1, X2=None):
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        D = sqdist(ell, X1, X2)
+        K = sf2 * np.exp(-0.5*D)
+        D *= K
+        yield D
+        yield 2*K
+
+    def dgrad(self, X):
+        yield np.zeros(len(x1))
+        yield 2*self.dget(X)
