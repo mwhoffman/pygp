@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from .__base import RealLikelihood
+from ._base import RealLikelihood
 from ..utils.models import Printable
 
 # exported symbols

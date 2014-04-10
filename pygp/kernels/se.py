@@ -11,8 +11,8 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from .__base import RealKernel
-from .__distances import sqdist, sqdist_per_dim
+from ._base import RealKernel
+from ._distances import sqdist, sqdist_per_dim
 from ..utils.models import Printable
 
 # exported symbols

@@ -13,7 +13,7 @@ import numpy as np
 import scipy.linalg as sla
 
 # local imports
-from .__base import GPModel
+from ._base import GPModel
 from ..likelihoods import Gaussian
 from ..utils.exceptions import ModelError
 
