@@ -1,7 +1,6 @@
 import os
 import numpy as np
-import pygp.inference as pgi
-import pygp.plotting as pgp
+import pygp as pg
 
 
 if __name__ == '__main__':
@@ -11,12 +10,9 @@ if __name__ == '__main__':
     X = data['X']
     y = data['y']
 
-    # parameters we'll use.
-    sn  = 0.14556133488
-    ell = 0.307661277438
-    sf  = 1.13604778127
-
-    # create the model, add data, and plot it.
-    gp = pgi.BasicGP(sn, ell, sf)
+    # create the model and add data to it.
+    gp = pg.BasicGP(.1, .1, 1)
     gp.add_data(X, y)
-    pgp.gpplot(gp)
+
+    pg.optimize(gp)
+    pg.gpplot(gp)

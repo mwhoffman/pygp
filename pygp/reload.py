@@ -18,6 +18,8 @@ pygp.inference.__base
 pygp.inference.exact
 pygp.inference.basic
 pygp.inference
+pygp.hyper.ml
+pygp.hyper
 pygp.plotting
 pygp
 """.split()
