@@ -24,10 +24,11 @@ __all__ = ['BasicGP']
 # that we use the __repr__ method defined there and override the base method.
 
 class BasicGP(Printable, ExactGP):
-    def __init__(self, sn, ell, sf):
+    def __init__(self, sn, ell, sf, ndim=None):
         likelihood = Gaussian(sn)
-        Kernel = SEARD if np.iterable(ell) else SEIso
-        kernel = Kernel(ell, sf)
+
+        kernel = SEARD(ell, sf) if np.iterable(ell) else \
+                 SEIso(ell, sf, 1 if (ndim is None) else ndim)
 
         super(BasicGP, self).__init__(likelihood, kernel)
 
