@@ -20,18 +20,21 @@ class FourierSample(object):
         self.W, self.alpha = gp._kernel.sample_spectrum(N)
         self.b = np.random.rand(N) * 2 * np.pi
 
-        sigma = np.exp(gp._likelihood._logsigma)
-        Phi = self.phi(gp._X)
+        if gp.ndata > 0:
+            sigma = np.exp(gp._likelihood._logsigma)
+            Phi = self.phi(gp._X)
+            A = np.dot(Phi.T, Phi)
+            A += sigma**2 * np.eye(Phi.shape[1])
+            R = sla.cholesky(A)
 
-        A = np.dot(Phi.T, Phi)
-        A += sigma**2 * np.eye(Phi.shape[1])
-        R = sla.cholesky(A)
+            # FIXME: we can do a smarter update here when the number of points is
+            # less than the number of features.
 
-        # FIXME: we can do a smarter update here when the number of points is
-        # less than the number of features.
+            self.theta = sla.cho_solve((R, False), np.dot(Phi.T, gp._y))
+            self.theta += sla.solve_triangular(R, sigma*np.random.randn(N))
 
-        self.theta = sla.cho_solve((R, False), np.dot(Phi.T, gp._y))
-        self.theta += sla.solve_triangular(R, sigma*np.random.randn(N))
+        else:
+            self.theta = np.random.randn(N)
 
     def phi(self, X):
         # x is n-by-D,
