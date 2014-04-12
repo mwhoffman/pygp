@@ -21,15 +21,22 @@ __all__ = ['Kernel', 'RealKernel']
 
 #--BASE KERNEL INTERFACE--------------------------------------------------------
 
+def _collapse(Combiner, *parts):
+    collapsed = []
+    for part in parts:
+        collapsed += part._parts if isinstance(part, Combiner) else [part]
+    return collapsed
+
+
 class Kernel(Parameterized):
     """
     Kernel interface.
     """
     def __add__(self, other):
-        return SumKernel(self, other)
+        return SumKernel(*_collapse(SumKernel, self, other))
 
     def __mul__(self, other):
-        return ProductKernel(self, other)
+        return ProductKernel(*_collapse(ProductKernel, self, other))
 
     @abc.abstractmethod
     def get(self, X1, X2=None):
