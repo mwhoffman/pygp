@@ -11,14 +11,22 @@ from __future__ import print_function
 import numpy as np
 import scipy.linalg as sla
 
+# local imports
+from ..utils.random import rstate
+
 # exported symbols
 __all__ = ['FourierSample']
 
 
 class FourierSample(object):
-    def __init__(self, gp, N):
-        self.W, self.alpha = gp._kernel.sample_spectrum(N)
-        self.b = np.random.rand(N) * 2 * np.pi
+    def __init__(self, gp, N, rng=None):
+        # if given a seed or an instantiated RandomState make sure that we use
+        # it here, but also within the sample_spectrum code.
+        rng = rstate(rng)
+
+        # this randomizes the feature.
+        self.W, self.alpha = gp._kernel.sample_spectrum(N, rng)
+        self.b = rng.rand(N) * 2 * np.pi
 
         if gp.ndata > 0:
             sigma = np.exp(gp._likelihood._logsigma)
@@ -31,10 +39,10 @@ class FourierSample(object):
             # less than the number of features.
 
             self.theta = sla.cho_solve((R, False), np.dot(Phi.T, gp._y))
-            self.theta += sla.solve_triangular(R, sigma*np.random.randn(N))
+            self.theta += sla.solve_triangular(R, sigma*rng.randn(N))
 
         else:
-            self.theta = np.random.randn(N)
+            self.theta = rng.randn(N)
 
     def phi(self, X):
         # x is n-by-D,

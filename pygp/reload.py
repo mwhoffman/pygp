@@ -5,6 +5,7 @@
 
 fnames = """
 pygp.utils.exceptions
+pygp.utils.random
 pygp.utils.models
 pygp.utils.iters
 pygp.utils

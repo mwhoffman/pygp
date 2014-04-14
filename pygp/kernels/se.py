@@ -13,6 +13,7 @@ import numpy as np
 # local imports
 from ._base import RealKernel
 from ._distances import sqdist, sqdist_per_dim
+from ..utils.random import rstate
 from ..utils.models import Printable
 
 # exported symbols
@@ -59,10 +60,11 @@ class SEARD(RealKernel, Printable):
             yield np.zeros(len(X))
         yield 2 * sf2 * np.ones(len(X))
 
-    def sample_spectrum(self, N):
+    def sample_spectrum(self, N, rng=None):
+        rng = rstate(rng)
         ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-        W = np.random.randn(N, len(self._logell)) / ell
+        W = rng.randn(N, len(self._logell)) / ell
         return W, sf2
 
 
@@ -111,8 +113,9 @@ class SEIso(RealKernel, Printable):
         yield np.zeros(len(x1))
         yield 2*self.dget(X)
 
-    def sample_spectrum(self, N):
+    def sample_spectrum(self, N, rng=None):
+        rng = rstate(rng)
         ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-        W = np.random.randn(N, self._ndim) / ell
+        W = rng.randn(N, self._ndim) / ell
         return W, sf2
