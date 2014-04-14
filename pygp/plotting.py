@@ -16,7 +16,7 @@ __all__ = ['gpplot']
 
 
 def gpplot(gp, xmin=None, xmax=None, nsamples=None, mean=True, data=True,
-               error=True, delta=0.05, spaghetti=False):
+               error=True, delta=0.05, spaghetti=False, draw=True):
     xmin = gp._X[:,0].min() if (xmin is None) else xmin
     xmax = gp._X[:,0].max() if (xmax is None) else xmax
 
@@ -44,4 +44,6 @@ def gpplot(gp, xmin=None, xmax=None, nsamples=None, mean=True, data=True,
 
     ax.axis('tight')
     ax.axis(xmin=xmin, xmax=xmax)
-    ax.figure.canvas.draw()
+
+    if draw:
+        ax.figure.canvas.draw()
