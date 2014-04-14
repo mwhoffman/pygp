@@ -23,8 +23,7 @@ class SEARD(RealKernel, Printable):
     def __init__(self, ell, sf):
         self._logell = np.log(np.ravel(ell))
         self._logsf = np.log(sf)
-        self.ndim = len(self._logell)
-        self.nhyper = self.ndim+1
+        self.nhyper = len(self._logell)+1
 
     def _params(self):
         return (
@@ -35,7 +34,7 @@ class SEARD(RealKernel, Printable):
         return np.r_[self._logell, self._logsf]
 
     def set_hyper(self, hyper):
-        self._logell = hyper[:self.ndim]
+        self._logell = hyper[:len(self._logell)]
         self._logsf  = hyper[-1]
 
     def get(self, X1, X2=None):
@@ -56,14 +55,14 @@ class SEARD(RealKernel, Printable):
     def dgrad(self, X):
         ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-        for i in xrange(self.ndim):
+        for i in xrange(len(self._logell)):
             yield np.zeros(len(X))
         yield 2 * sf2 * np.ones(len(X))
 
     def sample_spectrum(self, N):
         ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-        W = np.random.randn(N, self.ndim) / ell
+        W = np.random.randn(N, len(self._logell)) / ell
         return W, sf2
 
 
@@ -76,14 +75,14 @@ class SEIso(RealKernel, Printable):
     def __init__(self, ell, sf, ndim):
         self._logell = np.log(float(ell))
         self._logsf = np.log(sf)
-        self.ndim = ndim
+        self._ndim = ndim
         self.nhyper = 2
 
     def _params(self):
         return (
             ('ell', np.exp(self._logell)),
             ('sf', np.exp(self._logsf)),
-            ('ndim', self.ndim),)
+            ('ndim', self._ndim),)
 
     def get_hyper(self):
         return np.r_[self._logell, self._logsf]
@@ -115,5 +114,5 @@ class SEIso(RealKernel, Printable):
     def sample_spectrum(self, N):
         ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-        W = np.random.randn(N, self.ndim) / ell
+        W = np.random.randn(N, self._ndim) / ell
         return W, sf2

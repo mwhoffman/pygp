@@ -6,6 +6,7 @@
 fnames = """
 pygp.utils.exceptions
 pygp.utils.models
+pygp.utils.iters
 pygp.utils
 pygp.kernels._base
 pygp.kernels._distances
