@@ -74,7 +74,7 @@ class SEARD(RealKernel, Printable):
 # until I come up with a nicer way to do things.
 
 class SEIso(RealKernel, Printable):
-    def __init__(self, ell, sf, ndim):
+    def __init__(self, ell, sf, ndim=1):
         self._logell = np.log(float(ell))
         self._logsf = np.log(sf)
         self._ndim = ndim

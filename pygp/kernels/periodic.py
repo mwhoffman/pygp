@@ -24,6 +24,7 @@ class Periodic(RealKernel, Printable):
         self._logell = np.log(float(ell))
         self._logp = np.log(float(p))
         self._logsf = np.log(float(sf))
+        self.ndim = 1
         self.nhyper = 3
 
     def _params(self):
