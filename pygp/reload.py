@@ -13,6 +13,7 @@ pygp.kernels._base
 pygp.kernels._distances
 pygp.kernels.periodic
 pygp.kernels.se
+pygp.kernels.rq
 pygp.kernels
 pygp.likelihoods._base
 pygp.likelihoods.gaussian
