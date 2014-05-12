@@ -17,12 +17,12 @@ cdir = os.path.abspath(os.path.dirname(__file__))
 data = np.loadtxt(os.path.join(cdir, 'maunaloa.txt')).flatten()
 data = np.array([(x,y) for (x,y) in zip(np.arange(len(data)), data) if y>-99])
 
+# minor manipulations of the data to make the ranges reasonable. also use the
+# empirical mean as the prior mean.
 X = data[:,0,None] / 12.
 y = data[:,1]
 y -= y.mean()
 
-# use the empirical mean as our prior.
-sigma = 0.1
 
 # these are near the values called for in Rasmussen and Williams, so they should
 # give reasonable results and thus we'll skip the fit.
@@ -31,7 +31,13 @@ kernel = pk.SEIso(60, 60) + \
          pk.RQIso(0.7, 1.2, 0.7) + \
          pk.SEIso(0.15, 0.15)
 
+# use a gaussian likeihood with this standard deviation.
+sigma = 0.1
 likelihood = pg.likelihoods.Gaussian(sigma)
-gp = pg.ExactGP(likelihood, kernel)
 
+# construct the model and add the data.
+gp = pg.ExactGP(likelihood, kernel)
 gp.add_data(X, y)
+
+# plot everything.
+pg.gpplot(gp, data=False, xmax=100)

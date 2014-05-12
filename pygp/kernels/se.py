@@ -88,7 +88,6 @@ class SEIso(RealKernel, Printable):
         return (
             ('sf', np.exp(self._logsf)),
             ('ell', np.exp(self._logell)),
-            ('ndim', self.ndim),
             )
 
     def get_hyper(self):
