@@ -27,7 +27,7 @@ sigma = 0.1
 # these are near the values called for in Rasmussen and Williams, so they should
 # give reasonable results and thus we'll skip the fit.
 kernel = pk.SEIso(60, 60) + \
-         pk.SEIso(90, 2) * pk.Periodic(1, 1, 1) + \
+         pk.SEIso(2, 90) * pk.Periodic(1, 1, 1) + \
          pk.RQIso(0.7, 1.2, 0.7) + \
          pk.SEIso(0.15, 0.15)
 

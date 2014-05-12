@@ -20,31 +20,32 @@ __all__ = ['Periodic']
 
 
 class Periodic(RealKernel, Printable):
-    def __init__(self, ell, p, sf):
+    def __init__(self, sf, ell, p):
+        self._logsf = np.log(float(sf))
         self._logell = np.log(float(ell))
         self._logp = np.log(float(p))
-        self._logsf = np.log(float(sf))
         self.ndim = 1
         self.nhyper = 3
 
     def _params(self):
         return (
+            ('sf', np.exp(self._logsf)),
             ('ell', np.exp(self._logell)),
             ('p', np.exp(self._logp)),
-            ('sf', np.exp(self._logsf)),)
+            )
 
     def get_hyper(self):
-        return np.r_[self._logell, self._logp, self._logsf]
+        return np.r_[self._logsf, self._logell, self._logp]
 
     def set_hyper(self, hyper):
-        self._logell = hyper[0]
-        self._logp = hyper[1]
-        self._logsf = hyper[2]
+        self._logsf = hyper[0]
+        self._logell = hyper[1]
+        self._logp = hyper[2]
 
     def get(self, X1, X2=None):
+        sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
         p = np.exp(self._logp)
-        sf2 = np.exp(self._logsf*2)
 
         K = dist(1, X1, X2) * np.pi / p
         K = sf2 * np.exp(-2*(np.sin(K) / ell)**2)
@@ -54,9 +55,9 @@ class Periodic(RealKernel, Printable):
         return np.exp(self._logsf*2) * np.ones(len(X1))
 
     def grad(self, X1, X2=None):
+        sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
         p = np.exp(self._logp)
-        sf2 = np.exp(self._logsf*2)
 
         # get the distance and a few transformations
         D = dist(1, X1, X2) * np.pi / p
@@ -64,11 +65,11 @@ class Periodic(RealKernel, Printable):
         S = R**2
         E = 2 * sf2 * np.exp(-2*S)
 
+        yield E
         yield 2*E*S
         yield 2*E*R*D * np.cos(D) / ell
-        yield E
 
     def dgrad(self, X):
-        yield np.zeros(len(X))
-        yield np.zeros(len(X))
         yield 2 * self.dget(X)
+        yield np.zeros(len(X))
+        yield np.zeros(len(X))

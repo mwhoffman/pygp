@@ -23,34 +23,35 @@ class RQIso(RealKernel, Printable):
     #---------------------------------------------------------------------------
     # Bookkeeping code
 
-    def __init__(self, alpha, ell, sf, ndim=1):
-        self._logalpha = np.log(float(alpha))
-        self._logell = np.log(float(ell))
+    def __init__(self, sf, ell, alpha, ndim=1):
         self._logsf = np.log(float(sf))
+        self._logell = np.log(float(ell))
+        self._logalpha = np.log(float(alpha))
         self.ndim = ndim
         self.nhyper = 3
 
     def _params(self):
         return (
-            ('alpha', np.exp(self._logalpha)),
+            ('sf', np.exp(self._logsf)),
             ('ell', np.exp(self._logell)),
-            ('sf', np.exp(self._logsf)),)
+            ('alpha', np.exp(self._logalpha)),
+            )
 
     def get_hyper(self):
-        return np.r_[self._logalpha, self._logell, self._logsf]
+        return np.r_[self._logsf, self._logell, self._logalpha]
 
     def set_hyper(self, hyper):
-        self._logalpha = hyper[0]
+        self._logsf = hyper[0]
         self._logell = hyper[1]
-        self._logsf = hyper[2]
+        self._logalpha = hyper[2]
 
     #---------------------------------------------------------------------------
     # Kernel and gradient evaluation
 
     def get(self, X1, X2=None):
-        alpha = np.exp(self._logalpha)
-        ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        alpha = np.exp(self._logalpha)
 
         D = sqdist(ell, X1, X2)
         K = sf2 * (1 + 0.5*D/alpha) ** (-alpha)
@@ -69,11 +70,11 @@ class RQIso(RealKernel, Printable):
         K = sf2 * E**(-alpha)
         M = K*D/E
 
-        yield 0.5*M - alpha*K*np.log(E)
-        yield M
         yield 2*K
+        yield M
+        yield 0.5*M - alpha*K*np.log(E)
 
     def dgrad(self, X):
-        yield np.zeros(len(X))
-        yield np.zeros(len(X))
         yield 2 * self.dget(X)
+        yield np.zeros(len(X))
+        yield np.zeros(len(X))
