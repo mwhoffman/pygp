@@ -1,3 +1,6 @@
 /pygp.egg-info/
 /build/
 /dist/
+/pygp/kernels/_local.c
+/pygp/kernels/_local.so
+

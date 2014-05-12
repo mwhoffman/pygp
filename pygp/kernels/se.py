@@ -13,6 +13,8 @@ import numpy as np
 # local imports
 from ._base import RealKernel
 from ._distances import sqdist, sqdist_per_dim
+from ._local import local_se
+
 from ..utils.random import rstate
 from ..utils.models import Printable
 
@@ -70,6 +72,11 @@ class SEARD(RealKernel, Printable):
         W = rng.randn(N, self.ndim) / ell
         return W, sf2
 
+    def get_local(self, x, X1, X2=None):
+        ell = np.exp(self._logell*-1)
+        sf2 = np.exp(self._logsf*2)
+        return local_se(ell, sf2, 0.0, x, X1, X2)
+
 
 # NOTE: the definitions of the ARD and Iso kernels are basically the same, and
 # will remain so until I implement the gradients. Trying to generalize this code
@@ -122,3 +129,9 @@ class SEIso(RealKernel, Printable):
         ell = np.exp(self._logell)
         W = rng.randn(N, self.ndim) / ell
         return W, sf2
+
+    def get_local(self, x, X1, X2=None):
+        ell = np.tile(np.exp(self._logell*-1), self._ndim)
+        sf2 = np.exp(self._logsf*2)
+        return local_se(ell, sf2, 0.0, x, X1, X2)
+
