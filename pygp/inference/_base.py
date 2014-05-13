@@ -42,6 +42,13 @@ class GPModel(Parameterized):
 
         return string
 
+    def _params(self):
+        params = []
+        for name, part in [('like', self._likelihood),
+                           ('kern', self._kernel),]:
+            params.extend((('%s.%s' % (name, k), t, l) for (k,t,l) in part._params()))
+        return params
+
     def get_hyper(self):
         # NOTE: if subclasses define any "inference" hyperparameters they can
         # implement their own get/set methods and call super().

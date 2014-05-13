@@ -31,11 +31,10 @@ class RQIso(RealKernel, Printable):
         self.nhyper = 3
 
     def _params(self):
-        return (
-            ('sf', np.exp(self._logsf)),
-            ('ell', np.exp(self._logell)),
-            ('alpha', np.exp(self._logalpha)),
-            )
+        return [
+            ('sf',    'log', 1),
+            ('ell',   'log', 1),
+            ('alpha', 'log', 1),]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell, self._logalpha]

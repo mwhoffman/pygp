@@ -88,6 +88,23 @@ class ComboKernel(Kernel):
         string = ('\n'+indent).join(string.splitlines())
         return string
 
+    def _params(self):
+        # this is complicated somewhat because I want to return a flat list of
+        # parts. so I avoid calling _params() recursively since we could also
+        # contain combo objects.
+        params = []
+        parts = list(reversed(self._parts))
+        i = 0
+        while len(parts) > 0:
+            part = parts.pop()
+            if isinstance(part, ComboKernel):
+                parts.extend(reversed(part._parts))
+            else:
+                params.extend((('part%d.%s' % (i,k), t, l) for (k,t,l)
+                                                           in part._params()))
+                i += 1
+        return params
+
     def transform(self, X):
         return self._parts[0].transform(X)
 

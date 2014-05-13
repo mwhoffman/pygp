@@ -24,8 +24,8 @@ class Gaussian(RealLikelihood, Printable):
         self.nhyper = 1
 
     def _params(self):
-        return (
-            ('sigma', np.exp(self._logsigma)),)
+        return [
+            ('sigma', 'log', 1),]
 
     def get_hyper(self):
         return np.r_[self._logsigma]

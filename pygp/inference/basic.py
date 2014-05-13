@@ -33,7 +33,9 @@ class BasicGP(Printable, ExactGP):
         super(BasicGP, self).__init__(likelihood, kernel)
 
     def _params(self):
-        return (
-            ('sn', np.exp(self._likelihood._logsigma)),
-            ('ell', np.exp(self._kernel._logell)),
-            ('sf', np.exp(self._kernel._logsf)),)
+        # replace the parameters for the base GP model with a simplified
+        # structure and rename the likelihood's sigma parameter to sn (ie its
+        # the sigma corresponding to the noise).
+        params = [('sn', 'log', 1)]
+        params.extend(self._kernel._params())
+        return params

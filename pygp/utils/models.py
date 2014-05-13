@@ -22,6 +22,10 @@ class Parameterized(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
+    def _params(self):
+        pass
+
+    @abc.abstractmethod
     def get_hyper(self):
         pass
 
@@ -37,10 +41,14 @@ class Printable(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    @abc.abstractmethod
-    def _params(self):
-        pass
-
     def __repr__(self):
-        substrings = ['%s=%s' % kv for kv in self._params()]
+        hyper = self.get_hyper()
+        substrings = []
+        offset = 0
+        for key, transform, size in self._params():
+            val = hyper[offset:offset+size] if (size > 1) else hyper[offset]
+            if transform == 'log':
+                val = np.exp(val)
+            substrings += ['%s=%s' % (key, val)]
+            offset += size
         return self.__class__.__name__ + '(' + ', '.join(substrings) + ')'
