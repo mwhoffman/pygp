@@ -32,9 +32,9 @@ class RQIso(RealKernel, Printable):
 
     def _params(self):
         return [
-            ('sf',    'log', 1),
-            ('ell',   'log', 1),
-            ('alpha', 'log', 1),]
+            ('sf',    1),
+            ('ell',   1),
+            ('alpha', 1),]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell, self._logalpha]

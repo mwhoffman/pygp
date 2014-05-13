@@ -29,8 +29,8 @@ class SEARD(RealKernel, Printable):
 
     def _params(self):
         return [
-            ('sf',  'log', 1),
-            ('ell', 'log', self.ndim),]
+            ('sf',  1),
+            ('ell', self.ndim),]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell]
@@ -84,10 +84,9 @@ class SEIso(RealKernel, Printable):
         self.nhyper = 2
 
     def _params(self):
-        return (
-            ('sf',  'log', 1),
-            ('ell', 'log', 1),
-            )
+        return [
+            ('sf',  1),
+            ('ell', 1),]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell]

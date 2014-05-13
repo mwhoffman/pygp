@@ -12,7 +12,7 @@ import numpy as np
 import abc
 
 # exported symbols
-__all__ = ['Parameterized', 'Printable']
+__all__ = ['Parameterized', 'Printable', 'dot_params', 'get_params']
 
 
 class Parameterized(object):
@@ -44,11 +44,28 @@ class Printable(object):
     def __repr__(self):
         hyper = self.get_hyper()
         substrings = []
-        offset = 0
-        for key, transform, size in self._params():
-            val = hyper[offset:offset+size] if (size > 1) else hyper[offset]
-            if transform == 'log':
-                val = np.exp(val)
+        for key, block, log in get_params(self):
+            val = hyper[block]
+            val = val[0] if (len(val) == 1) else val
+            val = np.exp(val) if log else val
             substrings += ['%s=%s' % (key, val)]
-            offset += size
         return self.__class__.__name__ + '(' + ', '.join(substrings) + ')'
+
+
+def dot_params(ns, params):
+    """
+    Extend a param tuple with a 'namespace'. IE prepend the key string with ns
+    plus a dot.
+    """
+    return [("%s.%s" % (ns, p[0]),) + p[1:] for p in params]
+
+
+def get_params(obj):
+    offset = 0
+    for param in obj._params():
+        key = param[0]
+        size = param[1]
+        block = slice(offset, offset+size)
+        log = not(len(param) > 2 and param[2])
+        offset += size
+        yield key, block, log

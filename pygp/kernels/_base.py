@@ -12,7 +12,7 @@ import numpy as np
 import abc
 
 # local imports
-from ..utils.models import Parameterized
+from ..utils.models import Parameterized, dot_params
 from ..utils.iters import product, grad_sum, grad_product
 
 # exported symbols
@@ -93,16 +93,15 @@ class ComboKernel(Kernel):
         # parts. so I avoid calling _params() recursively since we could also
         # contain combo objects.
         params = []
+        nparts = 0
         parts = list(reversed(self._parts))
-        i = 0
         while len(parts) > 0:
             part = parts.pop()
             if isinstance(part, ComboKernel):
                 parts.extend(reversed(part._parts))
             else:
-                params.extend((('part%d.%s' % (i,k), t, l) for (k,t,l)
-                                                           in part._params()))
-                i += 1
+                params.extend(dot_params('part%d' % nparts, part._params()))
+                nparts += 1
         return params
 
     def transform(self, X):

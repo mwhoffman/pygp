@@ -16,7 +16,7 @@ import scipy.special as ss
 import abc
 
 # local imports
-from ..utils.models import Parameterized
+from ..utils.models import Parameterized, dot_params
 
 # exported symbols
 __all__ = ['GPModel']
@@ -43,10 +43,8 @@ class GPModel(Parameterized):
         return string
 
     def _params(self):
-        params = []
-        for name, part in [('like', self._likelihood),
-                           ('kern', self._kernel),]:
-            params.extend((('%s.%s' % (name, k), t, l) for (k,t,l) in part._params()))
+        params =  dot_params('like', self._likelihood._params())
+        params += dot_params('kern', self._kernel._params())
         return params
 
     def get_hyper(self):
