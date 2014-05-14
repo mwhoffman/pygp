@@ -19,6 +19,8 @@ pygp.likelihoods._base
 pygp.likelihoods.gaussian
 pygp.likelihoods
 pygp.hyper.ml
+pygp.hyper.samplers
+pygp.hyper.sampling
 pygp.hyper
 pygp.inference._base
 pygp.inference.exact
