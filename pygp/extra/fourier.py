@@ -45,8 +45,7 @@ class FourierSample(object):
         self.b = rng.rand(N) * 2 * np.pi
 
         if ndata > 0:
-            sigma = np.exp(gp._likelihood._logsigma)
-            Phi = self.phi(gp._X)
+            Phi = self.phi(X)
             A = np.dot(Phi.T, Phi)
             A += sigma**2 * np.eye(Phi.shape[1])
             R = sla.cholesky(A)
@@ -54,7 +53,7 @@ class FourierSample(object):
             # FIXME: we can do a smarter update here when the number of points is
             # less than the number of features.
 
-            self.theta = sla.cho_solve((R, False), np.dot(Phi.T, gp._y))
+            self.theta = sla.cho_solve((R, False), np.dot(Phi.T, y))
             self.theta += sla.solve_triangular(R, sigma*rng.randn(N))
 
         else:
