@@ -104,6 +104,11 @@ class GPModel(Parameterized):
 
         return f.ravel() if flatten else f
 
+    def xmax(self):
+        mu, _ = self.posterior(self._X)
+        i = mu.argmax()
+        return self._X[i], mu[i]
+
     @abc.abstractmethod
     def _update(self):
         pass
