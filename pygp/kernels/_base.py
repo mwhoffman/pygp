@@ -77,6 +77,10 @@ class ComboKernel(Kernel):
         self._parts = parts
         self.nhyper = sum(p.nhyper for p in self._parts)
 
+        for attr in ['ndim']:
+            try: setattr(self, attr, getattr(self._parts[0], attr))
+            except: pass
+
         # FIXME: add some sort of check here so that the kernels can verify
         # whether they can be combined.
 
