@@ -1,6 +1,14 @@
+"""
+Basic demo showing how to instantiate a simple GP model, add data to it, and
+optimize its hyperparameters.
+"""
+
+# global imports.
 import os
 import numpy as np
-import pygp as pg
+
+# local imports
+import pygp
 
 
 if __name__ == '__main__':
@@ -11,8 +19,8 @@ if __name__ == '__main__':
     y = data['y']
 
     # create the model and add data to it.
-    gp = pg.BasicGP(sn=.1, sf=1, ell=.1)
+    gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp.add_data(X, y)
 
-    pg.optimize(gp)
-    pg.gpplot(gp)
+    pygp.optimize(gp)
+    pygp.gpplot(gp)
