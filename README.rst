@@ -1,9 +1,10 @@
+=====
 pygp2
-======
+=====
 
 *This is a bastardized version of some of my earlier GP code. Eventually this
 will slowly replicate and extend that code, but in the meanwhile this code
-exists so that I can actually get things done. (Note the `2` above!)*
+exists so that I can actually get things done. (Note the 2 above!)*
 
 `pygp` is a python package for inference with Gaussian processes.
 
