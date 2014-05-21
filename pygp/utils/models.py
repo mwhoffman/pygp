@@ -10,6 +10,7 @@ from __future__ import print_function
 # global imports
 import numpy as np
 import abc
+import copy
 
 # exported symbols
 __all__ = ['Parameterized', 'Printable', 'dot_params', 'get_params']
@@ -32,6 +33,9 @@ class Parameterized(object):
     @abc.abstractmethod
     def set_hyper(self, hyper):
         pass
+
+    def copy(self):
+        return copy.deepcopy(self)
 
 
 class Printable(object):

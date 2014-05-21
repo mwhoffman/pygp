@@ -74,7 +74,7 @@ class Kernel(Parameterized):
 
 class ComboKernel(Kernel):
     def __init__(self, *parts):
-        self._parts = parts
+        self._parts = [part.copy() for part in parts]
         self.nhyper = sum(p.nhyper for p in self._parts)
 
         for attr in ['ndim']:
