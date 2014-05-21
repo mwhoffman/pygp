@@ -10,6 +10,9 @@ from __future__ import print_function
 # global imports
 import numpy as np
 
+# local imports
+from ..utils.models import get_params
+
 # exported symbols
 __all__ = ['sample']
 
@@ -94,13 +97,15 @@ def sample(gp, priors, n):
         return -nlogprob
 
     # store all the hyperparameters we see
-    hypers = [hyper0[active]]
+    hypers = np.tile(hyper0, (n, 1))
+    hyper = hyper0.copy()[active]
 
     for i in xrange(n):
-        hypers.append(_slice_sample(logprob, hypers[-1]))
+        hyper = _slice_sample(logprob, hyper)
+        hypers[i][active] = hyper
 
     # make sure the gp gets updated to the last sampled hyperparameter.
     gp.set_hyper(hypers[-1])
 
-    # convert hypers into an array and ditch the initial point.
-    return np.asarray(hypers[1:])
+    # return the hyperparameter array
+    return hypers

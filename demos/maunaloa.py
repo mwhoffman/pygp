@@ -8,7 +8,7 @@ would just take some time.
 import os
 import numpy as np
 
-import pygp as pg
+import pygp
 import pygp.kernels as pk
 
 
@@ -23,7 +23,6 @@ X = data[:,0,None] / 12.
 y = data[:,1]
 y -= y.mean()
 
-
 # these are near the values called for in Rasmussen and Williams, so they should
 # give reasonable results and thus we'll skip the fit.
 kernel = pk.SEIso(60, 60) + \
@@ -32,12 +31,11 @@ kernel = pk.SEIso(60, 60) + \
          pk.SEIso(0.15, 0.15)
 
 # use a gaussian likeihood with this standard deviation.
-sigma = 0.1
-likelihood = pg.likelihoods.Gaussian(sigma)
+likelihood = pygp.likelihoods.Gaussian(sigma=0.1)
 
 # construct the model and add the data.
-gp = pg.ExactGP(likelihood, kernel)
+gp = pygp.inference.ExactGP(likelihood, kernel)
 gp.add_data(X, y)
 
 # plot everything.
-pg.gpplot(gp, data=False, xmax=100)
+pygp.gpplot(gp, data=False, xmax=100)
