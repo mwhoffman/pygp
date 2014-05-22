@@ -28,9 +28,9 @@ if __name__ == '__main__':
     pygp.optimize(gp)
 
     priors = dict(
-        sn =pgp.Uniform(0.01, 0.4),
-        sf =pgp.Uniform(0.50, 3.0),
-        ell=pgp.Uniform(0.10, 1.0))
+        sn =None,
+        sf =pgp.Uniform(0.01, 4.0),
+        ell=pgp.Uniform(0.01, 1.0))
 
     hyper = pygp.hyper.sample(gp, priors, 10000)
 
@@ -38,12 +38,10 @@ if __name__ == '__main__':
     pygp.gpplot(gp)
 
     fg = pl.figure(2)
-    fg.clf()
-    ax = fg.add_subplot(111, projection='3d')
-    ax.scatter(np.exp(hyper[:,0]),
-               np.exp(hyper[:,1]),
+    ax = pl.gca()
+    ax.cla()
+    ax.scatter(np.exp(hyper[:,1]),
                np.exp(hyper[:,2]), alpha=0.1)
-    ax.set_xlabel('sn')
-    ax.set_ylabel('sf')
-    ax.set_zlabel('ell')
+    ax.set_xlabel('sf')
+    ax.set_ylabel('ell')
     ax.figure.canvas.draw()
