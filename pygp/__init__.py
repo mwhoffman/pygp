@@ -1,6 +1,5 @@
 from .inference import BasicGP
-from .plotting import gpplot
-from .hyper import optimize
+from .plotting import *
 
 from . import hyper
 from . import kernels

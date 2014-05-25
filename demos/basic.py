@@ -6,8 +6,6 @@ optimize its hyperparameters.
 # global imports.
 import os
 import numpy as np
-import matplotlib.pyplot as pl
-import mpl_toolkits.mplot3d
 
 # local imports
 import pygp
@@ -25,23 +23,16 @@ if __name__ == '__main__':
     gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp.add_data(X, y)
 
-    pygp.optimize(gp)
-
+    # specify a prior to use.
     priors = dict(
-        sn =None,
-        sf =pgp.Uniform(0.01, 4.0),
+        sn =pgp.Uniform(0.01, 1.0),
+        sf =pgp.Uniform(0.01, 5.0),
         ell=pgp.Uniform(0.01, 1.0))
 
+    # find the ML parameters and sample from the posterior.
+    pygp.optimize(gp)
     hyper = pygp.hyper.sample(gp, priors, 10000)
 
-    pl.figure(1)
-    pygp.gpplot(gp)
-
-    fg = pl.figure(2)
-    ax = pl.gca()
-    ax.cla()
-    ax.scatter(np.exp(hyper[:,1]),
-               np.exp(hyper[:,2]), alpha=0.1)
-    ax.set_xlabel('sf')
-    ax.set_ylabel('ell')
-    ax.figure.canvas.draw()
+    # plot everything.
+    pygp.gpplot(gp, figure=1)
+    pygp.sampleplot(gp, hyper, figure=2)
