@@ -72,10 +72,10 @@ class SEARD(RealKernel, Printable):
         W = rng.randn(N, self.ndim) / ell
         return W, sf2
 
-    def get_local(self, x, X1, X2=None):
-        ell = np.exp(self._logell*-1)
+    def get_local(self, sn2, x, X1, X2=None):
+        ell = np.exp(self._logell*-2)
         sf2 = np.exp(self._logsf*2)
-        return local_se(ell, sf2, 0.0, x, X1, X2)
+        return local_se(ell, sf2, sn2, x, X1, X2)
 
 
 # NOTE: the definitions of the ARD and Iso kernels are basically the same, and
@@ -130,8 +130,8 @@ class SEIso(RealKernel, Printable):
         W = rng.randn(N, self.ndim) / ell
         return W, sf2
 
-    def get_local(self, x, X1, X2=None):
-        ell = np.tile(np.exp(self._logell*-1), self._ndim)
+    def get_local(self, sn2, x, X1, X2=None):
+        ell = np.tile(np.exp(self._logell*-2), self.ndim)
         sf2 = np.exp(self._logsf*2)
-        return local_se(ell, sf2, 0.0, x, X1, X2)
+        return local_se(ell, sf2, sn2, x, X1, X2)
 
