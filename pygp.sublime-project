@@ -9,6 +9,7 @@
                 "dist"
             ],
             "file_exclude_patterns": [
+                "pygp/kernels/_local.c"
             ]
 		}
 	]
