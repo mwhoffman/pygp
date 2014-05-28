@@ -1,10 +1,8 @@
-from .inference import BasicGP, ExactGP
+from .inference import BasicGP
 from .plotting import *
-from .hyper import *
 
+from . import hyper
 from . import kernels
 from . import likelihoods
 
-__all__ = ['BasicGP', 'ExactGP']
-__all__ += plotting.__all__
-__all__ += hyper.__all__
+__all__ = ['BasicGP', 'optimize', 'gpplot']

@@ -120,5 +120,5 @@ class SEIso(RealKernel, Printable):
         rng = rstate(rng)
         sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
-        W = rng.randn(N, self._ndim) / ell
+        W = rng.randn(N, self.ndim) / ell
         return W, sf2

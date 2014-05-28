@@ -1,6 +1,15 @@
+"""
+Basic demo showing how to instantiate a simple GP model, add data to it, and
+optimize its hyperparameters.
+"""
+
+# global imports.
 import os
 import numpy as np
-import pygp as pg
+
+# local imports
+import pygp
+import pygp.hyper.priors as pgp
 
 
 if __name__ == '__main__':
@@ -11,8 +20,19 @@ if __name__ == '__main__':
     y = data['y']
 
     # create the model and add data to it.
-    gp = pg.BasicGP(sn=.1, sf=1, ell=.1)
+    gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp.add_data(X, y)
 
-    pg.optimize(gp)
-    pg.gpplot(gp)
+    # specify a prior to use.
+    priors = dict(
+        sn =pgp.Uniform(0.01, 1.0),
+        sf =pgp.Uniform(0.01, 5.0),
+        ell=pgp.Uniform(0.01, 1.0))
+
+    # find the ML parameters and sample from the posterior.
+    pygp.optimize(gp)
+    hyper = pygp.hyper.sample(gp, priors, 10000)
+
+    # plot everything.
+    pygp.gpplot(gp, figure=1)
+    pygp.sampleplot(gp, hyper, figure=2)
