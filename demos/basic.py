@@ -35,4 +35,4 @@ if __name__ == '__main__':
 
     # plot everything.
     pygp.gpplot(gp, figure=1)
-    pygp.sampleplot(gp, hyper, figure=2)
+    pygp.plotting.sampleplot(gp, hyper, figure=2)
