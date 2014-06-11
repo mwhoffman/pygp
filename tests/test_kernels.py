@@ -103,7 +103,7 @@ def dist(x1, x2, ell=None):
     return TT.sqrt(sqdist(x1, x2, ell))
 
 
-def se(iso):
+def se(iso=False):
     theta = TT.vector('theta')
     sf2 = TT.exp(theta[0]*2)
     ell = TT.exp(theta[1] if iso else theta[1:])
@@ -139,20 +139,20 @@ def rq(iso):
 # Test classes.
 
 class TestSEARD(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*se(iso=False))
-    kernel = pk.SEARD(0.8, [0.3, 0.4])
+    kfun, dhfun, dxfun = functionize(*se())
+    kernel = pk.SE(0.8, [0.3, 0.4])
 
 
 class TestSEIso(BaseKernelTest):
     kfun, dhfun, dxfun = functionize(*se(iso=True))
-    kernel = pk.SEIso(0.8, 0.3)
+    kernel = pk.SE(0.8, 0.3, ndim=2)
 
 
-class TestPeriodic(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*periodic())
-    kernel = pk.Periodic(0.5, 0.4, 0.3)
+# class TestPeriodic(BaseKernelTest):
+#     kfun, dhfun, dxfun = functionize(*periodic())
+#     kernel = pk.Periodic(0.5, 0.4, 0.3)
 
 
-class TestRQIso(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*rq(iso=True))
-    kernel = pk.RQIso(0.5, 0.4, 0.3)
+# class TestRQIso(BaseKernelTest):
+#     kfun, dhfun, dxfun = functionize(*rq(iso=True))
+#     kernel = pk.RQIso(0.5, 0.4, 0.3)
