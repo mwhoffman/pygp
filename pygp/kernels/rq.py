@@ -12,25 +12,35 @@ import numpy as np
 
 # local imports
 from ._base import RealKernel
-from ._distances import rescale, sqdist
+from ._distances import rescale, sqdist, sqdist_foreach
 from ..utils.models import Printable
 
 # exported symbols
-__all__ = ['RQIso']
+__all__ = ['RQ']
 
 
-class RQIso(RealKernel, Printable):
+class RQ(RealKernel, Printable):
     def __init__(self, sf, ell, alpha, ndim=1):
         self._logsf = np.log(float(sf))
-        self._logell = np.log(float(ell))
+        self._logell = np.log(np.ravel(ell))
         self._logalpha = np.log(float(alpha))
-        self.ndim = ndim
-        self.nhyper = 3
+
+        self._iso = False
+        self.ndim = self._logell.size
+        self.nhyper = 2 + self._logell.size
+
+        if (self._logell.size == 1) and (ndim > 1):
+            self._logell = float(self._logell)
+            self._iso = True
+            self.ndim = ndim
+
+        # FIXME: should I raise an error here if the dimensions are
+        # inconsistent?
 
     def _params(self):
         return [
             ('sf',    1),
-            ('ell',   1),
+            ('ell',   self.nhyper-2),
             ('alpha', 1),]
 
     def get_hyper(self):
@@ -38,33 +48,39 @@ class RQIso(RealKernel, Printable):
 
     def set_hyper(self, hyper):
         self._logsf = hyper[0]
-        self._logell = hyper[1]
-        self._logalpha = hyper[2]
+        self._logell = hyper[1:-1]
+        self._logalpha = hyper[-1]
 
     def get(self, X1, X2=None):
+        X1, X2 = rescale(self._logell, X1, X2)
         sf2 = np.exp(self._logsf*2)
         alpha = np.exp(self._logalpha)
-        X1, X2 = rescale(self._logell, X1, X2)
         K = sf2 * (1 + 0.5*sqdist(X1, X2)/alpha) ** (-alpha)
         return K
 
     def grad(self, X1, X2=None):
-        alpha = np.exp(self._logalpha)
-        sf2 = np.exp(self._logsf*2)
+        # precomputations
         X1, X2 = rescale(self._logell, X1, X2)
+        sf2 = np.exp(self._logsf*2)
+        alpha = np.exp(self._logalpha)
         D = sqdist(X1, X2)
         E = 1 + 0.5*D/alpha
         K = sf2 * E**(-alpha)
         M = K*D/E
 
-        yield 2*K
-        yield M
-        yield 0.5*M - alpha*K*np.log(E)
+        yield 2*K                               # derivative wrt logsf
+        if self._iso:
+            yield M                             # derivative wrt logell (iso)
+        else:
+            for D in sqdist_foreach(X1, X2):
+                yield K*D/E                     # derivative wrt logell (ard)
+        yield 0.5*M - alpha*K*np.log(E)         # derivative wrt alpha
 
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
 
     def dgrad(self, X):
         yield 2 * self.dget(X)
-        yield np.zeros(len(X))
+        for i in xrange(self.nhyper-2):
+            yield np.zeros(len(X))
         yield np.zeros(len(X))

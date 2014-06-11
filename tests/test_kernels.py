@@ -124,7 +124,7 @@ def periodic():
     return k, x1, x2, theta
 
 
-def rq(iso):
+def rq(iso=False):
     theta = TT.vector('theta')
     sf2 = TT.exp(theta[0]*2)
     ell = TT.exp(theta[1] if iso else theta[1:-1])
@@ -153,6 +153,11 @@ class TestPeriodic(BaseKernelTest):
     kernel = pk.Periodic(0.5, 0.4, 0.3)
 
 
+class TestRQARD(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*rq())
+    kernel = pk.RQ(0.5, [0.4, 0.5], 0.3)
+
+
 class TestRQIso(BaseKernelTest):
     kfun, dhfun, dxfun = functionize(*rq(iso=True))
-    kernel = pk.RQIso(0.5, 0.4, 0.3)
+    kernel = pk.RQ(0.5, 0.4, 0.3, ndim=2)
