@@ -135,6 +135,20 @@ def rq(iso=False):
     return k, x1, x2, theta
 
 
+def matern(d, iso=False):
+    theta = TT.vector('theta')
+    sf2 = TT.exp(theta[0]*2)
+    ell = TT.exp(theta[1] if iso else theta[1:])
+    x1 = TT.vector('x1')
+    x2 = TT.vector('x2')
+    f = (lambda r: 1  )         if (d == 1) else \
+        (lambda r: 1+r)         if (d == 3) else \
+        (lambda r: 1+r*(1+r/3))
+    r = np.sqrt(d) * dist(x1, x2, ell)
+    k = sf2 * f(r) * TT.exp(-r)
+    return k, x1, x2, theta
+
+
 #===============================================================================
 # Test classes.
 
@@ -161,3 +175,33 @@ class TestRQARD(BaseKernelTest):
 class TestRQIso(BaseKernelTest):
     kfun, dhfun, dxfun = functionize(*rq(iso=True))
     kernel = pk.RQ(0.5, 0.4, 0.3, ndim=2)
+
+
+class TestMaternARD1(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*matern(1))
+    kernel = pk.Matern(0.5, [0.4, 0.3], d=1)
+
+
+class TestMaternARD3(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*matern(3))
+    kernel = pk.Matern(0.5, [0.4, 0.3], d=3)
+
+
+class TestMaternARD5(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*matern(5))
+    kernel = pk.Matern(0.5, [0.4, 0.3], d=5)
+
+
+class TestMaternIso1(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*matern(1, iso=True))
+    kernel = pk.Matern(0.5, 0.4, d=1, ndim=2)
+
+
+class TestMaternIso3(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*matern(3, iso=True))
+    kernel = pk.Matern(0.5, 0.4, d=3, ndim=2)
+
+
+class TestMaternIso5(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*matern(5, iso=True))
+    kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
