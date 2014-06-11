@@ -25,35 +25,60 @@ import pygp.kernels as pk
 # elements).
 
 class BaseKernelTest(object):
+    def __init__(self):
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
+        self.hyper = self.kernel.get_hyper()
+
+    def _get(self, x1, x2):
+        m = x1.shape[0]
+        n = x2.shape[0]
+        K = [self.kfun(self.hyper, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
+        K = np.array(K).reshape(m, n)
+        return K
+
+    def _grad(self, x1, x2):
+        m = x1.shape[0]
+        n = x2.shape[0]
+        G = [self.dhfun(self.hyper, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
+        G = np.array(G).T.reshape(len(G[0]), m, n)
+        return G
+
     def test_kernel(self):
-        x1 = np.random.rand(5, self.kernel.ndim)
-        x2 = np.random.rand(3, self.kernel.ndim)
-        hyper = self.kernel.get_hyper()
-        K1 = self.kernel.get(x1, x2)
-        K2 = [self.kfun(hyper, x1[i], x2[j]) for (i,j) in np.ndindex(*K1.shape)]
-        K2 = np.reshape(K2, K1.shape)
+        K1 = self.kernel.get(self.x1, self.x2)
+        K2 = self._get(self.x1, self.x2)
         nt.assert_allclose(K1, K2)
 
     def test_grad(self):
-        x1 = np.random.rand(5, self.kernel.ndim)
-        x2 = np.random.rand(3, self.kernel.ndim)
-        hyper = self.kernel.get_hyper()
-        G1 = np.array(list(self.kernel.grad(x1, x2)))
-        G2 = [self.dhfun(hyper, x1[i], x2[j]) for (i,j) in np.ndindex(*G1[0].shape)]
-        G2 = np.reshape(np.array(G2).T, G1.shape)
+        G1 = np.array(list(self.kernel.grad(self.x1, self.x2)))
+        G2 = self._grad(self.x1, self.x2)
         nt.assert_allclose(G1, G2)
 
     def test_dget(self):
-        x1 = np.random.rand(5, self.kernel.ndim)
-        k1 = self.kernel.dget(x1)
-        k2 = np.diag(self.kernel.get(x1))
+        k1 = self.kernel.dget(self.x1)
+        k2 = np.diag(self.kernel.get(self.x1))
         nt.assert_allclose(k1, k2)
 
     def test_dgrad(self):
-        x1 = np.random.rand(5, self.kernel.ndim)
-        g1 = list(self.kernel.dgrad(x1))
-        g2 = map(np.diag, list(self.kernel.grad(x1)))
+        g1 = list(self.kernel.dgrad(self.x1))
+        g2 = map(np.diag, list(self.kernel.grad(self.x1)))
         nt.assert_allclose(g1, g2)
+
+    def test_transpose(self):
+        K1 = self.kernel.get(self.x1, self.x2)
+        K2 = self.kernel.get(self.x2, self.x1).T
+        nt.assert_allclose(K1, K2)
+        G1 = np.array(list(self.kernel.grad(self.x1, self.x2)))
+        G2 = np.array(list(self.kernel.grad(self.x2, self.x1))).swapaxes(1,2)
+        nt.assert_allclose(G1, G2)
+
+    def test_self(self):
+        K1 = self.kernel.get(self.x1)
+        K2 = self.kernel.get(self.x1, self.x1)
+        nt.assert_allclose(K1, K2)
+        G1 = np.array(list(self.kernel.grad(self.x1)))
+        G2 = np.array(list(self.kernel.grad(self.x1, self.x1)))
+        nt.assert_allclose(G1, G2)
 
 
 #===============================================================================
