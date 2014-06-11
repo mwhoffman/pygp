@@ -44,7 +44,7 @@ class BaseKernelTest(object):
         G = np.array(G).T.reshape(len(G[0]), m, n)
         return G
 
-    def test_kernel(self):
+    def test_get(self):
         K1 = self.kernel.get(self.x1, self.x2)
         K2 = self._get(self.x1, self.x2)
         nt.assert_allclose(K1, K2)
@@ -82,9 +82,8 @@ class BaseKernelTest(object):
 
 
 #===============================================================================
-# the following function takes the definition of a kernel function in theano and
-# returns functions to evaluate the kernel, its derivatives wrt the
-# hyperparameters, and the derivatives wrt x1.
+# definitions of kernel functions in theano which we can then use to generate
+# the derivatives.
 
 def functionize(k, x1, x2, theta):
     kfun  = T.function([theta, x1, x2], k, mode='FAST_COMPILE')
@@ -93,63 +92,67 @@ def functionize(k, x1, x2, theta):
     return kfun, dhfun, dxfun
 
 
-#===============================================================================
-# tests for the SE kernels
+def sqdist(x1, x2, ell=None):
+    if ell is not None:
+        x1 = x1 / ell
+        x2 = x2 / ell
+    return TT.dot(x1, x1) + TT.dot(x2, x2) - 2*TT.dot(x1, x2)
 
-def se(logsf, logell):
+
+def dist(x1, x2, ell=None):
+    return TT.sqrt(sqdist(x1, x2, ell))
+
+
+def se(iso):
+    theta = TT.vector('theta')
+    sf2 = TT.exp(theta[0]*2)
+    ell = TT.exp(theta[1] if iso else theta[1:])
     x1 = TT.vector('x1')
     x2 = TT.vector('x2')
-    x1_ = x1 / TT.exp(logell)
-    x2_ = x2 / TT.exp(logell)
-    d = TT.dot(x1_, x1_) + TT.dot(x2_, x2_) - 2*TT.dot(x1_, x2_)
-    k = TT.exp(2.0*logsf - 0.5*d)
-    return k, x1, x2
-
-
-def seiso():
-    theta = TT.vector('theta')
-    logsf = theta[0]
-    logell = theta[1]
-    k, x1, x2 = se(logsf, logell)
+    k = sf2 * TT.exp(-0.5*sqdist(x1, x2, ell))
     return k, x1, x2, theta
 
 
-def seard():
+def periodic():
     theta = TT.vector('theta')
-    logsf = theta[0]
-    logell = theta[1:]
-    k, x1, x2 = se(logsf, logell)
+    sf2 = TT.exp(theta[0]*2)
+    ell = TT.exp(theta[1])
+    p = TT.exp(theta[2])
+    x1 = TT.vector('x1')
+    x2 = TT.vector('x2')
+    k = sf2 * TT.exp(-2*(TT.sin(dist(x1, x2) * np.pi / p) / ell)**2)
     return k, x1, x2, theta
 
+
+def rq(iso):
+    theta = TT.vector('theta')
+    sf2 = TT.exp(theta[0]*2)
+    ell = TT.exp(theta[1] if iso else theta[1:-1])
+    alpha = TT.exp(theta[-1])
+    x1 = TT.vector('x1')
+    x2 = TT.vector('x2')
+    k = sf2 * (1 + sqdist(x1, x2, ell)/2/alpha) ** (-alpha)
+    return k, x1, x2, theta
+
+
+#===============================================================================
+# Test classes.
 
 class TestSEARD(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*seard())
+    kfun, dhfun, dxfun = functionize(*se(iso=False))
     kernel = pk.SEARD(0.8, [0.3, 0.4])
 
 
 class TestSEIso(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*seiso())
+    kfun, dhfun, dxfun = functionize(*se(iso=True))
     kernel = pk.SEIso(0.8, 0.3)
-
-
-#===============================================================================
-# tests for the periodic kernel
-
-def periodic():
-    theta = TT.vector('theta')
-    x1 = TT.vector('x1')
-    x2 = TT.vector('x2')
-
-    sf2 = TT.exp(theta[0]*2)
-    ell = TT.exp(theta[1])
-    p = TT.exp(theta[2])
-
-    d = TT.sqrt(TT.dot(x1, x1) + TT.dot(x2, x2) - 2*TT.dot(x1, x2)) * np.pi / p
-    k = sf2 * TT.exp(-2*(TT.sin(d) / ell)**2)
-
-    return k, x1, x2, theta
 
 
 class TestPeriodic(BaseKernelTest):
     kfun, dhfun, dxfun = functionize(*periodic())
     kernel = pk.Periodic(0.5, 0.4, 0.3)
+
+
+class TestRQIso(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*rq(iso=True))
+    kernel = pk.RQIso(0.5, 0.4, 0.3)
