@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from ._base import RealKernel
-from ._distances import dist, dist_per_dim
+from ._distances import dist
 from ..utils.models import Printable
 
 # exported symbols
@@ -46,12 +46,9 @@ class Periodic(RealKernel, Printable):
         ell = np.exp(self._logell)
         p = np.exp(self._logp)
 
-        K = dist(1, X1, X2) * np.pi / p
+        K = dist(X1, X2) * np.pi / p
         K = sf2 * np.exp(-2*(np.sin(K) / ell)**2)
         return K
-
-    def dget(self, X1):
-        return np.exp(self._logsf*2) * np.ones(len(X1))
 
     def grad(self, X1, X2=None):
         sf2 = np.exp(self._logsf*2)
@@ -59,7 +56,7 @@ class Periodic(RealKernel, Printable):
         p = np.exp(self._logp)
 
         # get the distance and a few transformations
-        D = dist(1, X1, X2) * np.pi / p
+        D = dist(X1, X2) * np.pi / p
         R = np.sin(D) / ell
         S = R**2
         E = 2 * sf2 * np.exp(-2*S)
@@ -67,6 +64,9 @@ class Periodic(RealKernel, Printable):
         yield E
         yield 2*E*S
         yield 2*E*R*D * np.cos(D) / ell
+
+    def dget(self, X1):
+        return np.exp(self._logsf*2) * np.ones(len(X1))
 
     def dgrad(self, X):
         yield 2 * self.dget(X)

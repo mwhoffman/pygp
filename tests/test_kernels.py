@@ -94,7 +94,7 @@ def functionize(k, x1, x2, theta):
 
 
 #===============================================================================
-# tests for the SE kernels.
+# tests for the SE kernels
 
 def se(logsf, logell):
     x1 = TT.vector('x1')
@@ -130,3 +130,26 @@ class TestSEARD(BaseKernelTest):
 class TestSEIso(BaseKernelTest):
     kfun, dhfun, dxfun = functionize(*seiso())
     kernel = pk.SEIso(0.8, 0.3)
+
+
+#===============================================================================
+# tests for the periodic kernel
+
+def periodic():
+    theta = TT.vector('theta')
+    x1 = TT.vector('x1')
+    x2 = TT.vector('x2')
+
+    sf2 = TT.exp(theta[0]*2)
+    ell = TT.exp(theta[1])
+    p = TT.exp(theta[2])
+
+    d = TT.sqrt(TT.dot(x1, x1) + TT.dot(x2, x2) - 2*TT.dot(x1, x2)) * np.pi / p
+    k = sf2 * TT.exp(-2*(TT.sin(d) / ell)**2)
+
+    return k, x1, x2, theta
+
+
+class TestPeriodic(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*periodic())
+    kernel = pk.Periodic(0.5, 0.4, 0.3)
