@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from ._base import RealKernel
-from ._distances import sqdist, sqdist_per_dim
+from ._distances import sqdist
 from ._local import local_se
 
 from ..utils.random import rstate
@@ -24,7 +24,7 @@ __all__ = ['SEARD', 'SEIso']
 
 class SEARD(RealKernel, Printable):
     def __init__(self, sf, ell):
-        self._logsf = np.log(sf)
+        self._logsf = np.log(float(sf))
         self._logell = np.log(np.ravel(ell))
         self.ndim = len(self._logell)
         self.nhyper = self.ndim + 1
@@ -44,26 +44,29 @@ class SEARD(RealKernel, Printable):
     def get(self, X1, X2=None):
         sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
-        return sf2 * np.exp(-0.5*sqdist(ell, X1, X2))
-
-    def dget(self, X1):
-        sf2 = np.exp(self._logsf*2)
-        return sf2 * np.ones(len(X1))
+        X1 = X1 / ell
+        X2 = X2 / ell if (X2 is not None) else None
+        K = sf2 * np.exp(-0.5*sqdist(X1, X2))
+        return K
 
     def grad(self, X1, X2=None):
         sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
-        for D in sqdist_per_dim(ell, X1, X2):
-            D *= sf2 * np.exp(-0.5*D)
-            yield D
-        yield 2*self.get(X1, X2)
+        X1 = X1 / ell
+        X2 = X2 / ell if (X2 is not None) else None
+        K = sf2 * np.exp(-0.5*sqdist(X1, X2))
+        yield 2*K
+        for i in xrange(self.ndim):
+            D = sqdist(X1[:,i,None], X2[:,i,None] if (X2 is not None) else None)
+            yield K*D
+
+    def dget(self, X1):
+        return np.exp(self._logsf*2) * np.ones(len(X1))
 
     def dgrad(self, X):
-        sf2 = np.exp(self._logsf*2)
-        ell = np.exp(self._logell)
+        yield 2 * np.exp(self._logsf*2) * np.ones(len(X))
         for i in xrange(self.ndim):
             yield np.zeros(len(X))
-        yield 2 * sf2 * np.ones(len(X))
 
     def sample_spectrum(self, N, rng=None):
         rng = rstate(rng)
@@ -85,7 +88,7 @@ class SEARD(RealKernel, Printable):
 
 class SEIso(RealKernel, Printable):
     def __init__(self, sf, ell, ndim=1):
-        self._logsf = np.log(sf)
+        self._logsf  = np.log(float(sf))
         self._logell = np.log(float(ell))
         self.ndim = ndim
         self.nhyper = 2
@@ -105,23 +108,27 @@ class SEIso(RealKernel, Printable):
     def get(self, X1, X2=None):
         sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
-        return sf2 * np.exp(-0.5*sqdist(ell, X1, X2))
-
-    def dget(self, X1):
-        sf2 = np.exp(self._logsf*2)
-        return sf2 * np.ones(len(X1))
+        X1 = X1 / ell
+        X2 = X2 / ell if (X2 is not None) else None
+        K = sf2 * np.exp(-0.5*sqdist(X1, X2))
+        return K
 
     def grad(self, X1, X2=None):
-        ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-        D = sqdist(ell, X1, X2)
+        ell = np.exp(self._logell)
+        X1 = X1 / ell
+        X2 = X2 / ell if (X2 is not None) else None
+        D = sqdist(X1, X2)
         K = sf2 * np.exp(-0.5*D)
         yield 2*K
-        yield D*K
+        yield K*D
+
+    def dget(self, X1):
+        return np.exp(self._logsf*2) * np.ones(len(X1))
 
     def dgrad(self, X):
-        yield 2*self.dget(X)
-        yield np.zeros(len(x1))
+        yield 2 * np.exp(self._logsf*2) * np.ones(len(X))
+        yield np.zeros(len(X))
 
     def sample_spectrum(self, N, rng=None):
         rng = rstate(rng)
@@ -134,4 +141,3 @@ class SEIso(RealKernel, Printable):
         ell = np.tile(np.exp(self._logell*-2), self.ndim)
         sf2 = np.exp(self._logsf*2)
         return local_se(ell, sf2, 0.0, x, X1, X2)
-
