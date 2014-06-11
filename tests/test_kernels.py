@@ -153,6 +153,6 @@ class TestPeriodic(BaseKernelTest):
     kernel = pk.Periodic(0.5, 0.4, 0.3)
 
 
-# class TestRQIso(BaseKernelTest):
-#     kfun, dhfun, dxfun = functionize(*rq(iso=True))
-#     kernel = pk.RQIso(0.5, 0.4, 0.3)
+class TestRQIso(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*rq(iso=True))
+    kernel = pk.RQIso(0.5, 0.4, 0.3)

@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from ._base import RealKernel
-from ._distances import sqdist
+from ._distances import rescale, sqdist
 from ..utils.models import Printable
 
 # exported symbols
@@ -20,9 +20,6 @@ __all__ = ['RQIso']
 
 
 class RQIso(RealKernel, Printable):
-    #---------------------------------------------------------------------------
-    # Bookkeeping code
-
     def __init__(self, sf, ell, alpha, ndim=1):
         self._logsf = np.log(float(sf))
         self._logell = np.log(float(ell))
@@ -44,28 +41,17 @@ class RQIso(RealKernel, Printable):
         self._logell = hyper[1]
         self._logalpha = hyper[2]
 
-    #---------------------------------------------------------------------------
-    # Kernel and gradient evaluation
-
     def get(self, X1, X2=None):
         sf2 = np.exp(self._logsf*2)
-        ell = np.exp(self._logell)
         alpha = np.exp(self._logalpha)
-
-        X1 = X1 / ell
-        X2 = X2 / ell if (X2 is not None) else None
+        X1, X2 = rescale(self._logell, X1, X2)
         K = sf2 * (1 + 0.5*sqdist(X1, X2)/alpha) ** (-alpha)
-
         return K
 
     def grad(self, X1, X2=None):
         alpha = np.exp(self._logalpha)
-        ell = np.exp(self._logell)
         sf2 = np.exp(self._logsf*2)
-
-        X1 = X1 / ell
-        X2 = X2 / ell if (X2 is not None) else None
-
+        X1, X2 = rescale(self._logell, X1, X2)
         D = sqdist(X1, X2)
         E = 1 + 0.5*D/alpha
         K = sf2 * E**(-alpha)
