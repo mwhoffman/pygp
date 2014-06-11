@@ -148,9 +148,9 @@ class TestSEIso(BaseKernelTest):
     kernel = pk.SE(0.8, 0.3, ndim=2)
 
 
-# class TestPeriodic(BaseKernelTest):
-#     kfun, dhfun, dxfun = functionize(*periodic())
-#     kernel = pk.Periodic(0.5, 0.4, 0.3)
+class TestPeriodic(BaseKernelTest):
+    kfun, dhfun, dxfun = functionize(*periodic())
+    kernel = pk.Periodic(0.5, 0.4, 0.3)
 
 
 # class TestRQIso(BaseKernelTest):

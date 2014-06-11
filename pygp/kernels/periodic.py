@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from ._base import RealKernel
-from ._distances import dist
+from ._distances import sqdist
 from ..utils.models import Printable
 
 # exported symbols
@@ -45,9 +45,8 @@ class Periodic(RealKernel, Printable):
         sf2 = np.exp(self._logsf*2)
         ell = np.exp(self._logell)
         p = np.exp(self._logp)
-
-        K = dist(X1, X2) * np.pi / p
-        K = sf2 * np.exp(-2*(np.sin(K) / ell)**2)
+        D = np.sqrt(sqdist(X1, X2)) * np.pi / p
+        K = sf2 * np.exp(-2*(np.sin(D) / ell)**2)
         return K
 
     def grad(self, X1, X2=None):
@@ -56,7 +55,7 @@ class Periodic(RealKernel, Printable):
         p = np.exp(self._logp)
 
         # get the distance and a few transformations
-        D = dist(X1, X2) * np.pi / p
+        D = np.sqrt(sqdist(X1, X2)) * np.pi / p
         R = np.sin(D) / ell
         S = R**2
         E = 2 * sf2 * np.exp(-2*S)
