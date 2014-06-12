@@ -92,3 +92,12 @@ class Matern(RealKernel, Printable):
         yield 2 * self.dget(X1)
         for i in xrange(self.nhyper-1):
             yield np.zeros(len(X1))
+
+    def sample_spectrum(self, N, rng=None):
+        rng = rstate(rng)
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        a = self._d / 2.
+        g = np.tile(rng.gamma(a, 1/a, N), (self.ndim, 1)).T
+        W = (rng.randn(N, self.ndim) / ell) / np.sqrt(g)
+        return W, sf2
