@@ -22,6 +22,11 @@ def rescale(logell, X1, X2):
     return X1, X2
 
 
+def diff(X1, X2=None):
+    X2 = X1 if (X2 is None) else X2
+    return X1[:,None,:] - X2[None,:,:]
+
+
 def sqdist(X1, X2=None):
     """
     Return the scaled squared-distance between two sets of vectors, x1 and x2,

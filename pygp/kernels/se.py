@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from ._base import RealKernel
-from ._distances import rescale, sqdist, sqdist_foreach
+from ._distances import rescale, diff, sqdist, sqdist_foreach
 from ._local import local_se
 
 from ..utils.random import rstate
@@ -64,6 +64,13 @@ class SE(RealKernel, Printable):
         else:
             for D in sqdist_foreach(X1, X2):
                 yield K*D                       # derivative wrt logell (ard)
+
+    def gradx(self, X1, X2=None):
+        X1, X2 = rescale(self._logell, X1, X2)
+        D = diff(X1, X2)
+        K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
+        G = np.exp(-self._logell) * D * K[:,:,None]
+        return G
 
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))

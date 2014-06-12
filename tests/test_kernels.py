@@ -44,6 +44,13 @@ class BaseKernelTest(object):
         G = np.array(G).T.reshape(len(G[0]), m, n)
         return G
 
+    def _gradx(self, x1, x2):
+        m = x1.shape[0]
+        n = x2.shape[0]
+        G = [self.dxfun(self.hyper, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
+        G = np.array(G).reshape(m, n, len(G[0]))
+        return G
+
     def test_get(self):
         K1 = self.kernel.get(self.x1, self.x2)
         K2 = self._get(self.x1, self.x2)
@@ -53,6 +60,12 @@ class BaseKernelTest(object):
         G1 = np.array(list(self.kernel.grad(self.x1, self.x2)))
         G2 = self._grad(self.x1, self.x2)
         nt.assert_allclose(G1, G2)
+
+    def test_gradx(self):
+        if hasattr(self.kernel, 'gradx'):
+            g1 = self.kernel.gradx(self.x1, self.x2)
+            g2 = self._gradx(self.x1, self.x2)
+            nt.assert_allclose(g1, g2)
 
     def test_dget(self):
         k1 = self.kernel.dget(self.x1)
@@ -88,7 +101,7 @@ class BaseKernelTest(object):
 def functionize(k, x1, x2, theta):
     kfun  = T.function([theta, x1, x2], k, mode='FAST_COMPILE')
     dhfun = T.function([theta, x1, x2], T.grad(k, theta), mode='FAST_COMPILE')
-    dxfun = T.function([theta, x1, x2], T.grad(k, x1), mode='FAST_COMPILE')
+    dxfun = T.function([theta, x1, x2], T.grad(k, x2), mode='FAST_COMPILE')
     return kfun, dhfun, dxfun
 
 

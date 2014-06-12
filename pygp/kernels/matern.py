@@ -53,16 +53,19 @@ class Matern(RealKernel, Printable):
         self._logell = hyper[1] if self._iso else hyper[1:]
 
     def _f(self, r):
-        return 1   if (self._d == 1) else \
-               1+r if (self._d == 3) else 1+r*(1+r/3.)
+        return 1                if (self._d == 1) else \
+               1+r              if (self._d == 3) else \
+               1+r*(1+r/3.)
 
     def _df(self, r):
         if self._iso:
-            return 1 if (self._d == 1) else \
-                   r if (self._d == 3) else r*(1+r)/3.
+            return 1            if (self._d == 1) else \
+                   r            if (self._d == 3) else \
+                   r*(1+r)/3.
         else:
-            return 1/r if (self._d == 1) else \
-                   1   if (self._d == 3) else (1+r)/3.
+            return 1/r          if (self._d == 1) else \
+                   1            if (self._d == 3) else \
+                   (1+r)/3.
 
     def get(self, X1, X2=None):
         X1, X2 = rescale(self._logell - 0.5*np.log(self._d), X1, X2)
