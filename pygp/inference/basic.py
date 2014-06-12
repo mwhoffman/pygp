@@ -13,7 +13,7 @@ import numpy as np
 # local imports
 from .exact import ExactGP
 from ..likelihoods import Gaussian
-from ..kernels import SEARD, SEIso
+from ..kernels import SE
 from ..utils.models import Printable
 
 # exported symbols
@@ -26,10 +26,7 @@ __all__ = ['BasicGP']
 class BasicGP(Printable, ExactGP):
     def __init__(self, sn, sf, ell, ndim=None):
         likelihood = Gaussian(sn)
-
-        kernel = SEARD(sf, ell) if np.iterable(ell) else \
-                 SEIso(sf, ell, 1 if (ndim is None) else ndim)
-
+        kernel = SE(sf, ell, ndim)
         super(BasicGP, self).__init__(likelihood, kernel)
 
     def _params(self):

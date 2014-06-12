@@ -12,40 +12,28 @@ import numpy as np
 import scipy.spatial.distance as ssd
 
 # exported symbols
-__all__ = ['dist', 'sqdist', 'dist_per_dim', 'sqdist_per_dim']
+__all__ = ['rescale', 'sqdist', 'sqdist_foreach']
 
 
-def sqdist(ell, X1, X2=None):
+def rescale(logell, X1, X2):
+    ell = np.exp(logell)
+    X1 = X1 / ell
+    X2 = X2 / ell if (X2 is not None) else None
+    return X1, X2
+
+
+def sqdist(X1, X2=None):
     """
     Return the scaled squared-distance between two sets of vectors, x1 and x2,
     which should be passed as arrays of size (n,d) and (m,d) respectively. The
     vectors should be scaled by ell, which can be passed as either be a scalar
     or a d-vector.
     """
-    if X2 is None:
-        X1 = X1/ell
-        X2 = X1
-    else:
-        X1 = X1/ell
-        X2 = X2/ell
+    X2 = X1 if (X2 is None) else X2
     return ssd.cdist(X1, X2, 'sqeuclidean')
 
 
-def sqdist_per_dim(ell, X1, X2=None):
-    if X2 is None:
-        X1 = X1/ell
-        X2 = X1
-    else:
-        X1 = X1/ell
-        X2 = X2/ell
+def sqdist_foreach(X1, X2=None):
+    X2 = X1 if (X2 is None) else X2
     for i in xrange(X1.shape[1]):
-        yield ssd.cdist(X1[:,i,None], X2[:,i,None])
-
-
-def dist(ell, X1, X2=None):
-    return np.sqrt(sqdist(ell, X1, X2))
-
-
-def dist_per_dim(ell, X1, X2=None):
-    for D in sqdist_per_dim(ell, X1, X2):
-        yield np.sqrt(D)
+        yield ssd.cdist(X1[:,i,None], X2[:,i,None], 'sqeuclidean')

@@ -23,16 +23,6 @@ if __name__ == '__main__':
     gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp.add_data(X, y)
 
-    # specify a prior to use.
-    priors = dict(
-        sn =pgp.Uniform(0.01, 1.0),
-        sf =pgp.Uniform(0.01, 5.0),
-        ell=pgp.Uniform(0.01, 1.0))
-
     # find the ML parameters and sample from the posterior.
     pygp.optimize(gp)
-    hyper = pygp.hyper.sample(gp, priors, 10000)
-
-    # plot everything.
     pygp.gpplot(gp, figure=1)
-    pygp.plotting.sampleplot(gp, hyper, figure=2)

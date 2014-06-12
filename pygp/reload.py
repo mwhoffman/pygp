@@ -11,9 +11,10 @@ pygp.utils.iters
 pygp.utils
 pygp.kernels._base
 pygp.kernels._distances
-pygp.kernels.periodic
 pygp.kernels.se
+pygp.kernels.periodic
 pygp.kernels.rq
+pygp.kernels.matern
 pygp.kernels
 pygp.likelihoods._base
 pygp.likelihoods.gaussian
