@@ -25,10 +25,10 @@ y -= y.mean()
 
 # these are near the values called for in Rasmussen and Williams, so they should
 # give reasonable results and thus we'll skip the fit.
-kernel = pk.SEIso(60, 60) + \
-         pk.SEIso(2, 90) * pk.Periodic(1, 1, 1) + \
-         pk.RQIso(0.7, 1.2, 0.7) + \
-         pk.SEIso(0.15, 0.15)
+kernel = pk.SE(60, 60) + \
+         pk.SE(2, 90) * pk.Periodic(1, 1, 1) + \
+         pk.RQ(0.7, 1.2, 0.7) + \
+         pk.SE(0.15, 0.15)
 
 # use a gaussian likeihood with this standard deviation.
 likelihood = pygp.likelihoods.Gaussian(sigma=0.1)
