@@ -10,6 +10,7 @@ from __future__ import print_function
 # global imports
 import numpy as np
 import numpy.testing as nt
+import nose
 
 # theano imports
 import theano as T
@@ -79,6 +80,8 @@ class BaseKernelTest(object):
             g1 = self.kernel.gradx(self.x1, self.x2)
             g2 = self._gradx(self.x1, self.x2)
             nt.assert_allclose(g1, g2)
+        else:
+            raise nose.SkipTest()
 
     def test_dget(self):
         k1 = self.kernel.dget(self.x1)
