@@ -52,17 +52,22 @@ class RQ(RealKernel, Printable):
         self._logalpha = hyper[-1]
 
     def get(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
         sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
         alpha = np.exp(self._logalpha)
+
+        X1, X2 = rescale(ell, X1, X2)
         K = sf2 * (1 + 0.5*sqdist(X1, X2)/alpha) ** (-alpha)
         return K
 
     def grad(self, X1, X2=None):
-        # precomputations
-        X1, X2 = rescale(self._logell, X1, X2)
+        # hypers
         sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
         alpha = np.exp(self._logalpha)
+
+        # precomputations
+        X1, X2 = rescale(ell, X1, X2)
         D = sqdist(X1, X2)
         E = 1 + 0.5*D/alpha
         K = sf2 * E**(-alpha)

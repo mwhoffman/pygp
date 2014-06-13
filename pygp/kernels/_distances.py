@@ -15,8 +15,7 @@ import scipy.spatial.distance as ssd
 __all__ = ['rescale', 'sqdist', 'sqdist_foreach']
 
 
-def rescale(logell, X1, X2):
-    ell = np.exp(logell)
+def rescale(ell, X1, X2):
     X1 = X1 / ell
     X2 = X2 / ell if (X2 is not None) else None
     return X1, X2

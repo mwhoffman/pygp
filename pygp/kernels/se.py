@@ -51,11 +51,11 @@ class SE(RealKernel, Printable):
         self._logell = hyper[1] if self._iso else hyper[1:]
 
     def get(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
+        X1, X2 = rescale(np.exp(self._logell), X1, X2)
         return np.exp(self._logsf*2 - sqdist(X1, X2)/2)
 
     def grad(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
+        X1, X2 = rescale(np.exp(self._logell), X1, X2)
         D = sqdist(X1, X2)
         K = np.exp(self._logsf*2 - D/2)
         yield 2*K                               # derivative wrt logsf
@@ -66,10 +66,11 @@ class SE(RealKernel, Printable):
                 yield K*D                       # derivative wrt logell (ard)
 
     def gradx(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
+        ell = np.exp(self._logell)
+        X1, X2 = rescale(ell, X1, X2)
         D = diff(X1, X2)
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
-        G = np.exp(-self._logell) * D * K[:,:,None]
+        G = K[:,:,None] * D / ell
         return G
 
     def dget(self, X1):
