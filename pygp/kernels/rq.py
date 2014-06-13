@@ -49,7 +49,7 @@ class RQ(RealKernel, Printable):
 
     def set_hyper(self, hyper):
         self._logsf = hyper[0]
-        self._logell = hyper[1:-1]
+        self._logell = hyper[1] if self._iso else hyper[1:-1]
         self._logalpha = hyper[-1]
 
     def get(self, X1, X2=None):

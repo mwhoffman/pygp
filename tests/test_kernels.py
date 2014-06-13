@@ -51,6 +51,19 @@ class BaseKernelTest(object):
         G = np.array(G).reshape(m, n, len(G[0]))
         return G
 
+    def test_copy(self):
+        kernel = self.kernel.copy()
+        K1 = kernel.get(self.x1, self.x2)
+        K2 = self.kernel.get(self.x1, self.x2)
+        nt.assert_allclose(K1, K2)
+
+    def test_hyper(self):
+        kernel = self.kernel.copy()
+        kernel.set_hyper(kernel.get_hyper())
+        K1 = kernel.get(self.x1, self.x2)
+        K2 = self.kernel.get(self.x1, self.x2)
+        nt.assert_allclose(K1, K2)
+
     def test_get(self):
         K1 = self.kernel.get(self.x1, self.x2)
         K2 = self._get(self.x1, self.x2)
