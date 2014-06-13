@@ -58,14 +58,9 @@ class Matern(RealKernel, Printable):
                1+r*(1+r/3.)
 
     def _df(self, r):
-        if self._iso:
-            return 1            if (self._d == 1) else \
-                   r            if (self._d == 3) else \
-                   r*(1+r)/3.
-        else:
-            return 1/r          if (self._d == 1) else \
-                   1            if (self._d == 3) else \
-                   (1+r)/3.
+        return 1                if (self._d == 1) else \
+               r                if (self._d == 3) else \
+               r*(1+r)/3.
 
     def get(self, X1, X2=None):
         X1, X2 = rescale(self._logell - 0.5*np.log(self._d), X1, X2)
@@ -81,12 +76,12 @@ class Matern(RealKernel, Printable):
         K = S * self._f(D)
         M = S * self._df(D)
 
-        yield 2*K                                 # derivative wrt logsf
+        yield 2*K                                  # derivative wrt logsf
         if self._iso:
-            yield M*D                             # derivative wrt logell (iso)
+            yield M*D                              # derivative wrt logell (iso)
         else:
-            for D in sqdist_foreach(X1, X2):
-                yield np.where(D<1e-12, 0, M*D)   # derivative wrt logell (ard)
+            for D_ in sqdist_foreach(X1, X2):
+                yield np.where(D<1e-12, 0, M*D_/D) # derivative wrt logell (ard)
 
     def gradx(self, X1, X2=None):
         X1, X2 = rescale(self._logell - 0.5*np.log(self._d), X1, X2)
@@ -95,7 +90,7 @@ class Matern(RealKernel, Printable):
 
         D = np.sqrt(np.sum(D1**2, axis=-1))
         S = np.exp(self._logsf*2 - D)
-        M = S * self._df(D) / D
+        M = np.where(D<1e-12, 0, S * self._df(D) / D)
         G = M[:,:,None] * D1 / ell * np.sqrt(self._d)
 
         return G
