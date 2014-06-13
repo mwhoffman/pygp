@@ -30,15 +30,16 @@ class Matern(RealKernel, Printable):
         self.ndim = self._logell.size
         self.nhyper = 1 + self._logell.size
 
-        if (self._logell.size == 1) and (ndim > 1):
-            self._logell = float(self._logell)
-            self._iso = True
-            self.ndim = ndim
+        if ndim is not None:
+            if self._logell.size == 1:
+                self._logell = float(self._logell)
+                self._iso = True
+                self.ndim = ndim
+            else:
+                raise ValueError('ndim only usable with scalar lengthscales')
 
-        # FIXME: should I raise an error here if the dimensions are
-        # inconsistent?
-
-        # FIXME: check if d is in {1, 3, 5}?
+        if self._d not in {1,3,5}:
+            raise ValueError('d must be one of 1, 3, or 5')
 
     def _params(self):
         return [

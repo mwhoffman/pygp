@@ -13,7 +13,6 @@ import numpy as np
 # local imports
 from ._base import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
-from ._local import local_se
 
 from ..utils.random import rstate
 from ..utils.models import Printable
@@ -30,13 +29,13 @@ class SE(RealKernel, Printable):
         self.ndim = self._logell.size
         self.nhyper = 1 + self._logell.size
 
-        if (self._logell.size == 1) and (ndim > 1):
-            self._logell = float(self._logell)
-            self._iso = True
-            self.ndim = ndim
-
-        # FIXME: should I raise an error here if the dimensions are
-        # inconsistent?
+        if ndim is not None:
+            if self._logell.size == 1:
+                self._logell = float(self._logell)
+                self._iso = True
+                self.ndim = ndim
+            else:
+                raise ValueError('ndim only usable with scalar lengthscales')
 
     def _params(self):
         return [

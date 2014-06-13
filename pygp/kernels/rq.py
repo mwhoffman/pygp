@@ -13,6 +13,7 @@ import numpy as np
 # local imports
 from ._base import RealKernel
 from ._distances import rescale, sqdist, sqdist_foreach
+
 from ..utils.models import Printable
 
 # exported symbols
@@ -20,7 +21,7 @@ __all__ = ['RQ']
 
 
 class RQ(RealKernel, Printable):
-    def __init__(self, sf, ell, alpha, ndim=1):
+    def __init__(self, sf, ell, alpha, ndim=None):
         self._logsf = np.log(float(sf))
         self._logell = np.log(np.ravel(ell))
         self._logalpha = np.log(float(alpha))
@@ -29,13 +30,13 @@ class RQ(RealKernel, Printable):
         self.ndim = self._logell.size
         self.nhyper = 2 + self._logell.size
 
-        if (self._logell.size == 1) and (ndim > 1):
-            self._logell = float(self._logell)
-            self._iso = True
-            self.ndim = ndim
-
-        # FIXME: should I raise an error here if the dimensions are
-        # inconsistent?
+        if ndim is not None:
+            if self._logell.size == 1:
+                self._logell = float(self._logell)
+                self._iso = True
+                self.ndim = ndim
+            else:
+                raise ValueError('ndim only usable with scalar lengthscales')
 
     def _params(self):
         return [
