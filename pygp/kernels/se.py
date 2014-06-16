@@ -72,6 +72,16 @@ class SE(RealKernel, Printable):
         G = K[:,:,None] * D / ell
         return G
 
+    def gradxx(self, X1, X2=None):
+        ell = np.exp(self._logell)
+        X1, X2 = rescale(ell, X1, X2)
+        m = X1.shape[1]
+        D = diff(X1, X2)
+        K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
+        G = (np.eye(m) - (D[:,:,None] * D[:,:,:,None])) * K[:,:,None,None]
+        G /= ell**2
+        return G
+
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
 
