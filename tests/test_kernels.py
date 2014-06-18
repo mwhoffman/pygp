@@ -117,7 +117,7 @@ class BaseKernelTest(object):
 def functionize(k, x1, x2, theta):
     kfun  = T.function([theta, x1, x2], k, mode='FAST_COMPILE')
     dhfun = T.function([theta, x1, x2], T.grad(k, theta), mode='FAST_COMPILE')
-    dxfun = T.function([theta, x1, x2], T.grad(k, x2), mode='FAST_COMPILE')
+    dxfun = T.function([theta, x1, x2], T.grad(k, x1), mode='FAST_COMPILE')
     return kfun, dhfun, dxfun
 
 
