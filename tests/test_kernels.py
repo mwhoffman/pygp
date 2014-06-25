@@ -21,6 +21,58 @@ import pygp.kernels as pk
 
 
 #===============================================================================
+# definitions of various kernels in theano.
+
+def sqdist(x1, x2, ell=None):
+    if ell is not None:
+        x1 = x1 / ell
+        x2 = x2 / ell
+    return TT.dot(x1, x1) + TT.dot(x2, x2) - 2*TT.dot(x1, x2)
+
+
+def dist(x1, x2, ell=None):
+    return TT.sqrt(sqdist(x1, x2, ell))
+
+
+# each kernel will use the same symbolic vectors for the hyperparameters and the
+# inputs to the kernel. this is so we don't need to pass them around in order to
+# take derivatives.
+THETA = TT.vector('theta')
+X1 = TT.vector('x1')
+X2 = TT.vector('x2')
+
+
+def se(iso=False):
+    sf2 = TT.exp(THETA[0]*2)
+    ell = TT.exp(THETA[1] if iso else THETA[1:])
+    return sf2 * TT.exp(-0.5*sqdist(X1, X2, ell))
+
+
+def periodic():
+    sf2 = TT.exp(THETA[0]*2)
+    ell = TT.exp(THETA[1])
+    p   = TT.exp(THETA[2])
+    return sf2 * TT.exp(-2*(TT.sin(dist(X1, X2) * np.pi / p) / ell)**2)
+
+
+def rq(iso=False):
+    sf2   = TT.exp(THETA[0]*2)
+    ell   = TT.exp(THETA[1] if iso else THETA[1:-1])
+    alpha = TT.exp(THETA[-1])
+    return sf2 * (1 + sqdist(X1, X2, ell)/2/alpha) ** (-alpha)
+
+
+def matern(d, iso=False):
+    sf2 = TT.exp(THETA[0]*2)
+    ell = TT.exp(THETA[1] if iso else THETA[1:])
+    f = (lambda r: 1  )         if (d == 1) else \
+        (lambda r: 1+r)         if (d == 3) else \
+        (lambda r: 1+r*(1+r/3))
+    r = np.sqrt(d) * dist(X1, X2, ell)
+    return sf2 * f(r) * TT.exp(-r)
+
+
+#===============================================================================
 # base test class. instances must have kernel, kfun, dhfun, and dxfun defined
 # where each of these evaluates the kernel from one element (or pair of
 # elements).
@@ -29,27 +81,46 @@ class BaseKernelTest(object):
     def __init__(self):
         self.x1 = np.random.rand(5, self.kernel.ndim)
         self.x2 = np.random.rand(3, self.kernel.ndim)
-        self.hyper = self.kernel.get_hyper()
 
     def _get(self, x1, x2):
+        kfun = T.function([THETA, X1, X2], self.k, mode='FAST_COMPILE')
+        theta = self.kernel.get_hyper()
         m = x1.shape[0]
         n = x2.shape[0]
-        K = [self.kfun(self.hyper, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
+        K = [kfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
         K = np.array(K).reshape(m, n)
         return K
 
     def _grad(self, x1, x2):
+        dfun = T.function([THETA, X1, X2], T.grad(self.k, THETA), mode='FAST_COMPILE')
+        theta = self.kernel.get_hyper()
         m = x1.shape[0]
         n = x2.shape[0]
-        G = [self.dhfun(self.hyper, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
-        G = np.array(G).T.reshape(len(G[0]), m, n)
+        N = self.kernel.nhyper
+        G = [dfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
+        G = np.array(G).T.reshape(N, m, n)
         return G
 
     def _gradx(self, x1, x2):
+        dfun = T.function([THETA, X1, X2], T.grad(self.k, X1), mode='FAST_COMPILE')
+        theta = self.kernel.get_hyper()
         m = x1.shape[0]
         n = x2.shape[0]
-        G = [self.dxfun(self.hyper, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
-        G = np.array(G).reshape(m, n, len(G[0]))
+        d = x1.shape[1]
+        G = [dfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
+        G = np.array(G).reshape(m, n, d)
+        return G
+
+    def _gradxx(self, x1, x2):
+        dx = T.grad(self.k, X1)
+        dxx, updates = T.scan(lambda i: T.grad(dx[i], X2), sequences=TT.arange(X1.shape[0]))
+        dfun = T.function([THETA, X1, X2], dxx, updates=updates, mode='FAST_COMPILE')
+        theta = self.kernel.get_hyper()
+        m = x1.shape[0]
+        n = x2.shape[0]
+        d = x1.shape[1]
+        G = np.array([dfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)])
+        G = np.array(G).reshape(m, n, d, d)
         return G
 
     def test_copy(self):
@@ -77,9 +148,17 @@ class BaseKernelTest(object):
 
     def test_gradx(self):
         if hasattr(self.kernel, 'gradx'):
-            g1 = self.kernel.gradx(self.x1, self.x2)
-            g2 = self._gradx(self.x1, self.x2)
-            nt.assert_allclose(g1, g2)
+            G1 = self.kernel.gradx(self.x1, self.x2)
+            G2 = self._gradx(self.x1, self.x2)
+            nt.assert_allclose(G1, G2)
+        else:
+            raise nose.SkipTest()
+
+    def test_gradxx(self):
+        if hasattr(self.kernel, 'gradxx'):
+            G1 = self.kernel.gradxx(self.x1, self.x2)
+            G2 = self._gradxx(self.x1, self.x2)
+            nt.assert_allclose(G1, G2)
         else:
             raise nose.SkipTest()
 
@@ -111,126 +190,58 @@ class BaseKernelTest(object):
 
 
 #===============================================================================
-# definitions of kernel functions in theano which we can then use to generate
-# the derivatives.
-
-def functionize(k, x1, x2, theta):
-    kfun  = T.function([theta, x1, x2], k, mode='FAST_COMPILE')
-    dhfun = T.function([theta, x1, x2], T.grad(k, theta), mode='FAST_COMPILE')
-    dxfun = T.function([theta, x1, x2], T.grad(k, x1), mode='FAST_COMPILE')
-    return kfun, dhfun, dxfun
-
-
-def sqdist(x1, x2, ell=None):
-    if ell is not None:
-        x1 = x1 / ell
-        x2 = x2 / ell
-    return TT.dot(x1, x1) + TT.dot(x2, x2) - 2*TT.dot(x1, x2)
-
-
-def dist(x1, x2, ell=None):
-    return TT.sqrt(sqdist(x1, x2, ell))
-
-
-def se(iso=False):
-    theta = TT.vector('theta')
-    sf2 = TT.exp(theta[0]*2)
-    ell = TT.exp(theta[1] if iso else theta[1:])
-    x1 = TT.vector('x1')
-    x2 = TT.vector('x2')
-    k = sf2 * TT.exp(-0.5*sqdist(x1, x2, ell))
-    return k, x1, x2, theta
-
-
-def periodic():
-    theta = TT.vector('theta')
-    sf2 = TT.exp(theta[0]*2)
-    ell = TT.exp(theta[1])
-    p = TT.exp(theta[2])
-    x1 = TT.vector('x1')
-    x2 = TT.vector('x2')
-    k = sf2 * TT.exp(-2*(TT.sin(dist(x1, x2) * np.pi / p) / ell)**2)
-    return k, x1, x2, theta
-
-
-def rq(iso=False):
-    theta = TT.vector('theta')
-    sf2 = TT.exp(theta[0]*2)
-    ell = TT.exp(theta[1] if iso else theta[1:-1])
-    alpha = TT.exp(theta[-1])
-    x1 = TT.vector('x1')
-    x2 = TT.vector('x2')
-    k = sf2 * (1 + sqdist(x1, x2, ell)/2/alpha) ** (-alpha)
-    return k, x1, x2, theta
-
-
-def matern(d, iso=False):
-    theta = TT.vector('theta')
-    sf2 = TT.exp(theta[0]*2)
-    ell = TT.exp(theta[1] if iso else theta[1:])
-    x1 = TT.vector('x1')
-    x2 = TT.vector('x2')
-    f = (lambda r: 1  )         if (d == 1) else \
-        (lambda r: 1+r)         if (d == 3) else \
-        (lambda r: 1+r*(1+r/3))
-    r = np.sqrt(d) * dist(x1, x2, ell)
-    k = sf2 * f(r) * TT.exp(-r)
-    return k, x1, x2, theta
-
-
-#===============================================================================
 # Test classes.
 
 class TestSEARD(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*se())
+    k = se()
     kernel = pk.SE(0.8, [0.3, 0.4])
 
 
 class TestSEIso(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*se(iso=True))
+    k = se(iso=True)
     kernel = pk.SE(0.8, 0.3, ndim=2)
 
 
 class TestPeriodic(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*periodic())
+    k = periodic()
     kernel = pk.Periodic(0.5, 0.4, 0.3)
 
 
 class TestRQARD(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*rq())
+    k = rq()
     kernel = pk.RQ(0.5, [0.4, 0.5], 0.3)
 
 
 class TestRQIso(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*rq(iso=True))
+    k = rq(iso=True)
     kernel = pk.RQ(0.5, 0.4, 0.3, ndim=2)
 
 
 class TestMaternARD1(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*matern(1))
+    k = matern(1)
     kernel = pk.Matern(0.5, [0.4, 0.3], d=1)
 
 
 class TestMaternARD3(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*matern(3))
+    k = matern(3)
     kernel = pk.Matern(0.5, [0.4, 0.3], d=3)
 
 
 class TestMaternARD5(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*matern(5))
+    k = matern(5)
     kernel = pk.Matern(0.5, [0.4, 0.3], d=5)
 
 
 class TestMaternIso1(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*matern(1, iso=True))
+    k = matern(1, iso=True)
     kernel = pk.Matern(0.5, 0.4, d=1, ndim=2)
 
 
 class TestMaternIso3(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*matern(3, iso=True))
+    k = matern(3, iso=True)
     kernel = pk.Matern(0.5, 0.4, d=3, ndim=2)
 
 
 class TestMaternIso5(BaseKernelTest):
-    kfun, dhfun, dxfun = functionize(*matern(5, iso=True))
+    k = matern(5, iso=True)
     kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
