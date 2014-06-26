@@ -23,17 +23,6 @@ import pygp.kernels as pk
 #===============================================================================
 # definitions of various kernels in theano.
 
-def sqdist(x1, x2, ell=None):
-    if ell is not None:
-        x1 = x1 / ell
-        x2 = x2 / ell
-    return TT.dot(x1, x1) + TT.dot(x2, x2) - 2*TT.dot(x1, x2)
-
-
-def dist(x1, x2, ell=None):
-    return TT.sqrt(sqdist(x1, x2, ell))
-
-
 # each kernel will use the same symbolic vectors for the hyperparameters and the
 # inputs to the kernel. this is so we don't need to pass them around in order to
 # take derivatives.
@@ -45,21 +34,27 @@ X2 = TT.vector('x2')
 def se(iso=False):
     sf2 = TT.exp(THETA[0]*2)
     ell = TT.exp(THETA[1] if iso else THETA[1:])
-    return sf2 * TT.exp(-0.5*sqdist(X1, X2, ell))
+    v = (X1-X2) / ell
+    k = sf2 * TT.exp(-0.5*TT.dot(v,v))
+    return k
 
 
 def periodic():
     sf2 = TT.exp(THETA[0]*2)
     ell = TT.exp(THETA[1])
-    p   = TT.exp(THETA[2])
-    return sf2 * TT.exp(-2*(TT.sin(dist(X1, X2) * np.pi / p) / ell)**2)
+    p = TT.exp(THETA[2])
+    v = X1-X2
+    k = sf2 * TT.exp(-2*(TT.sin(TT.sqrt(TT.dot(v,v)) * np.pi / p) / ell)**2)
+    return k
 
 
 def rq(iso=False):
-    sf2   = TT.exp(THETA[0]*2)
-    ell   = TT.exp(THETA[1] if iso else THETA[1:-1])
+    sf2 = TT.exp(THETA[0]*2)
+    ell = TT.exp(THETA[1] if iso else THETA[1:-1])
     alpha = TT.exp(THETA[-1])
-    return sf2 * (1 + sqdist(X1, X2, ell)/2/alpha) ** (-alpha)
+    v = (X1-X2) / ell
+    k = sf2 * (1 + TT.dot(v,v)/2/alpha) ** (-alpha)
+    return k
 
 
 def matern(d, iso=False):
@@ -68,8 +63,10 @@ def matern(d, iso=False):
     f = (lambda r: 1  )         if (d == 1) else \
         (lambda r: 1+r)         if (d == 3) else \
         (lambda r: 1+r*(1+r/3))
-    r = np.sqrt(d) * dist(X1, X2, ell)
-    return sf2 * f(r) * TT.exp(-r)
+    v = (X1-X2) / ell
+    r = np.sqrt(d) * TT.sqrt(TT.dot(v,v))
+    k = sf2 * f(r) * TT.exp(-r)
+    return k
 
 
 #===============================================================================
@@ -111,10 +108,10 @@ class BaseKernelTest(object):
         G = np.array(G).reshape(m, n, d)
         return G
 
-    def _gradxx(self, x1, x2):
+    def _gradxy(self, x1, x2):
         dx = T.grad(self.k, X1)
-        dxx, updates = T.scan(lambda i: T.grad(dx[i], X2), sequences=TT.arange(X1.shape[0]))
-        dfun = T.function([THETA, X1, X2], dxx, updates=updates, mode='FAST_COMPILE')
+        dxy, updates = T.scan(lambda i: T.grad(dx[i], X2), sequences=TT.arange(X1.shape[0]))
+        dfun = T.function([THETA, X1, X2], dxy, updates=updates, mode='FAST_COMPILE')
         theta = self.kernel.get_hyper()
         m = x1.shape[0]
         n = x2.shape[0]
@@ -154,10 +151,10 @@ class BaseKernelTest(object):
         else:
             raise nose.SkipTest()
 
-    def test_gradxx(self):
-        if hasattr(self.kernel, 'gradxx'):
-            G1 = self.kernel.gradxx(self.x1, self.x2)
-            G2 = self._gradxx(self.x1, self.x2)
+    def test_gradxy(self):
+        if hasattr(self.kernel, 'gradxy'):
+            G1 = self.kernel.gradxy(self.x1, self.x2)
+            G2 = self._gradxy(self.x1, self.x2)
             nt.assert_allclose(G1, G2)
         else:
             raise nose.SkipTest()
