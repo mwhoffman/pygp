@@ -13,7 +13,6 @@ import numpy as np
 # local imports
 from ._base import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
-from ._local import local_se
 
 from ..utils.random import rstate
 from ..utils.models import Printable
@@ -30,13 +29,13 @@ class SE(RealKernel, Printable):
         self.ndim = self._logell.size
         self.nhyper = 1 + self._logell.size
 
-        if (self._logell.size == 1) and (ndim > 1):
-            self._logell = float(self._logell)
-            self._iso = True
-            self.ndim = ndim
-
-        # FIXME: should I raise an error here if the dimensions are
-        # inconsistent?
+        if ndim is not None:
+            if self._logell.size == 1:
+                self._logell = float(self._logell)
+                self._iso = True
+                self.ndim = ndim
+            else:
+                raise ValueError('ndim only usable with scalar lengthscales')
 
     def _params(self):
         return [
@@ -51,11 +50,11 @@ class SE(RealKernel, Printable):
         self._logell = hyper[1] if self._iso else hyper[1:]
 
     def get(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
+        X1, X2 = rescale(np.exp(self._logell), X1, X2)
         return np.exp(self._logsf*2 - sqdist(X1, X2)/2)
 
     def grad(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
+        X1, X2 = rescale(np.exp(self._logell), X1, X2)
         D = sqdist(X1, X2)
         K = np.exp(self._logsf*2 - D/2)
         yield 2*K                               # derivative wrt logsf
@@ -66,10 +65,17 @@ class SE(RealKernel, Printable):
                 yield K*D                       # derivative wrt logell (ard)
 
     def gradx(self, X1, X2=None):
-        X1, X2 = rescale(self._logell, X1, X2)
+        """
+        Derivatives of the kernel with respect to its second argument. This
+        corresponds to the covariance between function values evaluated at X1
+        and gradients evaluated at X2. Returns an (m,n,d)-array.
+        """
+        ell = np.exp(self._logell)
+        X1, X2 = rescale(ell, X1, X2)
+
         D = diff(X1, X2)
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
-        G = np.exp(-self._logell) * D * K[:,:,None]
+        G = -K[:,:,None] * D / ell
         return G
 
     def dget(self, X1):
@@ -86,9 +92,3 @@ class SE(RealKernel, Printable):
         ell = np.exp(self._logell)
         W = rng.randn(N, self.ndim) / ell
         return W, sf2
-
-    # def get_local(self, x, X1, X2=None):
-    #     # FIXME! doesn't work for ard kernels.
-    #     ell = np.exp(self._logell*-2)
-    #     sf2 = np.exp(self._logsf*2)
-    #     return local_se(ell, sf2, 0.0, x, X1, X2)
