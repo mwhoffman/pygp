@@ -13,7 +13,7 @@ import numpy as np
 import scipy.linalg as sla
 
 # local imports
-from ._base import GPModel
+from ._base import GP
 from ..likelihoods import Gaussian
 from ..utils.exceptions import ModelError
 
@@ -21,7 +21,7 @@ from ..utils.exceptions import ModelError
 __all__ = ['ExactGP']
 
 
-class ExactGP(GPModel):
+class ExactGP(GP):
     def __init__(self, likelihood, kernel):
         # XXX: exact inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
