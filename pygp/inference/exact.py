@@ -62,24 +62,28 @@ class ExactGP(GP):
 
         return mu, s2
 
-    def nloglikelihood(self, grad=False):
-        nlZ  = 0.5 * np.inner(self._a, self._a)
-        nlZ += 0.5 * np.log(2*np.pi) * self.ndata
-        nlZ += np.sum(np.log(self._R.diagonal()))
+    def loglikelihood(self, grad=False):
+        lZ = -0.5 * np.inner(self._a, self._a)
+        lZ -= 0.5 * np.log(2*np.pi) * self.ndata
+        lZ -= np.sum(np.log(self._R.diagonal()))
 
         # bail early if we don't need the gradient.
-        if not grad:
-            return nlZ
+        if not grad: return lZ
 
+        # intermediate terms.
         alpha = sla.solve_triangular(self._R, self._a, trans=False)
         Q = sla.cho_solve((self._R, False), np.eye(self.ndata))
         Q -= np.outer(alpha, alpha)
 
-        # gradient wrt components of each model.
-        lgrad = np.exp(self._likelihood._logsigma*2) * np.trace(Q)
-        kgrad = [0.5*np.sum(Q*dK) for dK in self._kernel.grad(self._X)]
+        dlZ = np.r_[
+            # derivative wrt the likelihood's noise term.
+            -np.exp(self._likelihood._logsigma*2) * np.trace(Q),
 
-        return nlZ, np.r_[lgrad, kgrad]
+            # derivative wrt each kernel hyperparameter.
+            [-0.5*np.sum(Q*dK)
+              for dK in self._kernel.grad(self._X)]]
+
+        return lZ, dlZ
 
 
 def chol_update(A, B, C, a, b):

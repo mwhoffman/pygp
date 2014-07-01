@@ -23,7 +23,7 @@ def optimize(gp, priors=None):
     Perform type-II maximum likelihood to fit GP hyperparameters.
 
     If given the priors object should be a dictionary mapping named parameters
-    to an object which implements `prior.nloglikelihood(hyper, grad)`. If a
+    to an object which implements `prior.loglikelihood(hyper, grad)`. If a
     parameter is mapped to the `None` value then this will be assumed fixed.
 
     Note: nothing is returned by this function. Instead it will modify the
@@ -54,8 +54,8 @@ def optimize(gp, priors=None):
     def objective(x):
         hyper = hyper0.copy(); hyper[active] = x
         gp.set_hyper(hyper)
-        nll, dnll = gp.nloglikelihood(True)
-        return nll, dnll[active]
+        lZ, dlZ = gp.loglikelihood(True)
+        return -lZ, -dlZ[active]
 
     # optimize the model
     x, _, info = so.fmin_l_bfgs_b(objective, hyper0[active])
@@ -64,13 +64,3 @@ def optimize(gp, priors=None):
     hyper = hyper0.copy()
     hyper[active] = x
     gp.set_hyper(hyper)
-
-
-# FIXME: the following code can be used for optimizing wrt some prior, but this
-# needs to be modified to account for the log term.
-#-------------------------------------------------------------------------------
-# for key, prior in priors.items():
-#     block = blocks[key]
-#     p, dp = prior.nloglikelihood(hyper[block], True)
-#     nll += p
-#     dnll[block] += dp

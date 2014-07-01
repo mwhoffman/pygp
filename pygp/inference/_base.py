@@ -123,5 +123,5 @@ class GP(Parameterized):
         pass
 
     @abc.abstractmethod
-    def nloglikelihood(self):
+    def loglikelihood(self):
         pass
