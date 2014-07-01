@@ -108,18 +108,6 @@ class BaseKernelTest(object):
         G = np.array(G).reshape(m, n, d)
         return G
 
-    def _gradxy(self, x1, x2):
-        dx = T.grad(self.k, X1)
-        dxy, updates = T.scan(lambda i: T.grad(dx[i], X2), sequences=TT.arange(X1.shape[0]))
-        dfun = T.function([THETA, X1, X2], dxy, updates=updates, mode='FAST_COMPILE')
-        theta = self.kernel.get_hyper()
-        m = x1.shape[0]
-        n = x2.shape[0]
-        d = x1.shape[1]
-        G = np.array([dfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)])
-        G = np.array(G).reshape(m, n, d, d)
-        return G
-
     def test_copy(self):
         kernel = self.kernel.copy()
         K1 = kernel.get(self.x1, self.x2)
@@ -147,14 +135,6 @@ class BaseKernelTest(object):
         if hasattr(self.kernel, 'gradx'):
             G1 = self.kernel.gradx(self.x1, self.x2)
             G2 = self._gradx(self.x1, self.x2)
-            nt.assert_allclose(G1, G2)
-        else:
-            raise nose.SkipTest()
-
-    def test_gradxy(self):
-        if hasattr(self.kernel, 'gradxy'):
-            G1 = self.kernel.gradxy(self.x1, self.x2)
-            G2 = self._gradxy(self.x1, self.x2)
             nt.assert_allclose(G1, G2)
         else:
             raise nose.SkipTest()
