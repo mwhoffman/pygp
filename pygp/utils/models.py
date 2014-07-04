@@ -43,8 +43,6 @@ class Printable(object):
     Interface for objects which can be pretty-printed as a function of their
     hyperparameters.
     """
-    __metaclass__ = abc.ABCMeta
-
     def __repr__(self):
         hyper = self.get_hyper()
         substrings = []
