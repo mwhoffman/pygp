@@ -34,8 +34,11 @@ class Parameterized(object):
     def set_hyper(self, hyper):
         pass
 
-    def copy(self):
-        return copy.deepcopy(self)
+    def copy(self, hyper=None):
+        model = copy.deepcopy(self)
+        if hyper is not None:
+            model.set_hyper(hyper)
+        return model
 
 
 class Printable(object):

@@ -24,7 +24,7 @@ __all__ = ['BasicGP']
 # that we use the __repr__ method defined there and override the base method.
 
 class BasicGP(Printable, ExactGP):
-    def __init__(self, sn, sf, ell, kernel='SE', ndim=None):
+    def __init__(self, sn, sf, ell, ndim=None, kernel='SE'):
         likelihood = Gaussian(sn)
         kernel = (
             SE(sf, ell, ndim)        if (kernel == 'SE') else
