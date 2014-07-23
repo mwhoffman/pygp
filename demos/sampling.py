@@ -19,10 +19,18 @@ if __name__ == '__main__':
     X = data['X']
     y = data['y']
 
+    priors = dict(
+        sn =pygp.priors.Uniform(0.01, 1.0),
+        sf =pygp.priors.Uniform(0.01, 5.0),
+        ell=pygp.priors.Uniform(0.01, 1.0))
+
     # create the model and add data to it.
     gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp.add_data(X, y)
 
-    # find the ML parameters and sample from the posterior.
-    pygp.optimize(gp)
-    pygp.plotting.gpplot(gp, figure=1)
+    # sample from the posterior.
+    hyper = pygp.sample(gp, priors, 10000)
+
+    # plot the samples.
+    pygp.plotting.sampleplot(gp, hyper)
+

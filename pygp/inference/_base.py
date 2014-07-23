@@ -19,10 +19,10 @@ import abc
 from ..utils.models import Parameterized, dot_params
 
 # exported symbols
-__all__ = ['GPModel']
+__all__ = ['GP']
 
 
-class GPModel(Parameterized):
+class GP(Parameterized):
     def __init__(self, likelihood, kernel):
         self._likelihood = likelihood
         self._kernel = kernel
@@ -104,7 +104,12 @@ class GPModel(Parameterized):
 
         return f.ravel() if flatten else f
 
-    def xmax(self):
+    def get_max(self):
+        mu, _ = self.posterior(self._X)
+        i = mu.argmax()
+        return self._X[i], mu[i]
+
+    def get_min(self):
         mu, _ = self.posterior(self._X)
         i = mu.argmax()
         return self._X[i], mu[i]
@@ -118,5 +123,5 @@ class GPModel(Parameterized):
         pass
 
     @abc.abstractmethod
-    def nloglikelihood(self):
+    def loglikelihood(self):
         pass

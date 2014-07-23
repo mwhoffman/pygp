@@ -69,7 +69,7 @@ def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
 #===============================================================================
 # interface for sampling hyperparameters from a GP.
 
-def sample(gp, priors, n):
+def sample(gp, priors, n, burn=0, raw=True):
     priors = dict(priors)
     active = np.ones(gp.nhyper, dtype=bool)
     logged = np.ones(gp.nhyper, dtype=bool)
@@ -93,22 +93,22 @@ def sample(gp, priors, n):
         # parameters that come from x.
         hyper = hyper0.copy()
         hyper[active] = x
-        nlogprob = 0
+        logprob = 0
 
         # compute the prior probabilities. we do this first so that if there are
         # any infs they'll be caught in the least expensive computations first.
         for block, log, prior in priors:
-            nlogprob += prior.nlogprior(hyper[block])
-            if np.isinf(nlogprob): break
+            logprob += prior.logprior(hyper[block])
+            if np.isinf(logprob): break
 
         # now compute the likelihood term. note that we'll have to take the log
         # of any logspace parameters before calling set_hyper.
-        if not np.isinf(nlogprob):
+        if not np.isinf(logprob):
             hyper[logged] = np.log(hyper[logged])
             gp.set_hyper(hyper)
-            nlogprob += gp.nloglikelihood()
+            logprob += gp.loglikelihood()
 
-        return -nlogprob
+        return logprob
 
     # create a big list of the hyperparameters so that we can just assign to the
     # components that are active. also get an initial sample x corresponding
@@ -127,5 +127,10 @@ def sample(gp, priors, n):
     # make sure the gp gets updated to the last sampled hyperparameter.
     gp.set_hyper(hypers[-1])
 
-    # return the hyperparameter array
-    return hypers
+    if burn > 0:
+        hypers = hypers[m:].copy()
+
+    if raw:
+        return hypers
+    else:
+        return [gp.copy(h) for h in hypers]

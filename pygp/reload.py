@@ -19,9 +19,11 @@ pygp.kernels
 pygp.likelihoods._base
 pygp.likelihoods.gaussian
 pygp.likelihoods
-pygp.hyper.ml
-pygp.hyper.sampling
-pygp.hyper
+pygp.learning.optimization
+pygp.learning.sampling
+pygp.learning
+pygp.priors.priors
+pygp.priors
 pygp.inference._base
 pygp.inference.exact
 pygp.inference.basic

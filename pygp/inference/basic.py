@@ -13,7 +13,7 @@ import numpy as np
 # local imports
 from .exact import ExactGP
 from ..likelihoods import Gaussian
-from ..kernels import SE
+from ..kernels import SE, Matern
 from ..utils.models import Printable
 
 # exported symbols
@@ -24,9 +24,17 @@ __all__ = ['BasicGP']
 # that we use the __repr__ method defined there and override the base method.
 
 class BasicGP(Printable, ExactGP):
-    def __init__(self, sn, sf, ell, ndim=None):
+    def __init__(self, sn, sf, ell, ndim=None, kernel='SE'):
         likelihood = Gaussian(sn)
-        kernel = SE(sf, ell, ndim)
+        kernel = (
+            SE(sf, ell, ndim)        if (kernel == 'SE') else
+            Matern(sf, ell, 1, ndim) if (kernel == 'Matern1') else
+            Matern(sf, ell, 3, ndim) if (kernel == 'Matern3') else
+            Matern(sf, ell, 5, ndim) if (kernel == 'Matern5') else None)
+
+        if kernel is None:
+            raise RuntimeError('Unknown kernel type')
+
         super(BasicGP, self).__init__(likelihood, kernel)
 
     def _params(self):
