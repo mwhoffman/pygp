@@ -3,4 +3,5 @@
 /dist/
 /pygp/kernels/_local.c
 /pygp/kernels/_local.so
-
+.idea/
+*.pyc
