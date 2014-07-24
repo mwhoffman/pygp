@@ -72,7 +72,7 @@ class ExactGP(GP):
                 dmu = np.dot(RidK.T, self._a)
                 ds2 = -2 * np.dot(RidK.T, RiK)
 
-        return mu, s2, dmu, ds2 if grad else mu, s2
+        return (mu, s2, dmu, ds2) if grad else (mu, s2)
 
     def loglikelihood(self, grad=False):
         lZ = -0.5 * np.inner(self._a, self._a)
