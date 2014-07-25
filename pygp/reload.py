@@ -24,8 +24,8 @@ pygp.learning.sampling
 pygp.learning
 pygp.priors.priors
 pygp.priors
-pygp.inference._base
 pygp.inference._fourier
+pygp.inference._base
 pygp.inference.exact
 pygp.inference.basic
 pygp.inference

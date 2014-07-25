@@ -14,6 +14,7 @@ import scipy.linalg as sla
 # local imports
 from ..utils.random import rstate
 from ..utils.exceptions import ModelError
+from ..likelihoods import Gaussian
 
 # exported symbols
 __all__ = ['FourierSample']
@@ -34,7 +35,10 @@ class FourierSample(object):
         self.b = rng.rand(N) * 2 * np.pi
 
         if X is not None:
-            sigma = np.exp(self._likelihood._logsigma)
+            # FIXME: this bit of code needs to be changed/replaced if we have
+            # non-Gaussian likelihoods.
+            sigma = np.exp(likelihood._logsigma)
+
             Phi = self.phi(X)
             A = np.dot(Phi.T, Phi)
             A += sigma**2 * np.eye(Phi.shape[1])
@@ -56,6 +60,9 @@ class FourierSample(object):
         rnd = np.dot(X, self.W.T) + self.b
         Phi = np.cos(rnd) * np.sqrt(2 * self.alpha / self.W.shape[0])
         return Phi
+
+    # FIXME: should __call__ instead take a single value x and we add a
+    # vectorized version that is f.get(X)?
 
     def __call__(self, X):
         return np.dot(self.phi(X), self.theta)
