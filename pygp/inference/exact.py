@@ -66,11 +66,19 @@ class ExactGP(GP):
             s2 -= np.sum(V**2, axis=0) if diag else np.dot(V.T, V)
 
             if grad:
-                dK = self._kernel.gradx(self._X, X)
+                dK = self._kernel.gradx(X, self._X)  # shape (ntest, ndata, dim)
+                ntest, dim = X.shape
+                dK = np.rollaxis(dK, 1)  # makes it (ndata, ntest, dim)
+                dK = np.reshape(dK, (self.ndata, ntest * dim))
+
                 RiK = sla.solve_triangular(self._R, K, trans=True)
                 RidK = sla.solve_triangular(self._R, dK, trans=True)
+
                 dmu = np.dot(RidK.T, self._a)
-                ds2 = -2 * np.dot(RidK.T, RiK)
+                dmu.resize(dim, ntest)  # TODO: may need to be switched
+                RidK = np.reshape(RidK, (self.ndata, ntest, dim))
+                RidK = np.rollaxis(RidK, 2)
+                ds2 = -2 * np.sum(RidK * RiK, axis=1).T  # TODO: need (ntest, dim)
 
         return (mu, s2, dmu, ds2) if grad else (mu, s2)
 
