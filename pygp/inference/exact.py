@@ -75,10 +75,10 @@ class ExactGP(GP):
                 RidK = sla.solve_triangular(self._R, dK, trans=True)
 
                 dmu = np.dot(RidK.T, self._a)
-                dmu.resize(dim, ntest)  # TODO: may need to be switched
+                dmu = np.reshape(dmu, (ntest, dim))
                 RidK = np.reshape(RidK, (self.ndata, ntest, dim))
                 RidK = np.rollaxis(RidK, 2)
-                ds2 = -2 * np.sum(RidK * RiK, axis=1).T  # TODO: need (ntest, dim)
+                ds2 = -2 * np.sum(RidK * RiK, axis=1).T
 
         return (mu, s2, dmu, ds2) if grad else (mu, s2)
 
