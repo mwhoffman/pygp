@@ -61,8 +61,9 @@ class FourierSample(object):
         Phi = np.cos(rnd) * np.sqrt(2 * self.alpha / self.W.shape[0])
         return Phi
 
-    # FIXME: should __call__ instead take a single value x and we add a
-    # vectorized version that is f.get(X)?
+    def get(self, X):
+        Phi = self.phi(np.array(X, ndmin=2, copy=False))
+        return np.dot(Phi, self.theta)
 
-    def __call__(self, X):
-        return np.dot(self.phi(X), self.theta)
+    def __call__(self, x):
+        return self.get(x)[0]
