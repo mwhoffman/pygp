@@ -24,12 +24,11 @@ pygp.learning.sampling
 pygp.learning
 pygp.priors.priors
 pygp.priors
+pygp.inference._fourier
 pygp.inference._base
 pygp.inference.exact
 pygp.inference.basic
 pygp.inference
-pygp.extra.fourier
-pygp.extra
 pygp.plotting
 pygp
 """.split()

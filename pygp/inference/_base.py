@@ -18,6 +18,7 @@ import abc
 # local imports
 from ..utils.models import Parameterized, dot_params
 from ..utils.random import rstate
+from ._fourier import FourierSample
 
 # exported symbols
 __all__ = ['GP']
@@ -111,6 +112,14 @@ class GP(Parameterized):
             f = self._likelihood.sample(f.ravel(), rng).reshape(n,p)
 
         return f.ravel() if flatten else f
+
+    def sample_fourier(self, N, rng=None):
+        """
+        Approximately sample a function from the GP using a fourier-basis
+        expansion with N bases. See the documentation on `FourierSample` for
+        details on the returned function object.
+        """
+        return FourierSample(N, self._likelihood, self._kernel, self._X, self._y, rng)
 
     def get_max(self):
         mu, _ = self.posterior(self._X)
