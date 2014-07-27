@@ -45,10 +45,15 @@ class ExactGP(GP):
         y = y
         self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
 
-    def posterior(self, X, diag=True):
+    def posterior(self, X, diag=True, grad=False):
         # grab the prior mean and variance.
         mu = np.zeros(X.shape[0])
         s2 = self._kernel.dget(X) if diag else self._kernel.get(X)
+
+        if grad:
+            # FIXME -- Bobak: Assumes constant mean and stationary kernel.
+            dmu = np.zeros_like(X)
+            ds2 = np.zeros_like(X)
 
         if self._X is not None:
             K = self._kernel.get(self._X, X)
@@ -60,7 +65,22 @@ class ExactGP(GP):
             mu += np.dot(V.T, self._a)
             s2 -= np.sum(V**2, axis=0) if diag else np.dot(V.T, V)
 
-        return mu, s2
+            if grad:
+                dK = self._kernel.gradx(X, self._X)  # shape (ntest, ndata, dim)
+                ntest, dim = X.shape
+                dK = np.rollaxis(dK, 1)  # makes it (ndata, ntest, dim)
+                dK = np.reshape(dK, (self.ndata, ntest * dim))
+
+                RiK = sla.solve_triangular(self._R, K, trans=True)
+                RidK = sla.solve_triangular(self._R, dK, trans=True)
+
+                dmu = np.dot(RidK.T, self._a)
+                dmu = np.reshape(dmu, (ntest, dim))
+                RidK = np.reshape(RidK, (self.ndata, ntest, dim))
+                RidK = np.rollaxis(RidK, 2)
+                ds2 = -2 * np.sum(RidK * RiK, axis=1).T
+
+        return (mu, s2, dmu, ds2) if grad else (mu, s2)
 
     def loglikelihood(self, grad=False):
         lZ = -0.5 * np.inner(self._a, self._a)

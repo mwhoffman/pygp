@@ -13,6 +13,7 @@ import numpy as np
 # local imports
 from ._base import RealLikelihood
 from ..utils.models import Printable
+from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['Gaussian']
@@ -32,3 +33,7 @@ class Gaussian(RealLikelihood, Printable):
 
     def set_hyper(self, hyper):
         self._logsigma = hyper[0]
+
+    def sample(self, f, rng=None):
+        rng = rstate(rng)
+        return f + rng.normal(size=len(f), scale=np.exp(self._logsigma))

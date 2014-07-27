@@ -26,6 +26,10 @@ class Likelihood(Parameterized):
     def transform(self, y):
         pass
 
+    @abc.abstractmethod
+    def sample(self, f, rng=None):
+        pass
+
 
 class RealLikelihood(Likelihood):
     def transform(self, y):

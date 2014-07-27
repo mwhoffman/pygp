@@ -17,6 +17,7 @@ import abc
 
 # local imports
 from ..utils.models import Parameterized, dot_params
+from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['GP']
@@ -90,17 +91,24 @@ class GP(Parameterized):
         er = np.sqrt(2*b2*s2)
         return mu, mu-er, mu+er
 
-    def sample(self, X, n=None):
+    def sample(self, X, n=None, latent=True, rng=None):
         X = self._kernel.transform(X)
         flatten = (n is None)
         n = 1 if flatten else n
         p = len(X)
 
+        # if a seed or instantiated RandomState is given use that, otherwise use
+        # the global object.
+        rng = rstate(rng)
+
         # add a tiny amount to the diagonal to make the cholesky of Sigma stable
         # and then add this correlated noise onto mu to get the sample.
         mu, Sigma = self.posterior(X, diag=False)
         Sigma += 1e-10 * np.eye(p)
-        f = mu[None] + np.dot(np.random.normal(size=(n,p)), sla.cholesky(Sigma))
+        f = mu[None] + np.dot(rng.normal(size=(n,p)), sla.cholesky(Sigma))
+
+        if not latent:
+            f = self._likelihood.sample(f.ravel(), rng).reshape(n,p)
 
         return f.ravel() if flatten else f
 
