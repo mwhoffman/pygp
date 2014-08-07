@@ -104,7 +104,7 @@ class GP(Parameterized):
 
         # add a tiny amount to the diagonal to make the cholesky of Sigma stable
         # and then add this correlated noise onto mu to get the sample.
-        mu, Sigma = self.posterior(X, diag=False)
+        mu, Sigma = self._posterior(X)
         Sigma += 1e-10 * np.eye(p)
         f = mu[None] + np.dot(rng.normal(size=(n,p)), sla.cholesky(Sigma))
 
@@ -121,14 +121,9 @@ class GP(Parameterized):
         """
         return FourierSample(N, self._likelihood, self._kernel, self._X, self._y, rng)
 
-    def get_max(self):
+    def get_optimum(self, max=True):
         mu, _ = self.posterior(self._X)
-        i = mu.argmax()
-        return self._X[i], mu[i]
-
-    def get_min(self):
-        mu, _ = self.posterior(self._X)
-        i = mu.argmax()
+        i = mu.argmax() if max else mu.argmin()
         return self._X[i], mu[i]
 
     @abc.abstractmethod
@@ -136,7 +131,11 @@ class GP(Parameterized):
         pass
 
     @abc.abstractmethod
-    def posterior(self, X, diag=True):
+    def _posterior(self, X):
+        pass
+
+    @abc.abstractmethod
+    def posterior(self, X, grad=False):
         pass
 
     @abc.abstractmethod
