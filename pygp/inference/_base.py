@@ -66,6 +66,10 @@ class GP(Parameterized):
     def ndata(self):
         return 0 if (self._X is None) else self._X.shape[0]
 
+    @property
+    def data(self):
+        return (self._X, self._y)
+
     def add_data(self, X, y):
         X = self._kernel.transform(X)
         y = self._likelihood.transform(y)
@@ -120,11 +124,6 @@ class GP(Parameterized):
         details on the returned function object.
         """
         return FourierSample(N, self._likelihood, self._kernel, self._X, self._y, rng)
-
-    def get_optimum(self, max=True):
-        mu, _ = self.posterior(self._X)
-        i = mu.argmax() if max else mu.argmin()
-        return self._X[i], mu[i]
 
     @abc.abstractmethod
     def _update(self):
