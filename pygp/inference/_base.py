@@ -89,13 +89,6 @@ class GP(Parameterized):
             self._y = np.r_[self._y, y]
             self._update()
 
-    def predict(self, X, delta=0.05):
-        X = self._kernel.transform(X)
-        mu, s2 = self.posterior(X)
-        b2 = ss.erfinv(1-delta)
-        er = np.sqrt(2*b2*s2)
-        return mu, mu-er, mu+er
-
     def sample(self, X, n=None, latent=True, rng=None):
         X = self._kernel.transform(X)
         flatten = (n is None)
