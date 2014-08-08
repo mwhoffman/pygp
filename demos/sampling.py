@@ -9,6 +9,7 @@ import numpy as np
 
 # local imports
 import pygp
+import pygp.priors
 import pygp.plotting
 
 
@@ -19,18 +20,27 @@ if __name__ == '__main__':
     X = data['X']
     y = data['y']
 
+    # create the model and add data to it.
+    model = pygp.BasicGP(sn=.1, sf=1, ell=.1)
+    model.add_data(X, y)
+
+    # find the ML hyperparameters and plot the predictions.
+    pygp.optimize(model)
+    pygp.plotting.plot(model,
+                       ymin=-3, ymax=3,
+                       figure=1, subplot=121, title='ML posterior')
+
+    # create a prior structure.
     priors = dict(
         sn =pygp.priors.Uniform(0.01, 1.0),
         sf =pygp.priors.Uniform(0.01, 5.0),
         ell=pygp.priors.Uniform(0.01, 1.0))
 
-    # create the model and add data to it.
-    gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
-    gp.add_data(X, y)
+    # create a meta-model which samples hyperparameters.
+    model = pygp.meta.MCMC(model, priors, n=2000, burn=100)
+    model._update()
 
-    # sample from the posterior.
-    hyper = pygp.sample(gp, priors, 10000)
-
-    # plot the samples.
-    pygp.plotting.sampleplot(gp, hyper)
-
+    # plot the fully Bayesian predictions.
+    pygp.plotting.plot(model,
+                       ymin=-3, ymax=3,
+                       figure=1, subplot=122, title='Bayes posterior')

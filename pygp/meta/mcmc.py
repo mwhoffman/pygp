@@ -12,15 +12,15 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from .sampling import sample
+from ..learning.sampling import sample
 
 # exported symbols
-__all__ = []
+__all__ = ['MCMC']
 
 
-class SampledGP(object):
-    def __init__(self, gp, prior, n=100, burn=0):
-        self._gp = gp
+class MCMC(object):
+    def __init__(self, model, prior, n=100, burn=0):
+        self._model = model
         self._prior = prior
         self._samples = []
         self._n = n
@@ -39,19 +39,19 @@ class SampledGP(object):
         return self._samples.__iter__()
 
     def _update(self):
-        self._samples = sample(self._gp, self._prior, self._n, self._burn, raw=False)
-        self._gp = self._samples[-1]
+        self._samples = sample(self._model, self._prior, self._n, self._burn, raw=False)
+        self._model = self._samples[-1]
 
     @property
     def ndata(self):
-        return self._gp.ndata
+        return self._model.ndata
 
     @property
     def data(self):
-        return self._gp.data
+        return self._model.data
 
     def add_data(self, X, y):
-        self._gp.add_data(X, y)
+        self._model.add_data(X, y)
         self._update()
 
     def posterior(self, X, grad=False):

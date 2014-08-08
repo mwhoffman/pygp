@@ -128,7 +128,7 @@ def sample(gp, priors, n, burn=0, raw=True):
     gp.set_hyper(hypers[-1])
 
     if burn > 0:
-        hypers = hypers[m:].copy()
+        hypers = hypers[burn:].copy()
 
     if raw:
         return hypers

@@ -28,8 +28,9 @@ pygp.priors.priors
 pygp.priors
 pygp.learning.optimization
 pygp.learning.sampling
-pygp.learning.meta
 pygp.learning
+pygp.meta.mcmc
+pygp.meta
 pygp.plotting
 pygp
 """.split()
