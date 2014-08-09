@@ -38,7 +38,6 @@ if __name__ == '__main__':
 
     # create a meta-model which samples hyperparameters.
     model = pygp.meta.MCMC(model, priors, n=2000, burn=100)
-    model._update()
 
     # plot the fully Bayesian predictions.
     pygp.plotting.plot(model,

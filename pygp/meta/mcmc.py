@@ -26,14 +26,14 @@ class MCMC(object):
         self._n = n
         self._burn = burn
 
-        # FIXME: initially we could sample from the prior. It is, however, not
-        # even clear that the initial GP is a prior object: ie it could have
-        # data already attached to it. So we should probably just sample, and
-        # add a flag like `noinit` or something if we want to avoid an initial
-        # sample.
+        if self._model.ndata > 0:
+            self._update()
 
-        # FIXME: this would also require updating the sampling code for the case
-        # that `gp.ndata == 0`.
+        else:
+            # FIXME: the likelihood won't play a role, so we can sample directly
+            # from the prior. This of course requires the prior to also be
+            # a well-defined distribution.
+            pass
 
     def __iter__(self):
         return self._samples.__iter__()
