@@ -60,7 +60,8 @@ class GP(Parameterized):
         for model in [self._likelihood, self._kernel]:
             model.set_hyper(hyper[a:a+model.nhyper])
             a += model.nhyper
-        self._update()
+        if self.ndata > 0:
+            self._update()
 
     @property
     def ndata(self):

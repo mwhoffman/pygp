@@ -55,7 +55,7 @@ class MCMC(object):
         # if we've increased the amount of data by a factor of two or more then
         # we'll burn off some samples. Not sure if this is entirely necessary,
         # but it also accounts for an initial burnin before any data is added.
-        if self._model.ndata >= 2*prev:
+        if self._model.ndata >= 2*nprev:
             sample(self._model, self._prior, self._burn)
 
         # grab the samples.
