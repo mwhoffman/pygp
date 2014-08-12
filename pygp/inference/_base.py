@@ -60,11 +60,16 @@ class GP(Parameterized):
         for model in [self._likelihood, self._kernel]:
             model.set_hyper(hyper[a:a+model.nhyper])
             a += model.nhyper
-        self._update()
+        if self.ndata > 0:
+            self._update()
 
     @property
     def ndata(self):
         return 0 if (self._X is None) else self._X.shape[0]
+
+    @property
+    def data(self):
+        return (self._X, self._y)
 
     def add_data(self, X, y):
         X = self._kernel.transform(X)
@@ -85,13 +90,6 @@ class GP(Parameterized):
             self._y = np.r_[self._y, y]
             self._update()
 
-    def predict(self, X, delta=0.05):
-        X = self._kernel.transform(X)
-        mu, s2 = self.posterior(X)
-        b2 = ss.erfinv(1-delta)
-        er = np.sqrt(2*b2*s2)
-        return mu, mu-er, mu+er
-
     def sample(self, X, n=None, latent=True, rng=None):
         X = self._kernel.transform(X)
         flatten = (n is None)
@@ -104,7 +102,7 @@ class GP(Parameterized):
 
         # add a tiny amount to the diagonal to make the cholesky of Sigma stable
         # and then add this correlated noise onto mu to get the sample.
-        mu, Sigma = self.posterior(X, diag=False)
+        mu, Sigma = self._posterior(X)
         Sigma += 1e-10 * np.eye(p)
         f = mu[None] + np.dot(rng.normal(size=(n,p)), sla.cholesky(Sigma))
 
@@ -121,22 +119,16 @@ class GP(Parameterized):
         """
         return FourierSample(N, self._likelihood, self._kernel, self._X, self._y, rng)
 
-    def get_max(self):
-        mu, _ = self.posterior(self._X)
-        i = mu.argmax()
-        return self._X[i], mu[i]
-
-    def get_min(self):
-        mu, _ = self.posterior(self._X)
-        i = mu.argmax()
-        return self._X[i], mu[i]
-
     @abc.abstractmethod
     def _update(self):
         pass
 
     @abc.abstractmethod
-    def posterior(self, X, diag=True):
+    def _posterior(self, X):
+        pass
+
+    @abc.abstractmethod
+    def posterior(self, X, grad=False):
         pass
 
     @abc.abstractmethod

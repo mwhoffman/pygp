@@ -25,4 +25,4 @@ if __name__ == '__main__':
 
     # find the ML parameters and sample from the posterior.
     pygp.optimize(gp)
-    pygp.plotting.gpplot(gp, figure=1)
+    pygp.plotting.plot(gp, figure=1)

@@ -39,4 +39,4 @@ gp = pygp.inference.ExactGP(likelihood, kernel)
 gp.add_data(X, y)
 
 # plot everything.
-pygp.plotting.gpplot(gp, data=False, xmax=100)
+pygp.plotting.plot(gp, data=False, xmax=100)

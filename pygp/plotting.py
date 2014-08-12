@@ -15,15 +15,19 @@ import matplotlib.pyplot as pl
 from .utils.models import get_params
 
 # exported symbols
-__all__ = ['gpplot', 'sampleplot']
+__all__ = ['plot', 'sampleplot']
 
 
-def gpplot(gp,
-           xmin=None, xmax=None, mean=True, data=True, error=True, delta=0.05,
-           xlabel='', ylabel='', title='', figure=None, subplot=None, draw=True):
+def plot(model,
+         xmin=None, xmax=None, ymin=None, ymax=None,
+         mean=True, data=True, error=True,
+         xlabel='', ylabel='', title='',
+         figure=None, subplot=None,
+         draw=True):
 
     # get the axes object and clear it.
     fg = pl.gcf() if (figure is None) else pl.figure(figure)
+
     if subplot is None:
         fg.clf()
         ax = fg.gca()
@@ -31,26 +35,34 @@ def gpplot(gp,
         ax = fg.add_subplot(subplot)
         ax.cla()
 
-    xmin = gp._X[:,0].min() if (xmin is None) else xmin
-    xmax = gp._X[:,0].max() if (xmax is None) else xmax
+    # grab the data.
+    X, y = model.data
+
+    if X is None and (xmin is None or xmax is None):
+        raise Exception('bounds must be given if no data is present')
+
+    xmin = X[:,0].min() if (xmin is None) else xmin
+    xmax = X[:,0].max() if (xmax is None) else xmax
 
     x = np.linspace(xmin, xmax, 500)
-    mu, lo, hi = gp.predict(x[:,None], delta=delta)
+    mu, s2 = model.posterior(x[:,None])
+    lo = mu - 2 * np.sqrt(s2)
+    hi = mu + 2 * np.sqrt(s2)
 
     if error:
-        ax.fill_between(x, lo, hi, color='k', alpha=0.1, zorder=1)
+        ax.fill_between(x, lo, hi, color='k', alpha=0.15)
 
     if mean:
-        ax.plot(x, mu, color='k', zorder=2, lw=2)
+        ax.plot(x, mu, lw=2, color='b')
 
-    if data and gp._X is not None:
-        ax.scatter(gp._X.ravel(), gp._y, color='b', s=30, zorder=3)
+    if data and X is not None:
+        ax.scatter(X.ravel(), y, s=20, lw=1, facecolors='none', color='k')
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.axis('tight')
-    ax.axis(xmin=xmin, xmax=xmax)
+    ax.axis(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
     if draw:
         ax.figure.canvas.draw()
