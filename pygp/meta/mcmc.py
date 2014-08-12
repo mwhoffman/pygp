@@ -27,7 +27,8 @@ class MCMC(object):
         self._burn = burn
 
         if self._model.ndata > 0:
-            sample(self._model, self._prior, self._burn)
+            if self._burn > 0:
+                sample(self._model, self._prior, self._burn)
             self._samples = sample(self._model, self._prior, self._n, False)
 
         else:
@@ -55,7 +56,7 @@ class MCMC(object):
         # if we've increased the amount of data by a factor of two or more then
         # we'll burn off some samples. Not sure if this is entirely necessary,
         # but it also accounts for an initial burnin before any data is added.
-        if self._model.ndata >= 2*nprev:
+        if self._model.ndata >= 2*nprev and self._burn > 0:
             sample(self._model, self._prior, self._burn)
 
         # grab the samples.
