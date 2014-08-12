@@ -53,10 +53,10 @@ class MCMC(object):
         nprev = self._model.ndata
         self._model.add_data(X, y)
 
-        # if we've increased the amount of data by a factor of two or more then
-        # we'll burn off some samples. Not sure if this is entirely necessary,
-        # but it also accounts for an initial burnin before any data is added.
-        if self._model.ndata >= 2*nprev and self._burn > 0:
+        # if we've increased the amount of data by more than a factor two we'll
+        # burn off some samples. Not sure if this is entirely necessary, but it
+        # also accounts for burnin right after initial data is added.
+        if self._model.ndata > 2*nprev and self._burn > 0:
             sample(self._model, self._prior, self._burn)
 
         # grab the samples.
