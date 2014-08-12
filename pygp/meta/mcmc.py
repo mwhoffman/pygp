@@ -74,8 +74,8 @@ class MCMC(object):
 
         dmu_, ds2_ = parts[2:]
         dmu = np.mean(dmu_, axis=0)
-        ds2 = np.mean(ds2_ + 2*dmu_ + 2*dmu - 2*mu_[:,:,None]*dmu[None]
-                                            - 2*mu [None,:,None]*dmu_,
-                                            axis=0)
+        Dmu = dmu_ - dmu
+        ds2 = np.mean(ds2_ + 2 * mu_[   :,:,None] * Dmu
+                           - 2 * mu [None,:,None] * Dmu, axis=0)
 
         return mu, s2, dmu, ds2
