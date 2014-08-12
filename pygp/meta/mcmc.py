@@ -19,7 +19,7 @@ __all__ = ['MCMC']
 
 
 class MCMC(object):
-    def __init__(self, model, prior, n=100, burn=0):
+    def __init__(self, model, prior, n=100, burn=100):
         self._model = model
         self._prior = prior
         self._samples = []
@@ -27,7 +27,8 @@ class MCMC(object):
         self._burn = burn
 
         if self._model.ndata > 0:
-            self._update()
+            sample(self._model, self._prior, self._burn)
+            self._samples = sample(self._model, self._prior, self._n, False)
 
         else:
             # FIXME: the likelihood won't play a role, so we can sample directly
@@ -38,10 +39,6 @@ class MCMC(object):
     def __iter__(self):
         return self._samples.__iter__()
 
-    def _update(self):
-        self._samples = sample(self._model, self._prior, self._n, self._burn, raw=False)
-        self._model = self._samples[-1]
-
     @property
     def ndata(self):
         return self._model.ndata
@@ -51,8 +48,18 @@ class MCMC(object):
         return self._model.data
 
     def add_data(self, X, y):
+        # add the data
+        nprev = self._model.ndata
         self._model.add_data(X, y)
-        self._update()
+
+        # if we've increased the amount of data by a factor of two or more then
+        # we'll burn off some samples. Not sure if this is entirely necessary,
+        # but it also accounts for an initial burnin before any data is added.
+        if self._model.ndata >= 2*prev:
+            sample(self._model, self._prior, self._burn)
+
+        # grab the samples.
+        self._samples = sample(self._model, self._prior, self._n, False)
 
     def posterior(self, X, grad=False):
         parts = map(np.array, zip(*[_.posterior(X, grad) for _ in self._samples]))

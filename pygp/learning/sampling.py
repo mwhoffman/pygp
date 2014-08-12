@@ -69,7 +69,7 @@ def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
 #===============================================================================
 # interface for sampling hyperparameters from a GP.
 
-def sample(gp, priors, n, burn=0, raw=True):
+def sample(gp, priors, n, raw=True):
     priors = dict(priors)
     active = np.ones(gp.nhyper, dtype=bool)
     logged = np.ones(gp.nhyper, dtype=bool)
@@ -126,9 +126,6 @@ def sample(gp, priors, n, burn=0, raw=True):
 
     # make sure the gp gets updated to the last sampled hyperparameter.
     gp.set_hyper(hypers[-1])
-
-    if burn > 0:
-        hypers = hypers[burn:].copy()
 
     if raw:
         return hypers
