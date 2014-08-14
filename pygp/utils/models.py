@@ -25,17 +25,28 @@ class Parameterized(object):
 
     @abc.abstractmethod
     def _params(self):
+        """
+        Define the set of parameters for the model. This should return a list
+        of tuples of the form `(name, size, islog)`. If only a 2-tuple is given
+        then islog will be assumed to be `True`.
+        """
         pass
 
     @abc.abstractmethod
     def get_hyper(self):
+        """Return a vector of model hyperparameters."""
         pass
 
     @abc.abstractmethod
     def set_hyper(self, hyper):
+        """Set the model hyperparameters to the given vector."""
         pass
 
     def copy(self, hyper=None):
+        """
+        Copy the model. If `hyper` is given use this vector to immediately set
+        the copied model's hyperparameters.
+        """
         model = copy.deepcopy(self)
         if hyper is not None:
             model.set_hyper(hyper)
@@ -43,12 +54,14 @@ class Parameterized(object):
 
 
 class Printable(object):
+    # pylint: disable=too-few-public-methods
+
     """
-    Interface for objects which can be pretty-printed as a function of their
+    Mixin class for objects which can be pretty-printed as a function of their
     hyperparameters.
     """
     def __repr__(self):
-        hyper = self.get_hyper()
+        hyper = self.get_hyper()                    # pylint: disable=no-member
         substrings = []
         for key, block, log in get_params(self):
             val = hyper[block]
@@ -58,6 +71,8 @@ class Printable(object):
         return self.__class__.__name__ + '(' + ', '.join(substrings) + ')'
 
 
+# FIXME: it's unclear how useful dot_params is. This might be replaced.
+
 def dot_params(ns, params):
     """
     Extend a param tuple with a 'namespace'. IE prepend the key string with ns
@@ -66,7 +81,15 @@ def dot_params(ns, params):
     return [("%s.%s" % (ns, p[0]),) + p[1:] for p in params]
 
 
+# FIXME: the get_params function is kind of a hack in order to allow for
+# simpler definitions of the _params() method. This should probably be
+# replaced.
+
 def get_params(obj):
+    """
+    Helper function which translates the values returned by _params() into
+    something more meaningful.
+    """
     offset = 0
     for param in obj._params():
         key = param[0]

@@ -13,17 +13,24 @@ import numpy as np
 import scipy.linalg as sla
 
 # local imports
-from ._base import GP
-from ..likelihoods import Gaussian
 from ..utils.exceptions import ModelError
+from ..likelihoods import Gaussian
+from ._base import GP
 
 # exported symbols
 __all__ = ['ExactGP']
 
 
 class ExactGP(GP):
+    """
+    Exact GP inference.
+
+    This class implements exact inference for GPs. Note that exact inference
+    only works with regression so an exception will be thrown if the given
+    likelihood is not Gaussian.
+    """
     def __init__(self, likelihood, kernel):
-        # XXX: exact inference will only work with Gaussian likelihoods.
+        # NOTE: exact inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
             raise ModelError('exact inference requires a Gaussian likelihood')
 
@@ -128,6 +135,15 @@ class ExactGP(GP):
 
 
 def chol_update(A, B, C, a, b):
+    """
+    Update the cholesky decomposition of a growing matrix.
+
+    Let `A` denote a cholesky decomposition of some matrix and `a` the inverse
+    of `A` applied to some vector `y`. This computes the cholesky to a new
+    matrix which has additional elements `B` and the non-diagonal and `C` on
+    the diagonal block. It also computes the solution to the application of the
+    inverse where the vector has additional elements `b`.
+    """
     n = A.shape[0]
     m = C.shape[0]
 
