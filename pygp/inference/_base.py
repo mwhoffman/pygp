@@ -12,9 +12,9 @@ from __future__ import print_function
 # global imports
 import numpy as np
 import scipy.linalg as sla
-import abc
 
 # local imports
+from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized, dot_params
 from ..utils.random import rstate
 from ._fourier import FourierSample
@@ -154,7 +154,7 @@ class GP(Parameterized):
         return FourierSample(N, self._likelihood, self._kernel, self._X,
                              self._y, rng)
 
-    @abc.abstractmethod
+    @abstractmethod
     def _update(self):
         """
         Update any internal parameters (ie sufficient statistics) given the
@@ -175,7 +175,7 @@ class GP(Parameterized):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def _posterior(self, X):
         """
         Compute the posterior at points `X`. This should return the mean and
@@ -183,7 +183,7 @@ class GP(Parameterized):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def posterior(self, X, grad=False):
         """
         Compute the marginal posterior at points `X`. This should return the
@@ -193,7 +193,7 @@ class GP(Parameterized):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def loglikelihood(self, grad=False):
         """
         Return the marginal loglikelihood of the data. If `grad == True` also

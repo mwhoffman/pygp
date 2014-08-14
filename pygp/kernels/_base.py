@@ -9,9 +9,9 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
-import abc
 
 # local imports
+from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized, dot_params
 from ..utils.iters import product, grad_sum, grad_product
 
@@ -43,7 +43,7 @@ class Kernel(Parameterized):
     def __mul__(self, other):
         return ProductKernel(*_collapse(ProductKernel, self, other))
 
-    @abc.abstractmethod
+    @abstractmethod
     def get(self, X1, X2=None):
         """
         Evaluate the kernel.
@@ -54,12 +54,12 @@ class Kernel(Parameterized):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def dget(self, X):
         """Evaluate the self covariances."""
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def grad(self, X1, X2=None):
         """
         Evaluate the gradient of the kernel.
@@ -70,12 +70,12 @@ class Kernel(Parameterized):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def dgrad(self, X):
         """Evaluate the gradients of the self covariances."""
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def transform(self, X):
         """Format the inputs X as arrays."""
         pass

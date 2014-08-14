@@ -9,8 +9,10 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
-import abc
 import copy
+
+# local imports
+from .abc import ABCMeta, abstractmethod
 
 # exported symbols
 __all__ = ['Parameterized', 'Printable', 'dot_params', 'get_params']
@@ -21,9 +23,9 @@ class Parameterized(object):
     Interface for objects that are parameterized by some set of
     hyperparameters.
     """
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = ABCMeta
 
-    @abc.abstractmethod
+    @abstractmethod
     def _params(self):
         """
         Define the set of parameters for the model. This should return a list
@@ -32,12 +34,12 @@ class Parameterized(object):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_hyper(self):
         """Return a vector of model hyperparameters."""
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def set_hyper(self, hyper):
         """Set the model hyperparameters to the given vector."""
         pass
