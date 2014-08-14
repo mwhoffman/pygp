@@ -41,11 +41,11 @@ def plot(model,
     if X is None and (xmin is None or xmax is None):
         raise Exception('bounds must be given if no data is present')
 
-    xmin = X[:,0].min() if (xmin is None) else xmin
-    xmax = X[:,0].max() if (xmax is None) else xmax
+    xmin = X[:, 0].min() if (xmin is None) else xmin
+    xmax = X[:, 0].max() if (xmax is None) else xmax
 
     x = np.linspace(xmin, xmax, 500)
-    mu, s2 = model.posterior(x[:,None])
+    mu, s2 = model.posterior(x[:, None])
     lo = mu - 2 * np.sqrt(s2)
     hi = mu + 2 * np.sqrt(s2)
 
@@ -80,7 +80,7 @@ def sampleplot(model, samples,
 
     for key, block, log in get_params(model):
         for i in range(block.start, block.stop):
-            vals = samples[:,i]
+            vals = samples[:, i]
             size = block.stop - block.start
             name = key + ('' if (size == 1) else '_%d' % (i - block.start))
             if not np.allclose(vals, vals[0]):
@@ -91,22 +91,26 @@ def sampleplot(model, samples,
 
     if naxes == 1:
         ax = fg.add_subplot(111)
-        ax.hist(values[:,0], bins=20)
+        ax.hist(values[:, 0], bins=20)
         ax.set_xlabel(labels[0])
         ax.set_yticklabels([])
 
     else:
         for i, j in np.ndindex(naxes, naxes):
-            if i >= j: continue
+            if i >= j:
+                continue
             ax = fg.add_subplot(naxes-1, naxes-1, (j-1)*(naxes-1)+i+1)
-            ax.scatter(values[:,i], values[:,j], alpha=0.1)
+            ax.scatter(values[:, i], values[:, j], alpha=0.1)
 
-            if i == 0: ax.set_ylabel(labels[j])
-            else: ax.set_yticklabels([])
+            if i == 0:
+                ax.set_ylabel(labels[j])
+            else:
+                ax.set_yticklabels([])
 
-            if j == naxes-1: ax.set_xlabel(labels[i])
-            else: ax.set_xticklabels([])
+            if j == naxes-1:
+                ax.set_xlabel(labels[i])
+            else:
+                ax.set_xticklabels([])
 
     if draw:
         fg.canvas.draw()
-

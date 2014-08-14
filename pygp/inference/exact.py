@@ -108,7 +108,8 @@ class ExactGP(GP):
         lZ -= np.sum(np.log(self._R.diagonal()))
 
         # bail early if we don't need the gradient.
-        if not grad: return lZ
+        if not grad:
+            return lZ
 
         # intermediate terms.
         alpha = sla.solve_triangular(self._R, self._a, trans=False)
@@ -121,7 +122,7 @@ class ExactGP(GP):
 
             # derivative wrt each kernel hyperparameter.
             [-0.5*np.sum(Q*dK)
-              for dK in self._kernel.grad(self._X)]]
+             for dK in self._kernel.grad(self._X)]]
 
         return lZ, dlZ
 
@@ -135,7 +136,7 @@ def chol_update(A, B, C, a, b):
     c = np.dot(B.T, a)
 
     # grow the new cholesky and use then use this to grow the vector a.
-    A = np.r_[np.c_[A, B], np.c_[np.zeros((m,n)), C]]
+    A = np.r_[np.c_[A, B], np.c_[np.zeros((m, n)), C]]
     a = np.r_[a, sla.solve_triangular(C, b-c, trans=True)]
 
     return A, a

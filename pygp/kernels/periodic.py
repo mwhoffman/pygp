@@ -29,9 +29,10 @@ class Periodic(RealKernel, Printable):
 
     def _params(self):
         return [
-            ('sf',  1),
+            ('sf', 1),
             ('ell', 1),
-            ('p',   1),]
+            ('p', 1),
+        ]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell, self._logp]

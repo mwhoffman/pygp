@@ -1,7 +1,7 @@
 """
-Interface for latent function inference in Gaussian process models. These models
-will assume that the hyperparameters are fixed and any optimization and/or
-sampling of these parameters will be left to a higher-level wrapper.
+Interface for latent function inference in Gaussian process models. These
+models will assume that the hyperparameters are fixed and any optimization
+and/or sampling of these parameters will be left to a higher-level wrapper.
 """
 
 # future imports
@@ -31,8 +31,8 @@ class GP(Parameterized):
         self._X = None
         self._y = None
 
-        self.nhyper = self._likelihood.nhyper + \
-                      self._kernel.nhyper
+        self.nhyper = (self._likelihood.nhyper +
+                       self._kernel.nhyper)
 
     def __repr__(self):
         models = [repr(self._likelihood),
@@ -45,7 +45,7 @@ class GP(Parameterized):
         return string
 
     def _params(self):
-        params =  dot_params('like', self._likelihood._params())
+        params = dot_params('like', self._likelihood._params())
         params += dot_params('kern', self._kernel._params())
         return params
 
@@ -96,18 +96,18 @@ class GP(Parameterized):
         n = 1 if flatten else n
         p = len(X)
 
-        # if a seed or instantiated RandomState is given use that, otherwise use
-        # the global object.
+        # if a seed or instantiated RandomState is given use that, otherwise
+        # use the global object.
         rng = rstate(rng)
 
-        # add a tiny amount to the diagonal to make the cholesky of Sigma stable
-        # and then add this correlated noise onto mu to get the sample.
+        # add a tiny amount to the diagonal to make the cholesky of Sigma
+        # stable and then add this correlated noise onto mu to get the sample.
         mu, Sigma = self._posterior(X)
         Sigma += 1e-10 * np.eye(p)
-        f = mu[None] + np.dot(rng.normal(size=(n,p)), sla.cholesky(Sigma))
+        f = mu[None] + np.dot(rng.normal(size=(n, p)), sla.cholesky(Sigma))
 
         if not latent:
-            f = self._likelihood.sample(f.ravel(), rng).reshape(n,p)
+            f = self._likelihood.sample(f.ravel(), rng).reshape(n, p)
 
         return f.ravel() if flatten else f
 
@@ -117,7 +117,8 @@ class GP(Parameterized):
         expansion with N bases. See the documentation on `FourierSample` for
         details on the returned function object.
         """
-        return FourierSample(N, self._likelihood, self._kernel, self._X, self._y, rng)
+        return FourierSample(N, self._likelihood, self._kernel, self._X,
+                             self._y, rng)
 
     @abc.abstractmethod
     def _update(self):

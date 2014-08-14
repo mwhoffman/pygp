@@ -19,7 +19,7 @@ from ..utils.iters import product, grad_sum, grad_product
 __all__ = ['Kernel', 'RealKernel']
 
 
-#--BASE KERNEL INTERFACE--------------------------------------------------------
+### BASE KERNEL INTERFACE #####################################################
 
 def _collapse(Combiner, *parts):
     collapsed = []
@@ -59,7 +59,7 @@ class Kernel(Parameterized):
         pass
 
 
-#--COMBINATION KERNELS----------------------------------------------------------
+### COMBINATION KERNELS #######################################################
 
 # FIXME: should ComboKernel objects make a copy of their constituent kernels?
 # Otherwise we can do something like kernelA = kernelB + kernelB, but then
@@ -78,8 +78,10 @@ class ComboKernel(Kernel):
         self.nhyper = sum(p.nhyper for p in self._parts)
 
         for attr in ['ndim']:
-            try: setattr(self, attr, getattr(self._parts[0], attr))
-            except: pass
+            try:
+                setattr(self, attr, getattr(self._parts[0], attr))
+            except:
+                pass
 
         # FIXME: add some sort of check here so that the kernels can verify
         # whether they can be combined.
@@ -160,7 +162,7 @@ class ProductKernel(ComboKernel):
         return grad_product(fiterable, giterable)
 
 
-#--OTHER BASE KERNEL TYPES------------------------------------------------------
+### OTHER BASE KERNEL TYPES ###################################################
 
 class RealKernel(Kernel):
     def transform(self, X):

@@ -40,9 +40,10 @@ class RQ(RealKernel, Printable):
 
     def _params(self):
         return [
-            ('sf',    1),
-            ('ell',   self.nhyper-2),
-            ('alpha', 1),]
+            ('sf', 1),
+            ('ell', self.nhyper-2),
+            ('alpha', 1),
+        ]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell, self._logalpha]

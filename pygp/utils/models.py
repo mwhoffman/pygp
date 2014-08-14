@@ -18,7 +18,8 @@ __all__ = ['Parameterized', 'Printable', 'dot_params', 'get_params']
 
 class Parameterized(object):
     """
-    Interface for objects that are parameterized by some set of hyperparameters.
+    Interface for objects that are parameterized by some set of
+    hyperparameters.
     """
     __metaclass__ = abc.ABCMeta
 

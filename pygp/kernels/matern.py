@@ -38,30 +38,33 @@ class Matern(RealKernel, Printable):
             else:
                 raise ValueError('ndim only usable with scalar lengthscales')
 
-        if self._d not in {1,3,5}:
+        if self._d not in {1, 3, 5}:
             raise ValueError('d must be one of 1, 3, or 5')
 
     def _params(self):
         return [
-            ('sf',  1),
-            ('ell', self.nhyper-1),]
+            ('sf', 1),
+            ('ell', self.nhyper-1),
+        ]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell]
 
     def set_hyper(self, hyper):
-        self._logsf  = hyper[0]
+        self._logsf = hyper[0]
         self._logell = hyper[1] if self._iso else hyper[1:]
 
     def _f(self, r):
-        return 1                if (self._d == 1) else \
-               1+r              if (self._d == 3) else \
-               1+r*(1+r/3.)
+        return (
+            1 if (self._d == 1) else
+            1+r if (self._d == 3) else
+            1+r*(1+r/3.))
 
     def _df(self, r):
-        return 1                if (self._d == 1) else \
-               r                if (self._d == 3) else \
-               r*(1+r)/3.
+        return (
+            1 if (self._d == 1) else
+            r if (self._d == 3) else
+            r*(1+r)/3.)
 
     def get(self, X1, X2=None):
         X1, X2 = rescale(np.exp(self._logell)/np.sqrt(self._d), X1, X2)
@@ -77,12 +80,13 @@ class Matern(RealKernel, Printable):
         K = S * self._f(D)
         M = S * self._df(D)
 
-        yield 2*K                                  # derivative wrt logsf
+        yield 2*K           # derivative wrt logsf
         if self._iso:
-            yield M*D                              # derivative wrt logell (iso)
+            yield M*D       # derivative wrt logell (iso)
         else:
             for D_ in sqdist_foreach(X1, X2):
-                yield np.where(D<1e-12, 0, M*D_/D) # derivative wrt logell (ard)
+                            # derivative(s) wrt logell (ard)
+                yield np.where(D < 1e-12, 0, M*D_/D)
 
     def gradx(self, X1, X2=None):
         ell = np.exp(self._logell) / np.sqrt(self._d)
@@ -91,8 +95,8 @@ class Matern(RealKernel, Printable):
 
         D = np.sqrt(np.sum(D1**2, axis=-1))
         S = np.exp(self._logsf*2 - D)
-        M = np.where(D<1e-12, 0, S * self._df(D) / D)
-        G = -M[:,:,None] * D1 / ell
+        M = np.where(D < 1e-12, 0, S * self._df(D) / D)
+        G = -M[:, :, None] * D1 / ell
 
         return G
 

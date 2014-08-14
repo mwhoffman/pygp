@@ -26,9 +26,9 @@ def product(fiterable):
 
 
 def grad_sum(giterable):
-    # this is not really necessary since the gradient of sums is so trivial, but
-    # this makes the code epsilon more readable since it looks the same as the
-    # product gradients.
+    # this is not really necessary since the gradient of sums is so trivial,
+    # but this makes the code epsilon more readable since it looks the same as
+    # the product gradients.
     return it.chain.from_iterable(giterable)
 
 
@@ -36,8 +36,9 @@ def grad_product(fiterable, giterable):
     # This implements a helper for taking gradients of "product" models, where
     # the function takes two iterators over the function evaluations and
     # gradients of the sub-models. Here both iterables should have length given
-    # by the number of sub-models, but `giterable` will itself contain iterables
-    # for each hyperparameter of the constituent models evaluate each submodel.
+    # by the number of sub-models, but `giterable` will itself contain
+    # iterables for each hyperparameter of the constituent models evaluate each
+    # submodel.
 
     A = list(fiterable)
 
@@ -53,8 +54,8 @@ def grad_product(fiterable, giterable):
         M[i] *= M[-1]
         M[-1] *= A[i]
 
-    # XXX: it should now hold that M[i] is the product of every model evaluation
-    # EXCEPT for the ith one.
+    # XXX: it should now hold that M[i] is the product of every model
+    # evaluation EXCEPT for the ith one.
 
     for Mi, grads in zip(M, giterable):
         for dM in grads:

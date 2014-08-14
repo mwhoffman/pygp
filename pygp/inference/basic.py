@@ -27,7 +27,7 @@ class BasicGP(Printable, ExactGP):
     def __init__(self, sn, sf, ell, ndim=None, kernel='se'):
         likelihood = Gaussian(sn)
         kernel = (
-            SE(sf, ell, ndim)        if (kernel == 'se') else
+            SE(sf, ell, ndim) if (kernel == 'se') else
             Matern(sf, ell, 1, ndim) if (kernel == 'matern1') else
             Matern(sf, ell, 3, ndim) if (kernel == 'matern3') else
             Matern(sf, ell, 5, ndim) if (kernel == 'matern5') else None)

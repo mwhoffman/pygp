@@ -39,14 +39,15 @@ class SE(RealKernel, Printable):
 
     def _params(self):
         return [
-            ('sf',  1),
-            ('ell', self.nhyper-1),]
+            ('sf', 1),
+            ('ell', self.nhyper-1),
+        ]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell]
 
     def set_hyper(self, hyper):
-        self._logsf  = hyper[0]
+        self._logsf = hyper[0]
         self._logell = hyper[1] if self._iso else hyper[1:]
 
     def get(self, X1, X2=None):
@@ -62,7 +63,7 @@ class SE(RealKernel, Printable):
             yield K*D                           # derivative wrt logell (iso)
         else:
             for D in sqdist_foreach(X1, X2):
-                yield K*D                       # derivative wrt logell (ard)
+                yield K*D                       # derivatives wrt logell (ard)
 
     def gradx(self, X1, X2=None):
         """
@@ -75,7 +76,7 @@ class SE(RealKernel, Printable):
 
         D = diff(X1, X2)
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
-        G = -K[:,:,None] * D / ell
+        G = -K[:, :, None] * D / ell
         return G
 
     def dget(self, X1):

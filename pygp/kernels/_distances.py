@@ -23,7 +23,7 @@ def rescale(ell, X1, X2):
 
 def diff(X1, X2=None):
     X2 = X1 if (X2 is None) else X2
-    return X1[:,None,:] - X2[None,:,:]
+    return X1[:, None, :] - X2[None, :, :]
 
 
 def sqdist(X1, X2=None):
@@ -40,4 +40,4 @@ def sqdist(X1, X2=None):
 def sqdist_foreach(X1, X2=None):
     X2 = X1 if (X2 is None) else X2
     for i in xrange(X1.shape[1]):
-        yield ssd.cdist(X1[:,i,None], X2[:,i,None], 'sqeuclidean')
+        yield ssd.cdist(X1[:, i, None], X2[:, i, None], 'sqeuclidean')
