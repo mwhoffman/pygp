@@ -11,10 +11,9 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ._base import RealKernel
-from ._distances import rescale, sqdist, sqdist_foreach
-
 from ..utils.models import Printable
+from ._distances import rescale, sqdist, sqdist_foreach
+from ._base import RealKernel
 
 # exported symbols
 __all__ = ['RQ']
@@ -23,15 +22,15 @@ __all__ = ['RQ']
 class RQ(RealKernel, Printable):
     def __init__(self, sf, ell, alpha, ndim=None):
         self._logsf = np.log(float(sf))
-        self._logell = np.log(np.ravel(ell))
+        self._logell = np.log(ell)
         self._logalpha = np.log(float(alpha))
 
         self._iso = False
-        self.ndim = self._logell.size
-        self.nhyper = 2 + self._logell.size
+        self.ndim = np.size(self._logell)
+        self.nhyper = 2 + np.size(self._logell)
 
         if ndim is not None:
-            if self._logell.size == 1:
+            if np.size(self._logell) == 1:
                 self._logell = float(self._logell)
                 self._iso = True
                 self.ndim = ndim
@@ -88,6 +87,6 @@ class RQ(RealKernel, Printable):
 
     def dgrad(self, X):
         yield 2 * self.dget(X)
-        for i in xrange(self.nhyper-2):
+        for _ in xrange(self.nhyper-2):
             yield np.zeros(len(X))
         yield np.zeros(len(X))
