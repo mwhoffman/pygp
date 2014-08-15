@@ -36,6 +36,11 @@ class FITC(GP):
         self._R = None
         self._b = None
 
+    @property
+    def pseudoinputs(self):
+        """The pseudo-input points."""
+        return self._U
+
     def _update(self):
         sn2 = self._likelihood.s2
         su2 = sn2 / 1e6
