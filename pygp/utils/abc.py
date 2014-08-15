@@ -16,4 +16,22 @@ __all__ = ['ABCMeta', 'abstractmethod']
 
 
 class ABCMeta(ABCMeta_):
-    pass
+    """
+    Slight modification to ABCMeta that copies docstrings from an
+    abstractmethod to its implementation if the implementation lacks a
+    docstring.
+    """
+    def __new__(mcs, name, bases, attrs):
+        abstracts = dict(
+            (attr, getattr(base, attr))
+            for base in bases
+            for attr in getattr(base, '__abstractmethods__', set()))
+
+        for attr, value in attrs.items():
+            implements = (attr in abstracts and
+                          not getattr(value, '__isabstractmethod__', False))
+            if implements and not getattr(value, '__doc__', False):
+                docstring = getattr(abstracts[attr], '__doc__', None)
+                setattr(value, '__doc__', docstring)
+
+        return super(ABCMeta, mcs).__new__(mcs, name, bases, attrs)
