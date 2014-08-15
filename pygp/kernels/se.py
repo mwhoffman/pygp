@@ -66,20 +66,6 @@ class SE(RealKernel):
             for D in sqdist_foreach(X1, X2):
                 yield K*D                       # derivatives wrt logell (ard)
 
-    def gradx(self, X1, X2=None):
-        """
-        Derivatives of the kernel with respect to its second argument. This
-        corresponds to the covariance between function values evaluated at X1
-        and gradients evaluated at X2. Returns an (m,n,d)-array.
-        """
-        ell = np.exp(self._logell)
-        X1, X2 = rescale(ell, X1, X2)
-
-        D = diff(X1, X2)
-        K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
-        G = -K[:, :, None] * D / ell
-        return G
-
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
 
@@ -87,6 +73,15 @@ class SE(RealKernel):
         yield 2 * self.dget(X)
         for _ in xrange(self.nhyper-1):
             yield np.zeros(len(X))
+
+    def gradx(self, X1, X2=None):
+        ell = np.exp(self._logell)
+        X1, X2 = rescale(ell, X1, X2)
+
+        D = diff(X1, X2)
+        K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
+        G = -K[:, :, None] * D / ell
+        return G
 
     def sample_spectrum(self, N, rng=None):
         rng = rstate(rng)

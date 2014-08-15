@@ -73,3 +73,9 @@ class Periodic(RealKernel):
         yield 2 * self.dget(X)
         yield np.zeros(len(X))
         yield np.zeros(len(X))
+
+    def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def sample_spectrum(self, N, rng=None):
+        raise NotImplementedError

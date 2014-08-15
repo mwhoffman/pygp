@@ -199,3 +199,21 @@ class RealKernel(Kernel):
 
     def transform(self, X):
         return np.array(X, ndmin=2, dtype=float, copy=False)
+
+    @abstractmethod
+    def gradx(self, X1, X2=None):
+        """
+        Derivatives of the kernel with respect to its first argument. This
+        corresponds to the covariance between the function gradient at X1 and
+        the function evaluated at X2. Returns an (m,n,d)-array.
+        """
+        pass
+
+    @abstractmethod
+    def sample_spectrum(self, N, rng=None):
+        """
+        Sample N values from the spectral density of the kernel, returning a
+        set of weights W of size (n,d) and a scalar value representing the
+        normalizing constant.
+        """
+        pass

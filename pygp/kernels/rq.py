@@ -91,3 +91,9 @@ class RQ(RealKernel):
         for _ in xrange(self.nhyper-2):
             yield np.zeros(len(X))
         yield np.zeros(len(X))
+
+    def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def sample_spectrum(self, N, rng=None):
+        raise NotImplementedError
