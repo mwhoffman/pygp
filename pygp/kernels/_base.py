@@ -9,9 +9,9 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
-import abc
 
 # local imports
+from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized, dot_params
 from ..utils.iters import product, grad_sum, grad_product
 
@@ -21,16 +21,21 @@ __all__ = ['Kernel', 'RealKernel']
 
 ### BASE KERNEL INTERFACE #####################################################
 
-def _collapse(Combiner, *parts):
+def _collapse(cls, *parts):
+    """
+    Given a list of kernels return another list of kernels where objects of
+    type cls have been "collapsed". This applies to ComboKernel objects which
+    represent associative operations.
+    """
     collapsed = []
     for part in parts:
-        collapsed += part._parts if isinstance(part, Combiner) else [part]
+        collapsed += part._parts if isinstance(part, cls) else [part]
     return collapsed
 
 
 class Kernel(Parameterized):
     """
-    Kernel interface.
+    The base Kernel interface.
     """
     def __add__(self, other):
         return SumKernel(*_collapse(SumKernel, self, other))
@@ -38,24 +43,41 @@ class Kernel(Parameterized):
     def __mul__(self, other):
         return ProductKernel(*_collapse(ProductKernel, self, other))
 
-    @abc.abstractmethod
+    @abstractmethod
     def get(self, X1, X2=None):
+        """
+        Evaluate the kernel.
+
+        Returns the matrix of covariances between points in `X1` and `X2`. If
+        `X2` is not given this will return the pairwise covariances between
+        points in `X1`.
+        """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def dget(self, X):
+        """Evaluate the self covariances."""
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def grad(self, X1, X2=None):
+        """
+        Evaluate the gradient of the kernel.
+
+        Returns an iterator over the gradients of the covariances between
+        points in `X1` and `X2`. If `X2` is not given this will iterate over
+        the the gradients of the pairwise covariances.
+        """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def dgrad(self, X):
+        """Evaluate the gradients of the self covariances."""
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def transform(self, X):
+        """Format the inputs X as arrays."""
         pass
 
 
@@ -73,6 +95,10 @@ class Kernel(Parameterized):
 # object.
 
 class ComboKernel(Kernel):
+    """
+    General implementation of kernels which combine other kernels. Common
+    examples are sums and products of kernels.
+    """
     def __init__(self, *parts):
         self._parts = [part.copy() for part in parts]
         self.nhyper = sum(p.nhyper for p in self._parts)
@@ -80,7 +106,7 @@ class ComboKernel(Kernel):
         for attr in ['ndim']:
             try:
                 setattr(self, attr, getattr(self._parts[0], attr))
-            except:
+            except AttributeError:
                 pass
 
         # FIXME: add some sort of check here so that the kernels can verify
@@ -125,6 +151,8 @@ class ComboKernel(Kernel):
 
 
 class SumKernel(ComboKernel):
+    """Kernel representing a sum of other kernels."""
+
     def get(self, X1, X2=None):
         fiterable = (p.get(X1, X2) for p in self._parts)
         return sum(fiterable)
@@ -143,6 +171,8 @@ class SumKernel(ComboKernel):
 
 
 class ProductKernel(ComboKernel):
+    """Kernel representing a product of other kernels."""
+
     def get(self, X1, X2=None):
         fiterable = (p.get(X1, X2) for p in self._parts)
         return product(fiterable)
@@ -165,5 +195,7 @@ class ProductKernel(ComboKernel):
 ### OTHER BASE KERNEL TYPES ###################################################
 
 class RealKernel(Kernel):
+    """Kernel whose inputs are real-valued vectors."""
+
     def transform(self, X):
         return np.array(X, ndmin=2, dtype=float, copy=False)

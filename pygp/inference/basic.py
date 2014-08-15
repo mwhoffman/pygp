@@ -7,23 +7,22 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-# global imports
-import numpy as np
-
 # local imports
-from .exact import ExactGP
+from ..utils.models import printable
 from ..likelihoods import Gaussian
 from ..kernels import SE, Matern
-from ..utils.models import Printable
+from .exact import ExactGP
 
 # exported symbols
 __all__ = ['BasicGP']
 
 
-# NOTE: in the definition of the BasicGP class Printable has to come first so
-# that we use the __repr__ method defined there and override the base method.
-
-class BasicGP(Printable, ExactGP):
+@printable
+class BasicGP(ExactGP):
+    """
+    Basic GP frontend which assumes an ARD kernel and a Gaussian likelihood
+    (and hence performs exact inference).
+    """
     def __init__(self, sn, sf, ell, ndim=None, kernel='se'):
         likelihood = Gaussian(sn)
         kernel = (

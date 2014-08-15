@@ -15,23 +15,24 @@ from ._base import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 from ..utils.random import rstate
-from ..utils.models import Printable
+from ..utils.models import printable
 
 # exported symbols
 __all__ = ['Matern']
 
 
-class Matern(RealKernel, Printable):
+@printable
+class Matern(RealKernel):
     def __init__(self, sf, ell, d=3, ndim=None):
         self._logsf = np.log(float(sf))
-        self._logell = np.log(np.ravel(ell))
+        self._logell = np.log(ell)
         self._d = d
         self._iso = False
-        self.ndim = self._logell.size
-        self.nhyper = 1 + self._logell.size
+        self.ndim = np.size(self._logell)
+        self.nhyper = 1 + np.size(self._logell)
 
         if ndim is not None:
-            if self._logell.size == 1:
+            if np.size(self._logell) == 1:
                 self._logell = float(self._logell)
                 self._iso = True
                 self.ndim = ndim
@@ -40,6 +41,18 @@ class Matern(RealKernel, Printable):
 
         if self._d not in {1, 3, 5}:
             raise ValueError('d must be one of 1, 3, or 5')
+
+    def _f(self, r):
+        return (
+            1 if (self._d == 1) else
+            1+r if (self._d == 3) else
+            1+r*(1+r/3.))
+
+    def _df(self, r):
+        return (
+            1 if (self._d == 1) else
+            r if (self._d == 3) else
+            r*(1+r)/3.)
 
     def _params(self):
         return [
@@ -53,18 +66,6 @@ class Matern(RealKernel, Printable):
     def set_hyper(self, hyper):
         self._logsf = hyper[0]
         self._logell = hyper[1] if self._iso else hyper[1:]
-
-    def _f(self, r):
-        return (
-            1 if (self._d == 1) else
-            1+r if (self._d == 3) else
-            1+r*(1+r/3.))
-
-    def _df(self, r):
-        return (
-            1 if (self._d == 1) else
-            r if (self._d == 3) else
-            r*(1+r)/3.)
 
     def get(self, X1, X2=None):
         X1, X2 = rescale(np.exp(self._logell)/np.sqrt(self._d), X1, X2)
@@ -105,7 +106,7 @@ class Matern(RealKernel, Printable):
 
     def dgrad(self, X1):
         yield 2 * self.dget(X1)
-        for i in xrange(self.nhyper-1):
+        for _ in xrange(self.nhyper-1):
             yield np.zeros(len(X1))
 
     def sample_spectrum(self, N, rng=None):

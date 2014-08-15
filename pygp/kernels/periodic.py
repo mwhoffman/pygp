@@ -13,13 +13,14 @@ import numpy as np
 # local imports
 from ._base import RealKernel
 from ._distances import sqdist
-from ..utils.models import Printable
+from ..utils.models import printable
 
 # exported symbols
 __all__ = ['Periodic']
 
 
-class Periodic(RealKernel, Printable):
+@printable
+class Periodic(RealKernel):
     def __init__(self, sf, ell, p):
         self._logsf = np.log(float(sf))
         self._logell = np.log(float(ell))

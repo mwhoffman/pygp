@@ -15,22 +15,23 @@ from ._base import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 from ..utils.random import rstate
-from ..utils.models import Printable
+from ..utils.models import printable
 
 # exported symbols
 __all__ = ['SE']
 
 
-class SE(RealKernel, Printable):
+@printable
+class SE(RealKernel):
     def __init__(self, sf, ell, ndim=None):
         self._logsf = np.log(float(sf))
-        self._logell = np.log(np.ravel(ell))
+        self._logell = np.log(ell)
         self._iso = False
-        self.ndim = self._logell.size
-        self.nhyper = 1 + self._logell.size
+        self.ndim = np.size(self._logell)
+        self.nhyper = 1 + np.size(self._logell)
 
         if ndim is not None:
-            if self._logell.size == 1:
+            if np.size(self._logell) == 1:
                 self._logell = float(self._logell)
                 self._iso = True
                 self.ndim = ndim
@@ -84,7 +85,7 @@ class SE(RealKernel, Printable):
 
     def dgrad(self, X):
         yield 2 * self.dget(X)
-        for i in xrange(self.nhyper-1):
+        for _ in xrange(self.nhyper-1):
             yield np.zeros(len(X))
 
     def sample_spectrum(self, N, rng=None):
