@@ -132,11 +132,11 @@ class BaseKernelTest(object):
         nt.assert_allclose(G1, G2)
 
     def test_gradx(self):
-        if hasattr(self.kernel, 'gradx'):
+        try:
             G1 = self.kernel.gradx(self.x1, self.x2)
             G2 = self._gradx(self.x1, self.x2)
             nt.assert_allclose(G1, G2)
-        else:
+        except NotImplementedError:
             raise nose.SkipTest()
 
     def test_dget(self):

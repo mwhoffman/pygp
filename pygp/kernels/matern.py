@@ -89,6 +89,14 @@ class Matern(RealKernel):
                             # derivative(s) wrt logell (ard)
                 yield np.where(D < 1e-12, 0, M*D_/D)
 
+    def dget(self, X1):
+        return np.exp(self._logsf*2) * np.ones(len(X1))
+
+    def dgrad(self, X1):
+        yield 2 * self.dget(X1)
+        for _ in xrange(self.nhyper-1):
+            yield np.zeros(len(X1))
+
     def gradx(self, X1, X2=None):
         ell = np.exp(self._logell) / np.sqrt(self._d)
         X1, X2 = rescale(ell, X1, X2)
@@ -100,14 +108,6 @@ class Matern(RealKernel):
         G = -M[:, :, None] * D1 / ell
 
         return G
-
-    def dget(self, X1):
-        return np.exp(self._logsf*2) * np.ones(len(X1))
-
-    def dgrad(self, X1):
-        yield 2 * self.dget(X1)
-        for _ in xrange(self.nhyper-1):
-            yield np.zeros(len(X1))
 
     def sample_spectrum(self, N, rng=None):
         rng = rstate(rng)
