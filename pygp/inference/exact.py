@@ -39,14 +39,14 @@ class ExactGP(GP):
         self._a = None
 
     def _update(self):
-        sn2 = np.exp(self._likelihood._logsigma*2)
+        sn2 = self._likelihood.s2
         K = self._kernel.get(self._X) + sn2 * np.eye(len(self._X))
         y = self._y
         self._R = sla.cholesky(K)
         self._a = sla.solve_triangular(self._R, y, trans=True)
 
     def _updateinc(self, X, y):
-        sn2 = np.exp(self._likelihood._logsigma*2)
+        sn2 = self._likelihood.s2
         Kss = self._kernel.get(X) + sn2 * np.eye(len(X))
         Kxs = self._kernel.get(self._X, X)
         y = y
@@ -125,7 +125,7 @@ class ExactGP(GP):
 
         dlZ = np.r_[
             # derivative wrt the likelihood's noise term.
-            -np.exp(self._likelihood._logsigma*2) * np.trace(Q),
+            -self._likelihood.s2 * np.trace(Q),
 
             # derivative wrt each kernel hyperparameter.
             [-0.5*np.sum(Q*dK)
