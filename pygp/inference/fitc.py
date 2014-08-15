@@ -37,7 +37,7 @@ class FITC(GP):
         self._b = None
 
     def _update(self):
-        sn2 = np.exp(self._likelihood._logsigma*2)
+        sn2 = self._likelihood.s2
         su2 = sn2 / 1e6
 
         # kernel wrt the inducing points.
@@ -118,7 +118,7 @@ class FITC(GP):
 
     def loglikelihood(self, grad=False):
         # noise hyperparameters
-        sn2 = np.exp(self._likelihood._logsigma*2)
+        sn2 = self._likelihood.s2
         su2 = sn2 / 1e6
 
         # number of data points and the inducing points.
