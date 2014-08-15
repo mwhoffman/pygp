@@ -12,14 +12,15 @@ import numpy as np
 
 # local imports
 from ._base import RealLikelihood
-from ..utils.models import Printable
+from ..utils.models import printable
 from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['Gaussian']
 
 
-class Gaussian(RealLikelihood, Printable):
+@printable
+class Gaussian(RealLikelihood):
     def __init__(self, sigma):
         self._logsigma = np.log(float(sigma))
         self.nhyper = 1

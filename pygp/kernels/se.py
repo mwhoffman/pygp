@@ -15,13 +15,14 @@ from ._base import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 from ..utils.random import rstate
-from ..utils.models import Printable
+from ..utils.models import printable
 
 # exported symbols
 __all__ = ['SE']
 
 
-class SE(RealKernel, Printable):
+@printable
+class SE(RealKernel):
     def __init__(self, sf, ell, ndim=None):
         self._logsf = np.log(float(sf))
         self._logell = np.log(ell)

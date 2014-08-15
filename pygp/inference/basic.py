@@ -8,20 +8,17 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 # local imports
-from ..utils.models import Printable
+from ..utils.models import printable
 from ..likelihoods import Gaussian
 from ..kernels import SE, Matern
-
 from .exact import ExactGP
 
 # exported symbols
 __all__ = ['BasicGP']
 
 
-# NOTE: in the definition of the BasicGP class Printable has to come first so
-# that we use the __repr__ method defined there and override the base method.
-
-class BasicGP(Printable, ExactGP):
+@printable
+class BasicGP(ExactGP):
     """
     Basic GP frontend which assumes an ARD kernel and a Gaussian likelihood
     (and hence performs exact inference).

@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ..utils.models import Printable
+from ..utils.models import printable
 from ._distances import rescale, sqdist, sqdist_foreach
 from ._base import RealKernel
 
@@ -19,7 +19,8 @@ from ._base import RealKernel
 __all__ = ['RQ']
 
 
-class RQ(RealKernel, Printable):
+@printable
+class RQ(RealKernel):
     def __init__(self, sf, ell, alpha, ndim=None):
         self._logsf = np.log(float(sf))
         self._logell = np.log(ell)

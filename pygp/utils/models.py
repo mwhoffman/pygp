@@ -15,7 +15,7 @@ import copy
 from .abc import ABCMeta, abstractmethod
 
 # exported symbols
-__all__ = ['Parameterized', 'Printable', 'dot_params', 'get_params']
+__all__ = ['Parameterized', 'printable', 'dot_params', 'get_params']
 
 
 class Parameterized(object):
@@ -55,22 +55,25 @@ class Parameterized(object):
         return model
 
 
-class Printable(object):
-    # pylint: disable=too-few-public-methods
-
+def printable(cls):
     """
-    Mixin class for objects which can be pretty-printed as a function of their
-    hyperparameters.
+    Decorator which marks classes as being able to be pretty-printed as a
+    function of their hyperparameters. This decorator defines a __repr__ method
+    for the given class which uses the class's `get_hyper` and `_params`
+    methods to print it.
     """
-    def __repr__(self):
-        hyper = self.get_hyper()                    # pylint: disable=no-member
+    def _repr(obj):
+        """Represent the object as a function of its hyperparameters."""
+        hyper = obj.get_hyper()
         substrings = []
-        for key, block, log in get_params(self):
+        for key, block, log in get_params(obj):
             val = hyper[block]
             val = val[0] if (len(val) == 1) else val
             val = np.exp(val) if log else val
             substrings += ['%s=%s' % (key, val)]
-        return self.__class__.__name__ + '(' + ', '.join(substrings) + ')'
+        return obj.__class__.__name__ + '(' + ', '.join(substrings) + ')'
+    cls.__repr__ = _repr
+    return cls
 
 
 # FIXME: it's unclear how useful dot_params is. This might be replaced.
