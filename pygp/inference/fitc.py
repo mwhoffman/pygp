@@ -110,4 +110,39 @@ class FITC(GP):
         raise NotImplementedError
 
     def loglikelihood(self, grad=False):
-        raise NotImplementedError
+        # noise hyperparameters
+        sn2 = np.exp(self._likelihood._logsigma*2)
+        su2 = sn2 / 1e6
+
+        # number of data points and the inducing points.
+        p = self._U.shape[0]
+
+        # cholesky of the pseudo-input kernel.
+        Kuu = self._kernel.get(self._U)
+        L = sla.cholesky(Kuu + su2*np.eye(p))
+
+        # get the rest of the kernels and the residual.
+        Kux = self._kernel.get(self._U, self._X)
+        kxx = self._kernel.dget(self._X)
+        r = self._y
+
+        # the cholesky of Q.
+        V = sla.solve_triangular(L, Kux, trans=True)
+
+        # rescale everything by the diagonal matrix ell.
+        ell = np.sqrt(kxx + sn2 - np.sum(V**2, axis=0))
+        Kux /= ell
+        V /= ell
+        r /= ell
+
+        # Note this A corresponds to chol(self.A) from _update.
+        A = sla.cholesky(np.dot(V, V.T) + np.eye(p))
+        beta = sla.solve_triangular(A, V.dot(r), trans=True)
+        alpha = (r - V.T.dot(sla.solve_triangular(A, beta))) / ell
+
+        lZ = -np.sum(np.log(np.diag(A))) - np.sum(np.log(ell))
+        lZ -= 0.5 * (np.inner(r, r) - np.inner(beta, beta))
+        lZ -= 0.5 * ell.shape[0] * np.log(2*np.pi)
+
+        if not grad:
+            return lZ
