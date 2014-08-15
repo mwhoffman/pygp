@@ -10,8 +10,11 @@ from __future__ import print_function
 # global imports
 import numpy as np
 import scipy.linalg as sla
+import itertools as it
 
 # local imports
+from ..utils.exceptions import ModelError
+from ..likelihoods import Gaussian
 from ._base import GP
 
 # exported symbols
@@ -23,6 +26,10 @@ class FITC(GP):
     GP inference using sparse pseudo-inputs.
     """
     def __init__(self, likelihood, kernel, U):
+        # NOTE: exact FITC inference will only work with Gaussian likelihoods.
+        if not isinstance(likelihood, Gaussian):
+            raise ModelError('exact inference requires a Gaussian likelihood')
+
         super(FITC, self).__init__(likelihood, kernel)
         self._U = np.array(U, ndmin=2, dtype=float, copy=True)
         self._L = None
@@ -44,7 +51,7 @@ class FITC(GP):
         # evaluate the kernel and residuals at the new points
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
-        r = self._y
+        r = self._y.copy()
 
         # the cholesky of Q.
         V = sla.solve_triangular(self._L, Kux, trans=True)
@@ -124,7 +131,7 @@ class FITC(GP):
         # get the rest of the kernels and the residual.
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
-        r = self._y
+        r = self._y.copy()
 
         # the cholesky of Q.
         V = sla.solve_triangular(L, Kux, trans=True)
@@ -146,3 +153,37 @@ class FITC(GP):
 
         if not grad:
             return lZ
+
+        B = sla.solve_triangular(L, V*ell)
+        W = sla.solve_triangular(A, V/ell, trans=True)
+        w = B.dot(alpha)
+        v = 2*su2*np.sum(B**2, axis=0)
+
+        # allocate space for the gradients.
+        dlZ = np.empty(1+self._kernel.nhyper)
+
+        # gradient wrt the noise parameter.
+        dlZ[0] = (
+            - sn2 * (np.sum(1/ell**2) - np.sum(W**2) - np.inner(alpha, alpha))
+            - su2 * (np.sum(w**2) + np.sum(B.dot(W.T)**2))
+            + 0.5 * (
+                np.inner(alpha, v*alpha) + np.inner(np.sum(W**2, axis=0), v)))
+
+        # iterator over gradients of the kernels
+        dK = it.izip(
+            self._kernel.grad(self._U),
+            self._kernel.grad(self._U, self._X),
+            self._kernel.dgrad(self._X))
+
+        # gradient wrt the kernel hyperparameters.
+        i = 1
+        for i, (dKuu, dKux, dkxx) in enumerate(dK, i):
+            M = 2*dKux - dKuu.dot(B)
+            v = dkxx - np.sum(M*B, axis=0)
+            dlZ[i] = (
+                np.sum(dkxx/ell**2)
+                - np.inner(w, dKuu.dot(w) - 2*dKux.dot(alpha))
+                + np.inner(alpha, v*alpha) + np.inner(np.sum(W**2, axis=0), v)
+                + np.sum(M.dot(W.T) * B.dot(W.T))) / 2.0
+
+        return lZ, dlZ
