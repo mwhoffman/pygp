@@ -1,12 +1,18 @@
-# import the important sub-packages.
-from . import hyper
+"""
+Interface to GP inference.
+"""
+
+# import the basic things by default
+from . import inference
 from . import kernels
+from . import learning
 from . import likelihoods
+from . import meta
+from . import priors
 
 # import the basic things by default
 from .inference import BasicGP
-from .hyper import optimize
-from .plotting import gpplot
+from .learning import optimize
 
 # and make them available.
-__all__ = ['BasicGP', 'optimize', 'gpplot']
+__all__ = ['BasicGP', 'optimize']

@@ -15,86 +15,102 @@ import matplotlib.pyplot as pl
 from .utils.models import get_params
 
 # exported symbols
-__all__ = ['gpplot', 'sampleplot']
+__all__ = ['plot', 'sampleplot']
 
 
-def gpplot(gp, xmin=None, xmax=None, nsamples=None, mean=True, data=True,
-               error=True, delta=0.05, spaghetti=False,
-               figure=None, clear=True, draw=True):
-    xmin = gp._X[:,0].min() if (xmin is None) else xmin
-    xmax = gp._X[:,0].max() if (xmax is None) else xmax
+def plot(model,
+         xmin=None, xmax=None, ymin=None, ymax=None,
+         mean=True, data=True, error=True,
+         xlabel='', ylabel='', title='',
+         figure=None, subplot=None,
+         draw=True):
+
+    # get the axes object and clear it.
+    fg = pl.gcf() if (figure is None) else pl.figure(figure)
+
+    if subplot is None:
+        fg.clf()
+        ax = fg.gca()
+    else:
+        ax = fg.add_subplot(subplot)
+        ax.cla()
+
+    # grab the data.
+    X, y = model.data
+
+    if X is None and (xmin is None or xmax is None):
+        raise Exception('bounds must be given if no data is present')
+
+    xmin = X[:, 0].min() if (xmin is None) else xmin
+    xmax = X[:, 0].max() if (xmax is None) else xmax
 
     x = np.linspace(xmin, xmax, 500)
-    mu, lo, hi = gp.predict(x[:,None], delta=delta)
-
-    # get the current/named figure and clear it if requested.
-    fg = pl.gcf() if (figure is None) else pl.figure(figure)
-    if clear: fg.clf()
-
-    # get the axes and clear that.
-    ax = fg.gca()
-    ax.cla()
+    mu, s2 = model.posterior(x[:, None])
+    lo = mu - 2 * np.sqrt(s2)
+    hi = mu + 2 * np.sqrt(s2)
 
     if error:
-        ax.fill_between(x, lo, hi, color='k', alpha=0.1, zorder=1)
-
-    if nsamples:
-        f = gp.sample(x[:,None], n=nsamples)
-        if spaghetti:
-            ax.plot(x, f.T, color='m', alpha=0.1, zorder=1)
-        else:
-            ax.plot(x, f.T, lw=2, alpha=0.75)
+        ax.fill_between(x, lo, hi, color='k', alpha=0.15)
 
     if mean:
-        ax.plot(x, mu, color='k', zorder=2, lw=2)
+        ax.plot(x, mu, lw=2, color='b')
 
-    if data and gp._X is not None:
-        ax.scatter(gp._X.ravel(), gp._y, color='b', s=30, zorder=3)
+    if data and X is not None:
+        ax.scatter(X.ravel(), y, s=20, lw=1, facecolors='none', color='k')
 
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     ax.axis('tight')
-    ax.axis(xmin=xmin, xmax=xmax)
+    ax.axis(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
     if draw:
         ax.figure.canvas.draw()
 
 
-def sampleplot(gp, samples, figure=None, draw=True):
-    samples = samples.copy()
-    naxes = samples.shape[1]
-    labels = []
+def sampleplot(model, samples,
+               figure=None, draw=True):
 
-    for name, block, log in get_params(gp):
-        size = block.stop - block.start
-        if size == 1:
-            labels.append(name)
-        else:
-            labels.extend('%s[%d]' % (name, i) for i in xrange(size))
-        if log:
-            np.exp(samples[:, block], out=samples[:, block])
-
-    fg = pl.gcf()
-    fg.clf()
-
-    # get the current/named figure and clear it.
+    # get the figure and clear it.
     fg = pl.gcf() if (figure is None) else pl.figure(figure)
     fg.clf()
 
-    for i, j in np.ndindex(naxes, naxes):
-        if i >= j:
-            continue
-        ax = fg.add_subplot(naxes-1, naxes-1, (j-1)*(naxes-1)+i+1)
-        ax.scatter(samples[:,i], samples[:,j], alpha=0.1)
+    values = np.zeros((samples.shape[0], 0))
+    labels = []
 
-        if i == 0:
-            ax.set_ylabel(labels[j])
-        else:
-            ax.set_yticklabels([])
+    for key, block, log in get_params(model):
+        for i in range(block.start, block.stop):
+            vals = samples[:, i]
+            size = block.stop - block.start
+            name = key + ('' if (size == 1) else '_%d' % (i - block.start))
+            if not np.allclose(vals, vals[0]):
+                values = np.c_[values, np.exp(vals) if log else vals]
+                labels.append(name)
 
-        if j == naxes-1:
-            ax.set_xlabel(labels[i])
-        else:
-            ax.set_xticklabels([])
+    naxes = values.shape[1]
+
+    if naxes == 1:
+        ax = fg.add_subplot(111)
+        ax.hist(values[:, 0], bins=20)
+        ax.set_xlabel(labels[0])
+        ax.set_yticklabels([])
+
+    else:
+        for i, j in np.ndindex(naxes, naxes):
+            if i >= j:
+                continue
+            ax = fg.add_subplot(naxes-1, naxes-1, (j-1)*(naxes-1)+i+1)
+            ax.scatter(values[:, i], values[:, j], alpha=0.1)
+
+            if i == 0:
+                ax.set_ylabel(labels[j])
+            else:
+                ax.set_yticklabels([])
+
+            if j == naxes-1:
+                ax.set_xlabel(labels[i])
+            else:
+                ax.set_xticklabels([])
 
     if draw:
         fg.canvas.draw()
-

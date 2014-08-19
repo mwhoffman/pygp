@@ -9,7 +9,7 @@ import numpy as np
 
 # local imports
 import pygp
-import pygp.hyper.priors as pgp
+import pygp.plotting
 
 
 if __name__ == '__main__':
@@ -25,4 +25,4 @@ if __name__ == '__main__':
 
     # find the ML parameters and sample from the posterior.
     pygp.optimize(gp)
-    pygp.gpplot(gp, figure=1)
+    pygp.plotting.plot(gp, figure=1)

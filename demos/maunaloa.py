@@ -9,6 +9,7 @@ import os
 import numpy as np
 
 import pygp
+import pygp.plotting
 import pygp.kernels as pk
 
 
@@ -38,4 +39,4 @@ gp = pygp.inference.ExactGP(likelihood, kernel)
 gp.add_data(X, y)
 
 # plot everything.
-pygp.gpplot(gp, data=False, xmax=100)
+pygp.plotting.plot(gp, data=False, xmax=100)

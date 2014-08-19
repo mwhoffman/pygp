@@ -13,45 +13,40 @@ import scipy.linalg as sla
 
 # local imports
 from ..utils.random import rstate
-from ..inference import ExactGP
-from ..kernels._base import Kernel
 from ..utils.exceptions import ModelError
+from ..likelihoods import Gaussian
 
 # exported symbols
 __all__ = ['FourierSample']
 
 
 class FourierSample(object):
-    def __init__(self, obj, N, rng=None):
+    def __init__(self, N, likelihood, kernel, X, y, rng=None):
         # if given a seed or an instantiated RandomState make sure that we use
         # it here, but also within the sample_spectrum code.
         rng = rstate(rng)
 
-        if isinstance(obj, ExactGP):
-            # FIXME: for the time being this requires an ExactGP. There might be
-            # something else to do for other forms, though.
-            ndata = obj.ndata
-            kernel = obj._kernel
-            sigma = np.exp(obj._likelihood._logsigma)
-            X, y = obj._X, obj._y
-        elif isinstance(obj, Kernel):
-            ndata = 0
-            kernel = obj
-        else:
-            raise ModelError('passed object must be a Kernel or GP object')
+        if not isinstance(likelihood, Gaussian):
+            # FIXME: generalize this?
+            raise ModelError('Fourier samples only defined for Gaussian'
+                             'likelihoods')
 
         # this randomizes the feature.
         self.W, self.alpha = kernel.sample_spectrum(N, rng)
         self.b = rng.rand(N) * 2 * np.pi
 
-        if ndata > 0:
+        if X is not None:
+            # FIXME: this bit of code needs to be changed/replaced if we have
+            # non-Gaussian likelihoods.
+            sigma = np.exp(likelihood._logsigma)
+
             Phi = self.phi(X)
             A = np.dot(Phi.T, Phi)
             A += sigma**2 * np.eye(Phi.shape[1])
             R = sla.cholesky(A)
 
-            # FIXME: we can do a smarter update here when the number of points is
-            # less than the number of features.
+            # FIXME: we can do a smarter update here when the number of points
+            # is less than the number of features.
 
             self.theta = sla.cho_solve((R, False), np.dot(Phi.T, y))
             self.theta += sla.solve_triangular(R, sigma*rng.randn(N))
@@ -67,5 +62,9 @@ class FourierSample(object):
         Phi = np.cos(rnd) * np.sqrt(2 * self.alpha / self.W.shape[0])
         return Phi
 
-    def __call__(self, X):
-        return np.dot(self.phi(X), self.theta)
+    def get(self, X):
+        Phi = self.phi(np.array(X, ndmin=2, copy=False))
+        return np.dot(Phi, self.theta)
+
+    def __call__(self, x):
+        return self.get(x)[0]

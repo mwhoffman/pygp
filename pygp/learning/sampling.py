@@ -17,7 +17,7 @@ from ..utils.models import get_params
 __all__ = ['sample']
 
 
-#===============================================================================
+#==============================================================================
 # basic sampler(s) that don't know anything about GP objects.
 
 def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
@@ -59,17 +59,17 @@ def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
 
         return new_z*direction + x0
 
-    # FIXME: I've removed how blocks work because I want to rewrite that bit. so
-    # right now this samples everything as one big block.
+    # FIXME: I've removed how blocks work because I want to rewrite that bit.
+    # so right now this samples everything as one big block.
     direction = np.random.randn(x0.shape[0])
     direction = direction / np.sqrt(np.sum(direction**2))
     return direction_slice(direction, x0)
 
 
-#===============================================================================
+#==============================================================================
 # interface for sampling hyperparameters from a GP.
 
-def sample(gp, priors, n):
+def sample(gp, priors, n, raw=True):
     priors = dict(priors)
     active = np.ones(gp.nhyper, dtype=bool)
     logged = np.ones(gp.nhyper, dtype=bool)
@@ -78,8 +78,10 @@ def sample(gp, priors, n):
         inactive = (key in priors) and (priors[key] is None)
         logged[block] = log
         active[block] = not inactive
-        if inactive: del priors[key]
-        else: priors[key] = (block, log, priors[key])
+        if inactive:
+            del priors[key]
+        else:
+            priors[key] = (block, log, priors[key])
 
     # priors is now just a list of the form (block, log, prior).
     priors = priors.values()
@@ -93,26 +95,28 @@ def sample(gp, priors, n):
         # parameters that come from x.
         hyper = hyper0.copy()
         hyper[active] = x
-        nlogprob = 0
+        logprob = 0
 
-        # compute the prior probabilities. we do this first so that if there are
-        # any infs they'll be caught in the least expensive computations first.
+        # compute the prior probabilities. we do this first so that if there
+        # are any infs they'll be caught in the least expensive computations
+        # first.
         for block, log, prior in priors:
-            nlogprob += prior.nlogprior(hyper[block])
-            if np.isinf(nlogprob): break
+            logprob += prior.logprior(hyper[block])
+            if np.isinf(logprob):
+                break
 
         # now compute the likelihood term. note that we'll have to take the log
         # of any logspace parameters before calling set_hyper.
-        if not np.isinf(nlogprob):
+        if not np.isinf(logprob):
             hyper[logged] = np.log(hyper[logged])
             gp.set_hyper(hyper)
-            nlogprob += gp.nloglikelihood()
+            logprob += gp.loglikelihood()
 
-        return -nlogprob
+        return logprob
 
-    # create a big list of the hyperparameters so that we can just assign to the
-    # components that are active. also get an initial sample x corresponding
-    # only to the active parts of hyper0.
+    # create a big list of the hyperparameters so that we can just assign to
+    # the components that are active. also get an initial sample x
+    # corresponding only to the active parts of hyper0.
     hypers = np.tile(hyper0, (n, 1))
     x = hyper0.copy()[active]
 
@@ -127,5 +131,7 @@ def sample(gp, priors, n):
     # make sure the gp gets updated to the last sampled hyperparameter.
     gp.set_hyper(hypers[-1])
 
-    # return the hyperparameter array
-    return hypers
+    if raw:
+        return hypers
+    else:
+        return [gp.copy(h) for h in hypers]

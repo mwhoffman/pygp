@@ -9,9 +9,9 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
-import abc
 
 # local imports
+from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized
 
 # exported symbols
@@ -22,8 +22,12 @@ class Likelihood(Parameterized):
     """
     Likelihood interface.
     """
-    @abc.abstractmethod
+    @abstractmethod
     def transform(self, y):
+        pass
+
+    @abstractmethod
+    def sample(self, f, rng=None):
         pass
 
 
