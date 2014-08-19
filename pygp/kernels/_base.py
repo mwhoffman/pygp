@@ -43,6 +43,9 @@ class Kernel(Parameterized):
     def __mul__(self, other):
         return ProductKernel(*_collapse(ProductKernel, self, other))
 
+    def __call__(self, x1, x2):
+        return self.get(x1[None], x2[None])[0]
+
     @abstractmethod
     def get(self, X1, X2=None):
         """

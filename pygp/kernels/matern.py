@@ -89,6 +89,10 @@ class Matern(RealKernel):
                             # derivative(s) wrt logell (ard)
                 yield np.where(D < 1e-12, 0, M*D_/D)
 
+                # FIXME: this still raises a warning when D is zero. This can
+                # easily be replicated by letting with X2=None, since then D
+                # will always be zero on the diagonal.
+
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
 
