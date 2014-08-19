@@ -87,11 +87,8 @@ class Matern(RealKernel):
         else:
             for D_ in sqdist_foreach(X1, X2):
                             # derivative(s) wrt logell (ard)
-                yield np.where(D < 1e-12, 0, M*D_/D)
-
-                # FIXME: this still raises a warning when D is zero. This can
-                # easily be replicated by letting with X2=None, since then D
-                # will always be zero on the diagonal.
+                with np.errstate(invalid='ignore'):
+                    yield np.where(D < 1e-12, 0, M*D_/D)
 
     def dget(self, X1):
         return np.exp(self._logsf*2) * np.ones(len(X1))
@@ -108,7 +105,8 @@ class Matern(RealKernel):
 
         D = np.sqrt(np.sum(D1**2, axis=-1))
         S = np.exp(self._logsf*2 - D)
-        M = np.where(D < 1e-12, 0, S * self._df(D) / D)
+        with np.errstate(invalid='ignore'):
+            M = np.where(D < 1e-12, 0, S * self._df(D) / D)
         G = -M[:, :, None] * D1 / ell
 
         return G
