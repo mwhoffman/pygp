@@ -73,13 +73,40 @@ class BaseKernelTest(object):
         g2 = [np.diag(_) for _ in self.kernel.grad(self.x1)]
         nt.assert_allclose(g1, g2)
 
-    # def test_gradx(self):
-    #     try:
-    #         G1 = self.kernel.gradx(self.x1, self.x2)
-    #         G2 = self._gradx(self.x1, self.x2)
-    #         nt.assert_allclose(G1, G2)
-    #     except NotImplementedError:
-    #         raise nose.SkipTest()
+    def test_gradx(self):
+        try:
+            G1 = self.kernel.gradx(self.x1, self.x2)
+        except NotImplementedError:
+            raise nose.SkipTest()
+
+        m = self.x1.shape[0]
+        n = self.x2.shape[0]
+        d = self.x1.shape[1]
+        k = self.kernel
+
+        G2 = np.array([spop.approx_fprime(x1, k, 1e-8, x2)
+                       for x1 in self.x1
+                       for x2 in self.x2]).reshape(m, n, d)
+
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+
+    def test_gradxy(self):
+        try:
+            G1 = self.kernel.gradxy(self.x1, self.x2)
+        except NotImplementedError:
+            raise nose.SkipTest()
+
+        m = self.x1.shape[0]
+        n = self.x2.shape[0]
+        d = self.x1.shape[1]
+        g = lambda x2, x1, i: self.kernel.gradx(x1[None], x2[None])[0, 0, i]
+
+        G2 = np.array([spop.approx_fprime(x2, g, 1e-8, x1, i)
+                       for x1 in self.x1
+                       for x2 in self.x2
+                       for i in xrange(d)]).reshape(m, n, d, d)
+
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
 
 
 #==============================================================================
