@@ -107,3 +107,32 @@ class SE(RealKernel):
         G = M * K[:, :, None, None]
 
         return G
+
+    def gradyxx(self, x1, x2=none):
+        ell = np.exp(self._logell)
+        x1, x2 = rescale(ell, x1, x2)
+        d = diff(x1, x2)
+        m, n, d = d.shape
+        lam = np.ones(d) / ell**2
+
+        # the k and m computed above. here we have the negative of the earlier
+        # m though. the first two indices correspond to the components of
+        # x1/x2.
+        k = np.exp(self._logsf*2 - np.sum(d**2, axis=-1)/2)
+        d /= ell
+        m = d[:, :, none] * d[:, :, :, none] - np.diag(lam)
+
+        # let i be the 3rd index which corresponds to the portion of y (i.e.
+        # x2) we're differentiating with respect to. let v be the corresponding
+        # vector in d[p,q]
+
+        # computes [lambda_i (e_i v' + v e_i')] for each block.
+        a = np.reshape(np.eye(d).flatten()[none,none,:,none] * d[:,:,none,:], (m,n,d,d,d))
+        a += a.swapaxes(-1,-2)
+        a *= lam[none,none,:,none,none]
+
+        # computes [v_i m - a_i] for each block.
+        w = m[:,:,none] * d[:,:,:,none,none] - a
+        g = k[:,:,none,none,none] * w
+
+        return g
