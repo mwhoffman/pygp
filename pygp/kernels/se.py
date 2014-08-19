@@ -90,12 +90,6 @@ class SE(RealKernel):
         W = rng.randn(N, self.ndim) / ell
         return W, sf2
 
-    # def get_local(self, x, X1, X2=None):
-    #     # FIXME! doesn't work for ard kernels.
-    #     ell = np.exp(self._logell*-2)
-    #     sf2 = np.exp(self._logsf*2)
-    #     return local_se(ell, sf2, 0.0, x, X1, X2)
-
     def gradxy(self, X1, X2=None):
         """
         Derivatives of the kernel with respect to both its first and second
@@ -105,30 +99,31 @@ class SE(RealKernel):
         ell = np.exp(self._logell)
         X1, X2 = rescale(ell, X1, X2)
         D = diff(X1, X2)
-        m, n, d = D.shape
+        _, _, d = D.shape
 
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
         D /= ell
-        M = np.eye(d)/ell**2 - D[:,:,None] * D[:,:,:,None]
-        G = M*K[:,:,None,None]
+        M = np.eye(d)/ell**2 - D[:, :, None] * D[:, :, :, None]
+        G = M * K[:, :, None, None]
 
         return G
 
     def gradyxx(self, X1, X2=None):
         ell = np.exp(self._logell)
-        lam = np.ones(d) / ell**2
         X1, X2 = rescale(ell, X1, X2)
         D = diff(X1, X2)
         m, n, d = D.shape
+        lam = np.ones(d) / ell**2
 
-        # the K and M computed above. here we have the negative of the earlier M
-        # though. the first two indices correspond to the components of X1/X2.
+        # the K and M computed above. here we have the negative of the earlier
+        # M though. the first two indices correspond to the components of
+        # X1/X2.
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
         D /= ell
-        M = D[:,:,None] * D[:,:,:,None] - np.diag(lam)
+        M = D[:, :, None] * D[:, :, :, None] - np.diag(lam)
 
-        # let i be the 3rd index which corresponds to the portion of y (i.e. x2)
-        # we're differentiating with respect to. Let v be the corresponding
+        # let i be the 3rd index which corresponds to the portion of y (i.e.
+        # x2) we're differentiating with respect to. Let v be the corresponding
         # vector in D[p,q]
 
         # computes [lambda_i (e_i v' + v e_i')] for each block.
