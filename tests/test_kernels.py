@@ -1,5 +1,5 @@
 """
-Implementation of the squared-exponential kernels.
+Kernel tests.
 """
 
 # future imports
@@ -10,215 +10,186 @@ from __future__ import print_function
 # global imports
 import numpy as np
 import numpy.testing as nt
+import scipy.optimize as spop
 import nose
-
-# theano imports
-import theano as T
-import theano.tensor as TT
 
 # pygp imports
 import pygp.kernels as pk
 
 
-#===============================================================================
-# definitions of various kernels in theano.
+#==============================================================================
+# base test class. children tests should initialize a kernel and two sets of
+# points x1 and x2 in their __init__ method.
 
-# each kernel will use the same symbolic vectors for the hyperparameters and the
-# inputs to the kernel. this is so we don't need to pass them around in order to
-# take derivatives.
-THETA = TT.vector('theta')
-X1 = TT.vector('x1')
-X2 = TT.vector('x2')
-
-
-def se(iso=False):
-    sf2 = TT.exp(THETA[0]*2)
-    ell = TT.exp(THETA[1] if iso else THETA[1:])
-    v = (X1-X2) / ell
-    k = sf2 * TT.exp(-0.5*TT.dot(v,v))
-    return k
-
-
-def periodic():
-    sf2 = TT.exp(THETA[0]*2)
-    ell = TT.exp(THETA[1])
-    p = TT.exp(THETA[2])
-    v = X1-X2
-    k = sf2 * TT.exp(-2*(TT.sin(TT.sqrt(TT.dot(v,v)) * np.pi / p) / ell)**2)
-    return k
-
-
-def rq(iso=False):
-    sf2 = TT.exp(THETA[0]*2)
-    ell = TT.exp(THETA[1] if iso else THETA[1:-1])
-    alpha = TT.exp(THETA[-1])
-    v = (X1-X2) / ell
-    k = sf2 * (1 + TT.dot(v,v)/2/alpha) ** (-alpha)
-    return k
-
-
-def matern(d, iso=False):
-    sf2 = TT.exp(THETA[0]*2)
-    ell = TT.exp(THETA[1] if iso else THETA[1:])
-    f = (lambda r: 1  )         if (d == 1) else \
-        (lambda r: 1+r)         if (d == 3) else \
-        (lambda r: 1+r*(1+r/3))
-    v = (X1-X2) / ell
-    r = np.sqrt(d) * TT.sqrt(TT.dot(v,v))
-    k = sf2 * f(r) * TT.exp(-r)
-    return k
-
-
-#===============================================================================
-# base test class. instances must have kernel, kfun, dhfun, and dxfun defined
-# where each of these evaluates the kernel from one element (or pair of
-# elements).
+# pylint: disable=no-member
+# pylint: disable=missing-docstring
 
 class BaseKernelTest(object):
-    def __init__(self):
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
-
-    def _get(self, x1, x2):
-        kfun = T.function([THETA, X1, X2], self.k, mode='FAST_COMPILE')
-        theta = self.kernel.get_hyper()
-        m = x1.shape[0]
-        n = x2.shape[0]
-        K = [kfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
-        K = np.array(K).reshape(m, n)
-        return K
-
-    def _grad(self, x1, x2):
-        dfun = T.function([THETA, X1, X2], T.grad(self.k, THETA), mode='FAST_COMPILE')
-        theta = self.kernel.get_hyper()
-        m = x1.shape[0]
-        n = x2.shape[0]
-        N = self.kernel.nhyper
-        G = [dfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
-        G = np.array(G).T.reshape(N, m, n)
-        return G
-
-    def _gradx(self, x1, x2):
-        dfun = T.function([THETA, X1, X2], T.grad(self.k, X1), mode='FAST_COMPILE')
-        theta = self.kernel.get_hyper()
-        m = x1.shape[0]
-        n = x2.shape[0]
-        d = x1.shape[1]
-        G = [dfun(theta, x1[i], x2[j]) for (i,j) in np.ndindex(m,n)]
-        G = np.array(G).reshape(m, n, d)
-        return G
-
-    def test_copy(self):
-        kernel = self.kernel.copy()
-        K1 = kernel.get(self.x1, self.x2)
-        K2 = self.kernel.get(self.x1, self.x2)
-        nt.assert_allclose(K1, K2)
-
-    def test_hyper(self):
-        kernel = self.kernel.copy()
-        kernel.set_hyper(kernel.get_hyper())
-        K1 = kernel.get(self.x1, self.x2)
-        K2 = self.kernel.get(self.x1, self.x2)
-        nt.assert_allclose(K1, K2)
-
     def test_get(self):
-        K1 = self.kernel.get(self.x1, self.x2)
-        K2 = self._get(self.x1, self.x2)
-        nt.assert_allclose(K1, K2)
-
-    def test_grad(self):
-        G1 = np.array(list(self.kernel.grad(self.x1, self.x2)))
-        G2 = self._grad(self.x1, self.x2)
-        nt.assert_allclose(G1, G2)
-
-    def test_gradx(self):
-        try:
-            G1 = self.kernel.gradx(self.x1, self.x2)
-            G2 = self._gradx(self.x1, self.x2)
-            nt.assert_allclose(G1, G2)
-        except NotImplementedError:
-            raise nose.SkipTest()
+        _ = self.kernel.get(self.x1, self.x2)
 
     def test_dget(self):
-        k1 = self.kernel.dget(self.x1)
-        k2 = np.diag(self.kernel.get(self.x1))
-        nt.assert_allclose(k1, k2)
+        _ = self.kernel.dget(self.x1)
 
-    def test_dgrad(self):
-        g1 = list(self.kernel.dgrad(self.x1))
-        g2 = map(np.diag, list(self.kernel.grad(self.x1)))
-        nt.assert_allclose(g1, g2)
+    def test_copy(self):
+        _ = self.kernel.copy()
+
+    def test_hyper(self):
+        K1 = self.kernel.get(self.x1, self.x2)
+        K2 = self.kernel.copy(self.kernel.get_hyper()).get(self.x1, self.x2)
+        nt.assert_allclose(K1, K2)
 
     def test_transpose(self):
         K1 = self.kernel.get(self.x1, self.x2)
         K2 = self.kernel.get(self.x2, self.x1).T
-        nt.assert_allclose(K1, K2)
         G1 = np.array(list(self.kernel.grad(self.x1, self.x2)))
-        G2 = np.array(list(self.kernel.grad(self.x2, self.x1))).swapaxes(1,2)
+        G2 = np.array(list(self.kernel.grad(self.x2, self.x1))).swapaxes(1, 2)
+        nt.assert_allclose(K1, K2)
         nt.assert_allclose(G1, G2)
 
     def test_self(self):
         K1 = self.kernel.get(self.x1)
         K2 = self.kernel.get(self.x1, self.x1)
-        nt.assert_allclose(K1, K2)
         G1 = np.array(list(self.kernel.grad(self.x1)))
         G2 = np.array(list(self.kernel.grad(self.x1, self.x1)))
+        nt.assert_allclose(K1, K2)
         nt.assert_allclose(G1, G2)
 
+    def test_grad(self):
+        x = self.kernel.get_hyper()
+        k = lambda x, x1, x2: self.kernel.copy(x)(x1, x2)
 
-#===============================================================================
+        G1 = np.array(list(self.kernel.grad(self.x1, self.x2)))
+        G2 = np.array([spop.approx_fprime(x, k, 1e-8, x1, x2)
+                       for x1 in self.x1
+                       for x2 in self.x2])\
+            .swapaxes(0, 1)\
+            .reshape(-1, self.x1.shape[0], self.x2.shape[0])
+
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+
+    def test_dgrad(self):
+        g1 = list(self.kernel.dgrad(self.x1))
+        g2 = [np.diag(_) for _ in self.kernel.grad(self.x1)]
+        nt.assert_allclose(g1, g2)
+
+    def test_gradx(self):
+        try:
+            G1 = self.kernel.gradx(self.x1, self.x2)
+        except NotImplementedError:
+            raise nose.SkipTest()
+
+        m = self.x1.shape[0]
+        n = self.x2.shape[0]
+        d = self.x1.shape[1]
+        k = self.kernel
+
+        G2 = np.array([spop.approx_fprime(x1, k, 1e-8, x2)
+                       for x1 in self.x1
+                       for x2 in self.x2]).reshape(m, n, d)
+
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+
+    def test_gradxy(self):
+        try:
+            G1 = self.kernel.gradxy(self.x1, self.x2)
+        except NotImplementedError:
+            raise nose.SkipTest()
+
+        m = self.x1.shape[0]
+        n = self.x2.shape[0]
+        d = self.x1.shape[1]
+        g = lambda x2, x1, i: self.kernel.gradx(x1[None], x2[None])[0, 0, i]
+
+        G2 = np.array([spop.approx_fprime(x2, g, 1e-8, x1, i)
+                       for x1 in self.x1
+                       for x2 in self.x2
+                       for i in xrange(d)]).reshape(m, n, d, d)
+
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+
+
+#==============================================================================
 # Test classes.
 
+# set the random seed to something so that we know we're testing arbitrary
+# points, but the randomness will not make the tests fail between runs due to
+# different levels of accuracy for different points.
+np.random.seed(0)
+
+
 class TestSEARD(BaseKernelTest):
-    k = se()
-    kernel = pk.SE(0.8, [0.3, 0.4])
+    def __init__(self):
+        self.kernel = pk.SE(0.8, [0.3, 0.4])
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestSEIso(BaseKernelTest):
-    k = se(iso=True)
-    kernel = pk.SE(0.8, 0.3, ndim=2)
+    def __init__(self):
+        self.kernel = pk.SE(0.8, 0.3, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestPeriodic(BaseKernelTest):
-    k = periodic()
-    kernel = pk.Periodic(0.5, 0.4, 0.3)
+    def __init__(self):
+        self.kernel = pk.Periodic(0.5, 0.4, 0.3)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestRQARD(BaseKernelTest):
-    k = rq()
-    kernel = pk.RQ(0.5, [0.4, 0.5], 0.3)
+    def __init__(self):
+        self.kernel = pk.RQ(0.5, [0.4, 0.5], 0.3)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestRQIso(BaseKernelTest):
-    k = rq(iso=True)
-    kernel = pk.RQ(0.5, 0.4, 0.3, ndim=2)
+    def __init__(self):
+        self.kernel = pk.RQ(0.5, 0.4, 0.3, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestMaternARD1(BaseKernelTest):
-    k = matern(1)
-    kernel = pk.Matern(0.5, [0.4, 0.3], d=1)
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, [0.4, 0.3], d=1)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestMaternARD3(BaseKernelTest):
-    k = matern(3)
-    kernel = pk.Matern(0.5, [0.4, 0.3], d=3)
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, [0.4, 0.3], d=3)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestMaternARD5(BaseKernelTest):
-    k = matern(5)
-    kernel = pk.Matern(0.5, [0.4, 0.3], d=5)
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, [0.4, 0.3], d=5)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestMaternIso1(BaseKernelTest):
-    k = matern(1, iso=True)
-    kernel = pk.Matern(0.5, 0.4, d=1, ndim=2)
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, 0.4, d=1, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestMaternIso3(BaseKernelTest):
-    k = matern(3, iso=True)
-    kernel = pk.Matern(0.5, 0.4, d=3, ndim=2)
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, 0.4, d=3, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
 class TestMaternIso5(BaseKernelTest):
-    k = matern(5, iso=True)
-    kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)

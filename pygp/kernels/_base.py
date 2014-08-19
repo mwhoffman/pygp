@@ -43,6 +43,9 @@ class Kernel(Parameterized):
     def __mul__(self, other):
         return ProductKernel(*_collapse(ProductKernel, self, other))
 
+    def __call__(self, x1, x2):
+        return self.get(x1[None], x2[None])[0]
+
     @abstractmethod
     def get(self, X1, X2=None):
         """
@@ -206,6 +209,15 @@ class RealKernel(Kernel):
         Derivatives of the kernel with respect to its first argument. This
         corresponds to the covariance between the function gradient at X1 and
         the function evaluated at X2. Returns an (m,n,d)-array.
+        """
+        pass
+
+    @abstractmethod
+    def gradxy(self, X1, X2=None):
+        """
+        Derivatives of the kernel with respect to both its first and second
+        arguments. This corresponds to the covariance between gradient values
+        evaluated at X1 and at X2. Returns an (m,n,d,d)-array.
         """
         pass
 
