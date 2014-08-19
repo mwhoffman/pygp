@@ -95,5 +95,8 @@ class RQ(RealKernel):
     def gradx(self, X1, X2=None):
         raise NotImplementedError
 
+    def gradxy(self, X1, X2=None):
+        raise NotImplementedError
+
     def sample_spectrum(self, N, rng=None):
         raise NotImplementedError

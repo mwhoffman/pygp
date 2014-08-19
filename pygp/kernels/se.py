@@ -83,19 +83,7 @@ class SE(RealKernel):
         G = -K[:, :, None] * D / ell
         return G
 
-    def sample_spectrum(self, N, rng=None):
-        rng = rstate(rng)
-        sf2 = np.exp(self._logsf*2)
-        ell = np.exp(self._logell)
-        W = rng.randn(N, self.ndim) / ell
-        return W, sf2
-
     def gradxy(self, X1, X2=None):
-        """
-        Derivatives of the kernel with respect to both its first and second
-        arguments. This corresponds to the covariance between gradients values
-        evaluated at X1 and at X2. Returns an (m,n,d,d)-array.
-        """
         ell = np.exp(self._logell)
         X1, X2 = rescale(ell, X1, X2)
         D = diff(X1, X2)
@@ -107,3 +95,10 @@ class SE(RealKernel):
         G = M * K[:, :, None, None]
 
         return G
+
+    def sample_spectrum(self, N, rng=None):
+        rng = rstate(rng)
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        W = rng.randn(N, self.ndim) / ell
+        return W, sf2

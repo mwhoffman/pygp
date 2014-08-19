@@ -109,6 +109,9 @@ class Matern(RealKernel):
 
         return G
 
+    def gradxy(self, X1, X2=None):
+        raise NotImplementedError
+
     def sample_spectrum(self, N, rng=None):
         rng = rstate(rng)
         sf2 = np.exp(self._logsf*2)

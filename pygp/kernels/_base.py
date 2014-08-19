@@ -210,6 +210,15 @@ class RealKernel(Kernel):
         pass
 
     @abstractmethod
+    def gradxy(self, X1, X2=None):
+        """
+        Derivatives of the kernel with respect to both its first and second
+        arguments. This corresponds to the covariance between gradient values
+        evaluated at X1 and at X2. Returns an (m,n,d,d)-array.
+        """
+        pass
+
+    @abstractmethod
     def sample_spectrum(self, N, rng=None):
         """
         Sample N values from the spectral density of the kernel, returning a
