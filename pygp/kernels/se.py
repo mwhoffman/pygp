@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ._base import RealKernel
+from ._real import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 from ..utils.random import rstate

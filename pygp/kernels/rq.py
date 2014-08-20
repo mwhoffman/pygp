@@ -11,9 +11,9 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
+from ._real import RealKernel
 from ..utils.models import printable
 from ._distances import rescale, sqdist, sqdist_foreach
-from ._base import RealKernel
 
 # exported symbols
 __all__ = ['RQ']
