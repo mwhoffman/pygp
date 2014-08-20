@@ -209,9 +209,17 @@ class TestMaternIso5(BaseKernelTest):
         self.x2 = np.random.rand(3, self.kernel.ndim)
 
 
-# class TestSum(BaseKernelTest):
-#     def __init__(self):
-#         self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
-#         self.kernel += pk.SE(0.8, 0.3, ndim=2)
-#         self.x1 = np.random.rand(5, self.kernel.ndim)
-#         self.x2 = np.random.rand(3, self.kernel.ndim)
+class TestRealSum(BaseKernelTest):
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
+        self.kernel += pk.SE(0.8, 0.3, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
+
+
+class TestRealProduct(BaseKernelTest):
+    def __init__(self):
+        self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
+        self.kernel *= pk.SE(0.8, 0.3, ndim=2)
+        self.x1 = np.random.rand(5, self.kernel.ndim)
+        self.x2 = np.random.rand(3, self.kernel.ndim)
