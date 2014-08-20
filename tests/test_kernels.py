@@ -24,7 +24,7 @@ import pygp.kernels as pk
 # pylint: disable=no-member
 # pylint: disable=missing-docstring
 
-class BaseKernelTest(object):
+class KernelTest(object):
     def test_get(self):
         _ = self.kernel.get(self.x1, self.x2)
 
@@ -78,6 +78,14 @@ class BaseKernelTest(object):
         g2 = [np.diag(_) for _ in self.kernel.grad(self.x1)]
         nt.assert_allclose(g1, g2)
 
+
+class RealKernelTest(KernelTest):
+    def __init__(self, kernel):
+        self.kernel = kernel
+        rng = np.random.RandomState(0)
+        self.x1 = rng.rand(5, self.kernel.ndim)
+        self.x2 = rng.rand(3, self.kernel.ndim)
+
     def test_gradx(self):
         try:
             G1 = self.kernel.gradx(self.x1, self.x2)
@@ -126,100 +134,70 @@ class BaseKernelTest(object):
 #==============================================================================
 # Test classes.
 
-# set the random seed to something so that we know we're testing arbitrary
-# points, but the randomness will not make the tests fail between runs due to
-# different levels of accuracy for different points.
-np.random.seed(0)
-
-
-class TestSEARD(BaseKernelTest):
+class TestSEARD(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.SE(0.8, [0.3, 0.4])
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.SE(0.8, [0.3, 0.4]))
 
 
-class TestSEIso(BaseKernelTest):
+class TestSEIso(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.SE(0.8, 0.3, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.SE(0.8, 0.3, ndim=2))
 
 
-class TestPeriodic(BaseKernelTest):
+class TestPeriodic(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Periodic(0.5, 0.4, 0.3)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Periodic(0.5, 0.4, 0.3))
 
 
-class TestRQARD(BaseKernelTest):
+class TestRQARD(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.RQ(0.5, [0.4, 0.5], 0.3)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.RQ(0.5, [0.4, 0.5], 0.3))
 
 
-class TestRQIso(BaseKernelTest):
+class TestRQIso(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.RQ(0.5, 0.4, 0.3, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.RQ(0.5, 0.4, 0.3, ndim=2))
 
 
-class TestMaternARD1(BaseKernelTest):
+class TestMaternARD1(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, [0.4, 0.3], d=1)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Matern(0.5, [0.4, 0.3], d=1))
 
 
-class TestMaternARD3(BaseKernelTest):
+class TestMaternARD3(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, [0.4, 0.3], d=3)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Matern(0.5, [0.4, 0.3], d=3))
 
 
-class TestMaternARD5(BaseKernelTest):
+class TestMaternARD5(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, [0.4, 0.3], d=5)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Matern(0.5, [0.4, 0.3], d=5))
 
 
-class TestMaternIso1(BaseKernelTest):
+class TestMaternIso1(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, 0.4, d=1, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Matern(0.5, 0.4, d=1, ndim=2))
 
 
-class TestMaternIso3(BaseKernelTest):
+class TestMaternIso3(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, 0.4, d=3, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Matern(0.5, 0.4, d=3, ndim=2))
 
 
-class TestMaternIso5(BaseKernelTest):
+class TestMaternIso5(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self, pk.Matern(0.5, 0.4, d=5, ndim=2))
 
 
-class TestRealSum(BaseKernelTest):
+class TestRealSum(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
-        self.kernel += pk.SE(0.8, 0.3, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self,
+                                pk.Matern(0.5, 0.4, d=5, ndim=2) +
+                                pk.SE(0.8, 0.3, ndim=2))
 
 
-class TestRealProduct(BaseKernelTest):
+class TestRealProduct(RealKernelTest):
     def __init__(self):
-        self.kernel = pk.Matern(0.5, 0.4, d=5, ndim=2)
-        self.kernel *= pk.SE(0.8, 0.3, ndim=2)
-        self.x1 = np.random.rand(5, self.kernel.ndim)
-        self.x2 = np.random.rand(3, self.kernel.ndim)
+        RealKernelTest.__init__(self,
+                                pk.Matern(0.5, 0.4, d=5, ndim=2) *
+                                pk.SE(0.8, 0.3, ndim=2))
