@@ -12,8 +12,15 @@ import numpy as np
 
 # local imports
 from ._base import Kernel
-from ._combo import SumKernel, ProductKernel, combine
 from ..utils.abc import abstractmethod
+
+# import the generic sum/product kernels and change their names. We'll call the
+# real-valued versions SumKernel and ProductKernel as well since they really
+# shouldn't be used outside of this module anyway.
+from ._combo import SumKernel as SumKernel_
+from ._combo import ProductKernel as ProductKernel_
+from ._combo import combine
+from ._combo import grad_product
 
 # exported symbols
 __all__ = ['RealKernel']
@@ -23,10 +30,10 @@ class RealKernel(Kernel):
     """Kernel whose inputs are real-valued vectors."""
 
     def __add__(self, other):
-        return RealSumKernel(*combine(RealSumKernel, self, other))
+        return SumKernel(*combine(SumKernel, self, other))
 
     def __mul__(self, other):
-        return RealProductKernel(*combine(RealProductKernel, self, other))
+        return ProductKernel(*combine(ProductKernel, self, other))
 
     def transform(self, X):
         return np.array(X, ndmin=2, dtype=float, copy=False)
@@ -56,7 +63,7 @@ class RealKernel(Kernel):
         """
 
 
-class RealSumKernel(RealKernel, SumKernel):
+class SumKernel(RealKernel, SumKernel_):
     def __init__(self, *parts):
         combinable = (all(isinstance(_, RealKernel) for _ in parts) and
                       all(_.ndim == parts[0].ndim for _ in parts))
@@ -64,7 +71,7 @@ class RealSumKernel(RealKernel, SumKernel):
         if not combinable:
             raise ValueError('cannot add mismatched kernels')
 
-        super(RealSumKernel, self).__init__(*parts)
+        super(SumKernel, self).__init__(*parts)
         self.ndim = self._parts[0].ndim
 
     def gradx(self, X1, X2=None):
@@ -77,7 +84,7 @@ class RealSumKernel(RealKernel, SumKernel):
         raise NotImplementedError
 
 
-class RealProductKernel(RealKernel, ProductKernel):
+class ProductKernel(RealKernel, ProductKernel_):
     def __init__(self, *parts):
         combinable = (all(isinstance(_, RealKernel) for _ in parts) and
                       all(_.ndim == parts[0].ndim for _ in parts))
@@ -85,7 +92,7 @@ class RealProductKernel(RealKernel, ProductKernel):
         if not combinable:
             raise ValueError('cannot multiply mismatched kernels')
 
-        super(RealProductKernel, self).__init__(*parts)
+        super(ProductKernel, self).__init__(*parts)
         self.ndim = self._parts[0].ndim
 
     def gradx(self, X1, X2=None):
