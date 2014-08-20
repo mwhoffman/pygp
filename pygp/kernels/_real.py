@@ -11,8 +11,9 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ..utils.abc import abstractmethod
 from ._base import Kernel
+from ._combo import SumKernel, ProductKernel, combine
+from ..utils.abc import abstractmethod
 
 # exported symbols
 __all__ = ['RealKernel']
@@ -20,6 +21,12 @@ __all__ = ['RealKernel']
 
 class RealKernel(Kernel):
     """Kernel whose inputs are real-valued vectors."""
+
+    def __add__(self, other):
+        return RealSumKernel(*combine(RealSumKernel, self, other))
+
+    def __mul__(self, other):
+        return RealProductKernel(*combine(RealProductKernel, self, other))
 
     def transform(self, X):
         return np.array(X, ndmin=2, dtype=float, copy=False)
@@ -50,3 +57,25 @@ class RealKernel(Kernel):
         normalizing constant.
         """
         pass
+
+
+class RealSumKernel(RealKernel, SumKernel):
+    def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def gradxy(self, X1, X2=None):
+        raise NotImplementedError
+
+    def sample_spectrum(self, N, rng=None):
+        raise NotImplementedError
+
+
+class RealProductKernel(RealKernel, ProductKernel):
+    def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def gradxy(self, X1, X2=None):
+        raise NotImplementedError
+
+    def sample_spectrum(self, N, rng=None):
+        raise NotImplementedError
