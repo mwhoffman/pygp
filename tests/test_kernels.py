@@ -199,24 +199,24 @@ class TestMaternIso5(RealKernelTest):
 class TestRealSum(RealKernelTest):
     def __init__(self):
         RealKernelTest.__init__(self,
-                                pk.Matern(0.5, 0.4, d=5, ndim=2) +
-                                pk.SE(0.8, 0.3, ndim=2))
+                                pk.SE(0.8, 0.3, ndim=2) +
+                                pk.SE(0.1, 0.2, ndim=2))
 
 
 class TestRealProduct(RealKernelTest):
     def __init__(self):
         RealKernelTest.__init__(self,
-                                pk.Matern(0.5, 0.4, d=5, ndim=2) *
-                                pk.SE(0.8, 0.3, ndim=2))
+                                pk.SE(0.8, 0.3, ndim=2) *
+                                pk.SE(0.1, 0.2, ndim=2))
 
 
 class TestRealSumProduct(RealKernelTest):
     def __init__(self):
         RealKernelTest.__init__(self,
-                                pk.Matern(0.5, 0.4, d=5, ndim=2) *
-                                pk.SE(0.8, 0.3, ndim=2) +
-                                pk.Matern(0.5, 0.4, d=5, ndim=2) *
-                                pk.SE(0.8, 0.3, ndim=2))
+                                pk.SE(0.8, 0.3, ndim=2) *
+                                pk.SE(0.1, 0.2, ndim=2) +
+                                pk.SE(0.8, 0.3, ndim=2) *
+                                pk.SE(0.1, 0.2, ndim=2))
 
 
 ### INITIALIZATION TESTS ######################################################

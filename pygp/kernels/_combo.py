@@ -9,15 +9,71 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+import itertools as it
+import functools as ft
+import operator as op
 
 # local imports
 from ._base import Kernel
 from ..utils.models import dot_params
-from ..utils.iters import product, grad_sum, grad_product
 
 # exported symbols
 __all__ = ['ComboKernel', 'SumKernel', 'ProductKernel', 'combine']
 
+
+### HELPER METHODS ############################################################
+
+def product(fiterable):
+    """
+    The equivalent object to sum but for products.
+    """
+    return ft.reduce(op.mul, fiterable, 1)
+
+
+def grad_sum(giterable):
+    """
+    Return an iterator over gradients of a sum of functions.
+
+    Let f(x) = f1(x1) + f2(x2) + ... + fn(x2) define a function and let
+    `giterable` be an iterable object of length n such that the ith component
+    contains an iterator over the derivatives of fi with respect to xi. This
+    returns an iterator over the derivatives wrt x = [x1 ... xn].
+    """
+    return it.chain.from_iterable(giterable)
+
+
+def grad_product(fiterable, giterable):
+    """
+    Return an iterator over gradients of a product of functions.
+
+    Let f(x) = f1(x1) * f2(x2) * ... * fn(x2) define a function and let
+    `giterable` be an iterable object of length n such that the ith component
+    contains an iterator over the derivatives of fi with respect to xi. This
+    returns an iterator over the derivatives wrt x = [x1 ... xn].
+    """
+    A = list(fiterable)
+
+    # allocate memory for M and fill everything but the last element with
+    # the product of A[i+1:]. Note that we're using the cumprod in place.
+    M = np.empty_like(A)
+    np.cumprod(A[:0:-1], axis=0, out=M[:-1][::-1])
+
+    # use an explicit loop to iteratively set M[-1] equal to the product of
+    # A[:-1]. While doing this we can multiply M[i] by A[:i].
+    M[-1] = A[0]
+    for i in xrange(1, len(A)-1):
+        M[i] *= M[-1]
+        M[-1] *= A[i]
+
+    # NOTE: it should now hold that M[i] is the product of every model
+    # evaluation EXCEPT for the ith one.
+
+    for Mi, grads in zip(M, giterable):
+        for dM in grads:
+            yield Mi*dM
+
+
+### GENERAL COMBINATION KERNEL ################################################
 
 class ComboKernel(Kernel):
     """
@@ -63,6 +119,8 @@ class ComboKernel(Kernel):
             a = b
 
 
+### SUM AND PRODUCT KERNELS ###################################################
+
 class SumKernel(ComboKernel):
     """Kernel representing a sum of other kernels."""
 
@@ -104,6 +162,8 @@ class ProductKernel(ComboKernel):
         giterable = (p.dgrad(X) for p in self._parts)
         return grad_product(fiterable, giterable)
 
+
+### HELPER FOR ASSOCIATIVE OPERATIONS #########################################
 
 def combine(cls, *parts):
     """

@@ -68,10 +68,10 @@ class RealSumKernel(RealKernel, SumKernel):
         self.ndim = self._parts[0].ndim
 
     def gradx(self, X1, X2=None):
-        raise NotImplementedError
+        return sum(p.gradx(X1, X2) for p in self._parts)
 
     def gradxy(self, X1, X2=None):
-        raise NotImplementedError
+        return sum(p.gradxy(X1, X2) for p in self._parts)
 
     def sample_spectrum(self, N, rng=None):
         raise NotImplementedError
