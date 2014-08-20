@@ -2,6 +2,9 @@
 Kernel tests.
 """
 
+# pylint: disable=no-member
+# pylint: disable=missing-docstring
+
 # future imports
 from __future__ import division
 from __future__ import absolute_import
@@ -12,24 +15,20 @@ import numpy as np
 import numpy.testing as nt
 import scipy.optimize as spop
 import nose
+import operator as op
 
 # pygp imports
 import pygp.kernels as pk
 
 
-#==============================================================================
-# base test class. children tests should initialize a kernel and two sets of
-# points x1 and x2 in their __init__ method.
+### BASE TEST CLASS ###########################################################
 
-# pylint: disable=no-member
-# pylint: disable=missing-docstring
+# children tests should initialize a kernel and two sets of points x1 and x2 in
+# their __init__ method.
 
 class KernelTest(object):
-    def test_get(self):
-        _ = self.kernel.get(self.x1, self.x2)
-
-    def test_dget(self):
-        _ = self.kernel.dget(self.x1)
+    def test_repr(self):
+        _ = repr(self.kernel)
 
     def test_params(self):
         params = self.kernel._params()
@@ -40,9 +39,16 @@ class KernelTest(object):
         _ = self.kernel.copy()
 
     def test_hyper(self):
-        K1 = self.kernel.get(self.x1, self.x2)
-        K2 = self.kernel.copy(self.kernel.get_hyper()).get(self.x1, self.x2)
-        nt.assert_allclose(K1, K2)
+        hyper1 = self.kernel.get_hyper()
+        self.kernel.set_hyper(self.kernel.get_hyper())
+        hyper2 = self.kernel.get_hyper()
+        nt.assert_allclose(hyper1, hyper2)
+
+    def test_get(self):
+        _ = self.kernel.get(self.x1, self.x2)
+
+    def test_dget(self):
+        _ = self.kernel.dget(self.x1)
 
     def test_transpose(self):
         K1 = self.kernel.get(self.x1, self.x2)
@@ -78,6 +84,8 @@ class KernelTest(object):
         g2 = [np.diag(_) for _ in self.kernel.grad(self.x1)]
         nt.assert_allclose(g1, g2)
 
+
+### REAL KERNEL TEST CLASS ####################################################
 
 class RealKernelTest(KernelTest):
     def __init__(self, kernel):
@@ -131,8 +139,7 @@ class RealKernelTest(KernelTest):
         assert W.shape[0] == 100
 
 
-#==============================================================================
-# Test classes.
+### PER KERNEL TESTS ##########################################################
 
 class TestSEARD(RealKernelTest):
     def __init__(self):
@@ -201,3 +208,47 @@ class TestRealProduct(RealKernelTest):
         RealKernelTest.__init__(self,
                                 pk.Matern(0.5, 0.4, d=5, ndim=2) *
                                 pk.SE(0.8, 0.3, ndim=2))
+
+
+class TestRealSumProduct(RealKernelTest):
+    def __init__(self):
+        RealKernelTest.__init__(self,
+                                pk.Matern(0.5, 0.4, d=5, ndim=2) *
+                                pk.SE(0.8, 0.3, ndim=2) +
+                                pk.Matern(0.5, 0.4, d=5, ndim=2) *
+                                pk.SE(0.8, 0.3, ndim=2))
+
+
+### INITIALIZATION TESTS ######################################################
+
+# the following tests attempt to initialize a few kernels with invalid
+# parameters, each of which should raise an exception.
+
+def test_init_sum():
+    k1 = pk.SE(1, 1, ndim=1)
+    k2 = pk.SE(1, 1, ndim=2)
+    nt.assert_raises(ValueError, op.add, k1, k2)
+
+
+def test_init_product():
+    k1 = pk.SE(1, 1, ndim=1)
+    k2 = pk.SE(1, 1, ndim=2)
+    nt.assert_raises(ValueError, op.mul, k1, k2)
+
+
+def test_init_ard():
+    def check_ard(Kernel, args):
+        nt.assert_raises(ValueError, Kernel, *args, ndim=1)
+
+    kernel_args = [
+        (pk.SE, (1, [1, 1])),
+        (pk.Matern, (1, [1, 1])),
+        (pk.RQ, (1, [1, 1], 1))
+    ]
+
+    for Kernel, args in kernel_args:
+        yield check_ard, Kernel, args
+
+
+def test_init_matern():
+    nt.assert_raises(ValueError, pk.Matern, 1, 1, d=12)

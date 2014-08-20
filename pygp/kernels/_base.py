@@ -7,9 +7,6 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-# global imports
-import numpy as np
-
 # local imports
 from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized
@@ -36,12 +33,10 @@ class Kernel(Parameterized):
         `X2` is not given this will return the pairwise covariances between
         points in `X1`.
         """
-        pass
 
     @abstractmethod
     def dget(self, X):
         """Evaluate the self covariances."""
-        pass
 
     @abstractmethod
     def grad(self, X1, X2=None):
@@ -52,14 +47,11 @@ class Kernel(Parameterized):
         points in `X1` and `X2`. If `X2` is not given this will iterate over
         the the gradients of the pairwise covariances.
         """
-        pass
 
     @abstractmethod
     def dgrad(self, X):
         """Evaluate the gradients of the self covariances."""
-        pass
 
     @abstractmethod
     def transform(self, X):
         """Format the inputs X as arrays."""
-        pass

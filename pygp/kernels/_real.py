@@ -38,7 +38,6 @@ class RealKernel(Kernel):
         corresponds to the covariance between the function gradient at X1 and
         the function evaluated at X2. Returns an (m,n,d)-array.
         """
-        pass
 
     @abstractmethod
     def gradxy(self, X1, X2=None):
@@ -47,7 +46,6 @@ class RealKernel(Kernel):
         arguments. This corresponds to the covariance between gradient values
         evaluated at X1 and at X2. Returns an (m,n,d,d)-array.
         """
-        pass
 
     @abstractmethod
     def sample_spectrum(self, N, rng=None):
@@ -56,7 +54,6 @@ class RealKernel(Kernel):
         set of weights W of size (n,d) and a scalar value representing the
         normalizing constant.
         """
-        pass
 
 
 class RealSumKernel(RealKernel, SumKernel):
@@ -65,7 +62,7 @@ class RealSumKernel(RealKernel, SumKernel):
                       all(_.ndim == parts[0].ndim for _ in parts))
 
         if not combinable:
-            raise Exception('cannot add mismatched kernels')
+            raise ValueError('cannot add mismatched kernels')
 
         super(RealSumKernel, self).__init__(*parts)
         self.ndim = self._parts[0].ndim
@@ -86,7 +83,7 @@ class RealProductKernel(RealKernel, ProductKernel):
                       all(_.ndim == parts[0].ndim for _ in parts))
 
         if not combinable:
-            raise Exception('cannot add mismatched kernels')
+            raise ValueError('cannot multiply mismatched kernels')
 
         super(RealProductKernel, self).__init__(*parts)
         self.ndim = self._parts[0].ndim
