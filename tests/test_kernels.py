@@ -31,6 +31,11 @@ class BaseKernelTest(object):
     def test_dget(self):
         _ = self.kernel.dget(self.x1)
 
+    def test_params(self):
+        params = self.kernel._params()
+        assert all(2 <= len(p) <= 3 for p in params)
+        assert sum(p[1] for p in params) == self.kernel.nhyper
+
     def test_copy(self):
         _ = self.kernel.copy()
 
@@ -107,6 +112,15 @@ class BaseKernelTest(object):
                        for i in xrange(d)]).reshape(m, n, d, d)
 
         nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+
+    def test_spectrum(self):
+        try:
+            W, alpha = self.kernel.sample_spectrum(100)
+        except NotImplementedError:
+            raise nose.SkipTest()
+
+        assert np.isscalar(alpha)
+        assert W.shape[0] == 100
 
 
 #==============================================================================
