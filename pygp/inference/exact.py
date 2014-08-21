@@ -102,7 +102,7 @@ class ExactGP(GP):
 
         return (mu, s2, dmu, ds2)
 
-    def loglikelihood(self, n=np.inf, grad=False):
+    def loglikelihood(self, grad=False, n=np.inf):
         """
         Compute the log likelihood of last `n` data points conditioned on the
         rest of the observations.

@@ -43,7 +43,7 @@ class SMC(object):
     def _update(self, n=1):
         # weights are given on page 5 of (Gramacy & Polson, 2010) derived from Eq. 31
         # in (Del Moral et al., 2006)
-        self._weights *= np.array([model.loglikelihood(n)
+        self._weights *= np.array([model.loglikelihood(n=n)
                                    for model in self._samples])
 
         weights = self._weights / self._weights.sum()
@@ -53,7 +53,7 @@ class SMC(object):
 
         # propagate particles according to MCMC kernel (1 step) as per Eq. 30 in
         # (Del Moral et al., 2006)
-        self._samples = [sample(model, self._prior, 1, self._burn, raw=False)[-1]
+        self._samples = [sample(model, self._prior, self._burn+1, raw=False)[-1]
                          for model in self._samples]
 
         self._model = self._samples[-1]
