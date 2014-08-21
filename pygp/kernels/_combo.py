@@ -46,10 +46,16 @@ def grad_product(fiterable, giterable):
     """
     Return an iterator over gradients of a product of functions.
 
-    Let f(x) = f1(x1) * f2(x2) * ... * fn(x2) define a function and let
-    `giterable` be an iterable object of length n such that the ith component
-    contains an iterator over the derivatives of fi with respect to xi. This
-    returns an iterator over the derivatives wrt x = [x1 ... xn].
+    Let f(x) = f1(x1) * f2(x2) * ... * fn(x2) define a function and where
+
+      - `fiterable` is an iterable object of length n whose ith component is
+        the evaluation of fi(xi).
+
+      - `giterable` is an iterable object of length n whose ith component
+        contains an iterator over the derivatives of fi with respect to xi.
+
+    Return an iterator over the derivatives of f(x) where each component is the
+    derivative with respect to xij.
     """
     A = list(fiterable)
 

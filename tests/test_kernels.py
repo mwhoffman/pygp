@@ -200,6 +200,7 @@ class TestRealSum(RealKernelTest):
     def __init__(self):
         RealKernelTest.__init__(self,
                                 pk.SE(0.8, 0.3, ndim=2) +
+                                pk.SE(0.1, 0.2, ndim=2) +
                                 pk.SE(0.1, 0.2, ndim=2))
 
 
@@ -207,6 +208,7 @@ class TestRealProduct(RealKernelTest):
     def __init__(self):
         RealKernelTest.__init__(self,
                                 pk.SE(0.8, 0.3, ndim=2) *
+                                pk.SE(0.1, 0.2, ndim=2) *
                                 pk.SE(0.1, 0.2, ndim=2))
 
 

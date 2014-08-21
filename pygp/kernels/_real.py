@@ -63,12 +63,21 @@ class RealKernel(Kernel):
         """
 
 
-class SumKernel(RealKernel, SumKernel_):
-    def __init__(self, *parts):
-        combinable = (all(isinstance(_, RealKernel) for _ in parts) and
-                      all(_.ndim == parts[0].ndim for _ in parts))
+def _can_combine(*parts):
+    """
+    Return whether a set of real-valued kernels can be combined. Here this
+    requires them to all be RealKernel objects and have the same number of
+    input dimensions.
+    """
+    return (all(isinstance(_, RealKernel) for _ in parts) and
+            all(_.ndim == parts[0].ndim for _ in parts))
 
-        if not combinable:
+
+class SumKernel(RealKernel, SumKernel_):
+    """A sum of real-valued kernels."""
+
+    def __init__(self, *parts):
+        if not _can_combine(*parts):
             raise ValueError('cannot add mismatched kernels')
 
         super(SumKernel, self).__init__(*parts)
@@ -85,18 +94,19 @@ class SumKernel(RealKernel, SumKernel_):
 
 
 class ProductKernel(RealKernel, ProductKernel_):
-    def __init__(self, *parts):
-        combinable = (all(isinstance(_, RealKernel) for _ in parts) and
-                      all(_.ndim == parts[0].ndim for _ in parts))
+    """A product of real-valued kernels."""
 
-        if not combinable:
+    def __init__(self, *parts):
+        if not _can_combine(*parts):
             raise ValueError('cannot multiply mismatched kernels')
 
         super(ProductKernel, self).__init__(*parts)
         self.ndim = self._parts[0].ndim
 
     def gradx(self, X1, X2=None):
-        raise NotImplementedError
+        fiterable = (p.get(X1, X2)[:, :, None] for p in self._parts)
+        giterable = ([p.gradx(X1, X2)] for p in self._parts)
+        return sum(grad_product(fiterable, giterable))
 
     def gradxy(self, X1, X2=None):
         raise NotImplementedError
