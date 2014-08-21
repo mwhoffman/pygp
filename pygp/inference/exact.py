@@ -102,39 +102,21 @@ class ExactGP(GP):
 
         return (mu, s2, dmu, ds2)
 
-    def loglikelihood(self, grad=False, n=np.inf):
+    def loglikelihood(self, grad=False, n=None):
         """
         Compute the log likelihood of last `n` data points conditioned on the
         rest of the observations.
         """
-        if n >= self.ndata:
-            a = self._a
-            R = self._R
-            n = self.ndata
+        if (not n) and (n > self.ndata):
+            raise ValueError
 
-        else:
-            # unpack already computed cholesky into relevant blocks
-            A = self._R[:n, :n]
-            B = self._R[:n, -n:]
-            R = self._R[-n:, -n:]
-
-            # compute the conditional mean
-            mu = sla.solve_triangular(A, self._y[:n], trans=True)
-            mu = np.dot(B.T, mu)
-
-            # subtract the conditional mean from the last `n` observed points
-            # and solve for a in: Ra = y_n - mu
-            a = sla.solve_triangular(R, self._y[-n:] - mu, trans=True)
-
-        lZ = -0.5 * np.inner(a, a)
-        lZ -= 0.5 * np.log(2 * np.pi) * n
-        lZ -= np.sum(np.log(R.diagonal()))
+        lZ = -0.5 * np.inner(self._a[:n], self._a[:n])
+        lZ -= 0.5 * np.log(2 * np.pi) * (n if n else self.ndata)
+        lZ -= np.sum(np.log(self._R[:n, :n].diagonal()))
 
         # bail early if we don't need the gradient.
         if not grad:
             return lZ
-
-        # FIXME -- Bobak: Gradient will not work with n < self.ndata
 
         # intermediate terms.
         alpha = sla.solve_triangular(self._R, self._a, trans=False)
