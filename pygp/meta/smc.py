@@ -10,6 +10,7 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+from scipy.misc import logsumexp
 
 # local imports
 from ..learning.sampling import sample
@@ -24,12 +25,12 @@ class SMC(object):
         self._prior = prior
         # FIXME -- Bobak: the following should initialize according to prior
         self._samples = [model.copy() for _ in xrange(n)]
-        self._weights = np.ones(n) / n
+        self._logweights = np.zeros(n) - np.log(n)
         self._n = n
         self._burn = burn   # every particle will burn before propagating
 
         if self._model.ndata > 0:
-            self._update()
+            self._update(n=self._model.ndata)
 
         else:
             # FIXME: the likelihood won't play a role, so we can sample directly
@@ -43,10 +44,10 @@ class SMC(object):
     def _update(self, n=1):
         # weights are given on page 5 of (Gramacy & Polson, 2010) derived from Eq. 31
         # in (Del Moral et al., 2006)
-        self._weights *= np.array([model.loglikelihood(n=n)
-                                   for model in self._samples])
+        self._logweights *= np.array([model.loglikelihood(n=n)
+                                      for model in self._samples])
 
-        weights = self._weights / self._weights.sum()
+        weights = np.exp(self._logweights - logsumexp(self._logweights))
         # resample if effective sample size is less than N/2
         if np.sum(weights ** 2) * weights.shape[0] > 2:
             self._resample()
@@ -59,10 +60,10 @@ class SMC(object):
         self._model = self._samples[-1]
 
     def _resample(self):
-        n = self._weights.shape[0]
-        weights = self._weights / self._weights.sum()
+        n = self._logweights.shape[0]
+        weights = np.exp(self._logweights - logsumexp(self._logweights))
         self._samples = np.random.choice(self._samples, size=n, p=weights)
-        self._weights = np.ones(n) / n
+        self._logweights = np.zeros(n) - np.log(n)
 
     @property
     def ndata(self):
@@ -79,7 +80,7 @@ class SMC(object):
 
     def posterior(self, X, grad=False):
         parts = map(np.array, zip(*[_.posterior(X, grad) for _ in self._samples]))
-        weights = self._weights / self._weights.sum()
+        weights = np.exp(self._logweights - logsumexp(self._logweights))
 
         mu_, s2_ = parts[:2]
         mu = np.average(mu_, weights=weights, axis=0)
