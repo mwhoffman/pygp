@@ -30,7 +30,7 @@ class SMC(object):
         self._burn = burn   # every particle will burn before propagating
 
         if self._model.ndata > 0:
-            self._update()
+            self._update(self._model.ndata)
 
         else:
             # FIXME: the likelihood won't play a role, so we can sample directly
