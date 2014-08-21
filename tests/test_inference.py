@@ -73,22 +73,19 @@ class InferenceTest(object):
 ### TEST CLASS FOR REAL-VALUED INPUTS #########################################
 
 class RealTest(InferenceTest):
-    def __init__(self, cls, *args):
-        likelihood = pygp.likelihoods.Gaussian(1)
-        kernel = pygp.kernels.SE(1, 1, ndim=2)
-
+    def __init__(self, gp):
         # create some data.
         rng = np.random.RandomState(0)
-        X = rng.rand(10, kernel.ndim)
-        y = likelihood.sample(rng.rand(10))
+        X = rng.rand(10, gp._kernel.ndim)
+        y = gp._likelihood.sample(rng.rand(10))
 
         # create a gp.
-        self.gp = cls(likelihood, kernel, *args)
+        self.gp = gp
         self.gp.add_data(X, y)
 
         # new set of points to predict at.
-        self.X = rng.rand(10, kernel.ndim)
-        self.y = likelihood.sample(rng.rand(10))
+        self.X = rng.rand(10, gp._kernel.ndim)
+        self.y = gp._likelihood.sample(rng.rand(10))
 
     def test_posterior_mu(self):
         f = lambda x: self.gp.posterior(x[None])[0]
@@ -107,4 +104,16 @@ class RealTest(InferenceTest):
 
 class TestExact(RealTest):
     def __init__(self):
-        RealTest.__init__(self, pygp.inference.ExactGP)
+        likelihood = pygp.likelihoods.Gaussian(1)
+        kernel = pygp.kernels.SE(1, 1, ndim=2)
+        gp = pygp.inference.ExactGP(likelihood, kernel)
+        RealTest.__init__(self, gp)
+
+
+class TestFITC(RealTest):
+    def __init__(self):
+        rng = np.random.RandomState(1)
+        likelihood = pygp.likelihoods.Gaussian(1)
+        kernel = pygp.kernels.SE(1, 1, ndim=2)
+        gp = pygp.inference.FITC(likelihood, kernel, rng.rand(10, 2))
+        RealTest.__init__(self, gp)
