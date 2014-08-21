@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ._base import RealKernel
+from ._real import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 from ..utils.random import rstate
@@ -82,6 +82,9 @@ class SE(RealKernel):
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
         G = -K[:, :, None] * D / ell
         return G
+
+    def grady(self, X1, X2=None):
+        return -self.gradx(X1, X2)
 
     def gradxy(self, X1, X2=None):
         ell = np.exp(self._logell)
