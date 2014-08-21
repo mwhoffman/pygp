@@ -165,7 +165,7 @@ class FITC(GP):
         v = 2*su2*np.sum(B**2, axis=0)
 
         # allocate space for the gradients.
-        dlZ = np.empty(1+self._kernel.nhyper)
+        dlZ = np.zeros(1+self._kernel.nhyper)
 
         # gradient wrt the noise parameter.
         dlZ[0] = (

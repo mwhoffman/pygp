@@ -14,6 +14,7 @@ from __future__ import print_function
 import numpy as np
 import numpy.testing as nt
 import scipy.optimize as spop
+import nose
 
 # local imports
 import pygp
@@ -77,7 +78,7 @@ class RealTest(InferenceTest):
         # create some data.
         rng = np.random.RandomState(0)
         X = rng.rand(10, gp._kernel.ndim)
-        y = gp._likelihood.sample(rng.rand(10))
+        y = gp._likelihood.sample(rng.rand(10), rng)
 
         # create a gp.
         self.gp = gp
@@ -85,19 +86,25 @@ class RealTest(InferenceTest):
 
         # new set of points to predict at.
         self.X = rng.rand(10, gp._kernel.ndim)
-        self.y = gp._likelihood.sample(rng.rand(10))
+        self.y = gp._likelihood.sample(rng.rand(10), rng)
 
     def test_posterior_mu(self):
-        f = lambda x: self.gp.posterior(x[None])[0]
-        G1 = self.gp.posterior(self.X, grad=True)[2]
-        G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
-        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+        try:
+            f = lambda x: self.gp.posterior(x[None])[0]
+            G1 = self.gp.posterior(self.X, grad=True)[2]
+            G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
+            nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+        except NotImplementedError:
+            raise nose.SkipTest()
 
     def test_posterior_s2(self):
-        f = lambda x: self.gp.posterior(x[None])[1]
-        G1 = self.gp.posterior(self.X, grad=True)[3]
-        G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
-        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+        try:
+            f = lambda x: self.gp.posterior(x[None])[1]
+            G1 = self.gp.posterior(self.X, grad=True)[3]
+            G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
+            nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+        except NotImplementedError:
+            raise nose.SkipTest()
 
 
 ### PER INFERENCE METHOD TESTS ################################################
