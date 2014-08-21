@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ._base import RealKernel
+from ._real import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 from ..utils.random import rstate
@@ -81,6 +81,22 @@ class SE(RealKernel):
         D = diff(X1, X2)
         K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
         G = -K[:, :, None] * D / ell
+        return G
+
+    def grady(self, X1, X2=None):
+        return -self.gradx(X1, X2)
+
+    def gradxy(self, X1, X2=None):
+        ell = np.exp(self._logell)
+        X1, X2 = rescale(ell, X1, X2)
+        D = diff(X1, X2)
+        _, _, d = D.shape
+
+        K = np.exp(self._logsf*2 - np.sum(D**2, axis=-1)/2)
+        D /= ell
+        M = np.eye(d)/ell**2 - D[:, :, None] * D[:, :, :, None]
+        G = M * K[:, :, None, None]
+
         return G
 
     def sample_spectrum(self, N, rng=None):

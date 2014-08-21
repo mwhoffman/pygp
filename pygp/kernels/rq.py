@@ -11,9 +11,9 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
+from ._real import RealKernel
 from ..utils.models import printable
 from ._distances import rescale, sqdist, sqdist_foreach
-from ._base import RealKernel
 
 # exported symbols
 __all__ = ['RQ']
@@ -93,6 +93,12 @@ class RQ(RealKernel):
         yield np.zeros(len(X))
 
     def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def grady(self, X1, X2=None):
+        raise NotImplementedError
+
+    def gradxy(self, X1, X2=None):
         raise NotImplementedError
 
     def sample_spectrum(self, N, rng=None):

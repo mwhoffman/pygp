@@ -11,7 +11,7 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ._base import RealKernel
+from ._real import RealKernel
 from ._distances import sqdist
 from ..utils.models import printable
 
@@ -75,6 +75,12 @@ class Periodic(RealKernel):
         yield np.zeros(len(X))
 
     def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def grady(self, X1, X2=None):
+        raise NotImplementedError
+
+    def gradxy(self, X1, X2=None):
         raise NotImplementedError
 
     def sample_spectrum(self, N, rng=None):
