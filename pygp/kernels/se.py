@@ -83,6 +83,9 @@ class SE(RealKernel):
         G = -K[:, :, None] * D / ell
         return G
 
+    def grady(self, X1, X2=None):
+        return -self.gradx(X1, X2)
+
     def gradxy(self, X1, X2=None):
         ell = np.exp(self._logell)
         X1, X2 = rescale(ell, X1, X2)

@@ -41,17 +41,23 @@ class RealKernel(Kernel):
     @abstractmethod
     def gradx(self, X1, X2=None):
         """
-        Derivatives of the kernel with respect to its first argument. This
-        corresponds to the covariance between the function gradient at X1 and
-        the function evaluated at X2. Returns an (m,n,d)-array.
+        Derivatives of the kernel with respect to its first argument. Returns
+        an (m,n,d)-array.
+        """
+
+    @abstractmethod
+    def grady(self, X1, X2=None):
+        """
+        Derivatives of the kernel with respect to its second argument. Returns
+        an (m,n,d)-array.
         """
 
     @abstractmethod
     def gradxy(self, X1, X2=None):
         """
         Derivatives of the kernel with respect to both its first and second
-        arguments. This corresponds to the covariance between gradient values
-        evaluated at X1 and at X2. Returns an (m,n,d,d)-array.
+        arguments. Returns an (m,n,d,d)-array. The (a,b,i,j)th element
+        corresponds to the derivative with respect to `X1[a,i]` and `X2[b,j]`.
         """
 
     @abstractmethod
@@ -86,6 +92,9 @@ class SumKernel(RealKernel, SumKernel_):
     def gradx(self, X1, X2=None):
         return sum(p.gradx(X1, X2) for p in self._parts)
 
+    def grady(self, X1, X2=None):
+        return sum(p.grady(X1, X2) for p in self._parts)
+
     def gradxy(self, X1, X2=None):
         return sum(p.gradxy(X1, X2) for p in self._parts)
 
@@ -106,6 +115,11 @@ class ProductKernel(RealKernel, ProductKernel_):
     def gradx(self, X1, X2=None):
         fiterable = (p.get(X1, X2)[:, :, None] for p in self._parts)
         giterable = ([p.gradx(X1, X2)] for p in self._parts)
+        return sum(grad_product(fiterable, giterable))
+
+    def grady(self, X1, X2=None):
+        fiterable = (p.get(X1, X2)[:, :, None] for p in self._parts)
+        giterable = ([p.grady(X1, X2)] for p in self._parts)
         return sum(grad_product(fiterable, giterable))
 
     def gradxy(self, X1, X2=None):

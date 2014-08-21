@@ -111,6 +111,23 @@ class RealKernelTest(KernelTest):
 
         nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
 
+    def test_grady(self):
+        try:
+            G1 = self.kernel.grady(self.x1, self.x2)
+        except NotImplementedError:
+            raise nose.SkipTest()
+
+        m = self.x1.shape[0]
+        n = self.x2.shape[0]
+        d = self.x1.shape[1]
+        k = lambda x2, x1: self.kernel(x1, x2)
+
+        G2 = np.array([spop.approx_fprime(x2, k, 1e-8, x1)
+                       for x1 in self.x1
+                       for x2 in self.x2]).reshape(m, n, d)
+
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
+
     def test_gradxy(self):
         try:
             G1 = self.kernel.gradxy(self.x1, self.x2)

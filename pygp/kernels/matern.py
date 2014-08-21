@@ -111,6 +111,9 @@ class Matern(RealKernel):
 
         return G
 
+    def grady(self, X1, X2=None):
+        return -self.gradx(X1, X2)
+
     def gradxy(self, X1, X2=None):
         raise NotImplementedError
 

@@ -77,6 +77,9 @@ class Periodic(RealKernel):
     def gradx(self, X1, X2=None):
         raise NotImplementedError
 
+    def grady(self, X1, X2=None):
+        raise NotImplementedError
+
     def gradxy(self, X1, X2=None):
         raise NotImplementedError
 
