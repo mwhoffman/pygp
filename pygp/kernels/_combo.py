@@ -30,32 +30,10 @@ def product(fiterable):
     return ft.reduce(op.mul, fiterable, 1)
 
 
-def grad_sum(giterable):
+def product_but(fiterable):
     """
-    Return an iterator over gradients of a sum of functions.
-
-    Let f(x) = f1(x1) + f2(x2) + ... + fn(x2) define a function and let
-    `giterable` be an iterable object of length n such that the ith component
-    contains an iterator over the derivatives of fi with respect to xi. This
-    returns an iterator over the derivatives wrt x = [x1 ... xn].
-    """
-    return it.chain.from_iterable(giterable)
-
-
-def grad_product(fiterable, giterable):
-    """
-    Return an iterator over gradients of a product of functions.
-
-    Let f(x) = f1(x1) * f2(x2) * ... * fn(x2) define a function and where
-
-      - `fiterable` is an iterable object of length n whose ith component is
-        the evaluation of fi(xi).
-
-      - `giterable` is an iterable object of length n whose ith component
-        contains an iterator over the derivatives of fi with respect to xi.
-
-    Return an iterator over the derivatives of f(x) where each component is the
-    derivative with respect to xij.
+    Given an iterator over function evaluations return an array such that
+    `M[i]` is the product of every evaluation except for the ith one.
     """
     A = list(fiterable)
 
@@ -71,12 +49,7 @@ def grad_product(fiterable, giterable):
         M[i] *= M[-1]
         M[-1] *= A[i]
 
-    # NOTE: it should now hold that M[i] is the product of every model
-    # evaluation EXCEPT for the ith one.
-
-    for Mi, grads in zip(M, giterable):
-        for dM in grads:
-            yield Mi*dM
+    return M
 
 
 ### GENERAL COMBINATION KERNEL ################################################
@@ -140,11 +113,11 @@ class SumKernel(ComboKernel):
 
     def grad(self, X1, X2=None):
         giterable = (p.grad(X1, X2) for p in self._parts)
-        return grad_sum(giterable)
+        return it.chain.from_iterable(giterable)
 
     def dgrad(self, X):
         giterable = (p.dgrad(X) for p in self._parts)
-        return grad_sum(giterable)
+        return it.chain.from_iterable(giterable)
 
 
 class ProductKernel(ComboKernel):
@@ -161,12 +134,16 @@ class ProductKernel(ComboKernel):
     def grad(self, X1, X2=None):
         fiterable = (p.get(X1, X2) for p in self._parts)
         giterable = (p.grad(X1, X2) for p in self._parts)
-        return grad_product(fiterable, giterable)
+        for Mi, grads in zip(product_but(fiterable), giterable):
+            for dM in grads:
+                yield Mi*dM
 
     def dgrad(self, X):
         fiterable = (p.dget(X) for p in self._parts)
         giterable = (p.dgrad(X) for p in self._parts)
-        return grad_product(fiterable, giterable)
+        for Mi, grads in zip(product_but(fiterable), giterable):
+            for dM in grads:
+                yield Mi*dM
 
 
 ### HELPER FOR ASSOCIATIVE OPERATIONS #########################################

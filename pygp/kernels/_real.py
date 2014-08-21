@@ -20,7 +20,7 @@ from ..utils.abc import abstractmethod
 from ._combo import SumKernel as SumKernel_
 from ._combo import ProductKernel as ProductKernel_
 from ._combo import combine
-from ._combo import grad_product
+from ._combo import product_but
 
 # exported symbols
 __all__ = ['RealKernel']
@@ -114,16 +114,42 @@ class ProductKernel(RealKernel, ProductKernel_):
 
     def gradx(self, X1, X2=None):
         fiterable = (p.get(X1, X2)[:, :, None] for p in self._parts)
-        giterable = ([p.gradx(X1, X2)] for p in self._parts)
-        return sum(grad_product(fiterable, giterable))
+        giterable = (p.gradx(X1, X2) for p in self._parts)
+        return sum(f*g for f, g in zip(product_but(fiterable), giterable))
 
     def grady(self, X1, X2=None):
         fiterable = (p.get(X1, X2)[:, :, None] for p in self._parts)
-        giterable = ([p.grady(X1, X2)] for p in self._parts)
-        return sum(grad_product(fiterable, giterable))
+        giterable = (p.grady(X1, X2) for p in self._parts)
+        return sum(f*g for f, g in zip(product_but(fiterable), giterable))
 
     def gradxy(self, X1, X2=None):
-        raise NotImplementedError
+        # the kernel evaluations.
+        K = [p.get(X1, X2) for p in self._parts]
+        Kn = product_but(K)
+
+        # the gradients we need.
+        Gx = [p.gradx(X1, X2) for p in self._parts]
+        Gy = [p.grady(X1, X2) for p in self._parts]
+        Gxy = [p.gradxy(X1, X2) for p in self._parts]
+
+        # the part of the gradient corresponding to the two partial derivatives
+        # with respect to xy.
+        grad = sum(Kni[:, :, None, None] * dKi for Kni, dKi in zip(Kn, Gxy))
+
+        # this is the combination of partials for different kernels.
+        # multiplying in this way lets us avoid an explicit double-loop, but we
+        # overcount.
+        xpart = sum(dKi * Ki[:, :, None] for dKi, Ki in zip(Gx, Kn))
+        ypart = sum(dKi / Ki[:, :, None] for dKi, Ki in zip(Gy, K))
+        grad += xpart[:, :, :, None] * ypart[:, :, None, :]
+
+        # get rid of the overcount.
+        grad -= sum((Kni / Ki)[:, :, None, None]
+                    * dKx[:, :, :, None]
+                    * dKy[:, :, None, :]
+                    for Kni, Ki, dKx, dKy in zip(Kn, K, Gx, Gy))
+
+        return grad
 
     def sample_spectrum(self, N, rng=None):
         raise NotImplementedError
