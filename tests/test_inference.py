@@ -68,7 +68,9 @@ class InferenceTest(object):
         f = lambda x: self.gp.copy(x).loglikelihood()
         _, g1 = self.gp.loglikelihood(grad=True)
         g2 = spop.approx_fprime(x, f, 1e-8)
-        nt.assert_allclose(g1, g2, rtol=1e-6, atol=1e-6)
+
+        # slightly lesser gradient tolerance. mostly due to FITC.
+        nt.assert_allclose(g1, g2, rtol=1e-5, atol=1e-5)
 
 
 ### TEST CLASS FOR REAL-VALUED INPUTS #########################################
@@ -122,5 +124,5 @@ class TestFITC(RealTest):
         rng = np.random.RandomState(1)
         likelihood = pygp.likelihoods.Gaussian(1)
         kernel = pygp.kernels.SE(1, 1, ndim=2)
-        gp = pygp.inference.FITC(likelihood, kernel, rng.rand(10, 2))
+        gp = pygp.inference.FITC(likelihood, kernel, rng.rand(10, kernel.ndim))
         RealTest.__init__(self, gp)

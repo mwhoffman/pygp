@@ -31,10 +31,19 @@ class FITC(GP):
             raise ModelError('exact inference requires a Gaussian likelihood')
 
         super(FITC, self).__init__(likelihood, kernel)
+
+        # save the pseudo-input locations.
         self._U = np.array(U, ndmin=2, dtype=float, copy=True)
+
+        # sufficient statistics that we'll need.
         self._L = None
         self._R = None
         self._b = None
+
+        # these are useful in computing the loglikelihood and updating the
+        # sufficient statistics.
+        self._A = None
+        self._a = None
 
     @property
     def pseudoinputs(self):
@@ -70,12 +79,12 @@ class FITC(GP):
         # NOTE: to update things incrementally all we need to do is store these
         # components. A just needs to be initialized at the identity and then
         # we just accumulate here.
-        A = np.eye(p) + np.dot(V, V.T)
-        a = np.dot(Kux, r)
+        self._A = np.eye(p) + np.dot(V, V.T)
+        self._a = np.dot(Kux, r)
 
         # update the posterior.
-        self._R = np.dot(sla.cholesky(A), self._L)
-        self._b = sla.solve_triangular(self._R, a, trans=True)
+        self._R = np.dot(sla.cholesky(self._A), self._L)
+        self._b = sla.solve_triangular(self._R, self._a, trans=True)
 
     def _posterior(self, X):
         mu = np.zeros(X.shape[0])
@@ -126,29 +135,21 @@ class FITC(GP):
         sn2 = self._likelihood.s2
         su2 = sn2 / 1e6
 
-        # number of data points and the inducing points.
-        p = self._U.shape[0]
-
-        # cholesky of the pseudo-input kernel.
-        Kuu = self._kernel.get(self._U)
-        L = sla.cholesky(Kuu + su2*np.eye(p))
-
         # get the rest of the kernels and the residual.
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
         r = self._y.copy()
 
         # the cholesky of Q.
-        V = sla.solve_triangular(L, Kux, trans=True)
+        V = sla.solve_triangular(self._L, Kux, trans=True)
 
         # rescale everything by the diagonal matrix ell.
         ell = np.sqrt(kxx + sn2 - np.sum(V**2, axis=0))
-        Kux /= ell
         V /= ell
         r /= ell
 
-        # Note this A corresponds to chol(self.A) from _update.
-        A = sla.cholesky(np.dot(V, V.T) + np.eye(p))
+        # Note this A corresponds to chol(A) from _update.
+        A = sla.cholesky(self._A)
         beta = sla.solve_triangular(A, V.dot(r), trans=True)
         alpha = (r - V.T.dot(sla.solve_triangular(A, beta))) / ell
 
@@ -159,7 +160,7 @@ class FITC(GP):
         if not grad:
             return lZ
 
-        B = sla.solve_triangular(L, V*ell)
+        B = sla.solve_triangular(self._L, V*ell)
         W = sla.solve_triangular(A, V/ell, trans=True)
         w = B.dot(alpha)
         v = 2*su2*np.sum(B**2, axis=0)
@@ -186,7 +187,7 @@ class FITC(GP):
             M = 2*dKux - dKuu.dot(B)
             v = dkxx - np.sum(M*B, axis=0)
             dlZ[i] = (
-                np.sum(dkxx/ell**2)
+                - np.sum(dkxx/ell**2)
                 - np.inner(w, dKuu.dot(w) - 2*dKux.dot(alpha))
                 + np.inner(alpha, v*alpha) + np.inner(np.sum(W**2, axis=0), v)
                 + np.sum(M.dot(W.T) * B.dot(W.T))) / 2.0
