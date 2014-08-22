@@ -20,7 +20,7 @@ __all__ = ['plot', 'sampleplot']
 
 def plot(model,
          xmin=None, xmax=None, ymin=None, ymax=None,
-         mean=True, data=True, error=True,
+         mean=True, data=True, error=True, pseudoinputs=False,
          xlabel='', ylabel='', title='',
          figure=None, subplot=None,
          draw=True):
@@ -62,7 +62,13 @@ def plot(model,
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.axis('tight')
-    ax.axis(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    ax.axis((xmin, xmax, ymin, ymax))
+
+    if hasattr(model, 'pseudoinputs') and pseudoinputs:
+        ymin, ymax = ax.get_ylim()
+        U = model.pseudoinputs.ravel()
+        ax.scatter(U, np.ones_like(U) * (ymin + 0.1 * (ymax-ymin)),
+                   s=20, lw=1, marker='x', color='k')
 
     if draw:
         ax.figure.canvas.draw()

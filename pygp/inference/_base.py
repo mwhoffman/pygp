@@ -67,6 +67,19 @@ class GP(Parameterized):
         params += dot_params('kern', self._kernel._params())
         return params
 
+    @classmethod
+    def from_gp(cls, gp, *args, **kwargs):
+        """
+        Create a new GP object given another. This allows one to make a "copy"
+        of a GP using the same likelihood, kernel, etc. and using the same
+        data, but possibly a different inference method.
+        """
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), *args, **kwargs)
+        if gp.ndata > 0:
+            X, y = gp.data
+            newgp.add_data(X, y)
+        return newgp
+
     def get_hyper(self):
         # NOTE: if subclasses define any "inference" hyperparameters they can
         # implement their own get/set methods and call super().
@@ -160,7 +173,6 @@ class GP(Parameterized):
         Update any internal parameters (ie sufficient statistics) given the
         entire set of current data.
         """
-        pass
 
     # NOTE: the following method is not abstract since we don't require that it
     # is implemented. if it is not implemented the full _update is performed
@@ -181,7 +193,6 @@ class GP(Parameterized):
         Compute the posterior at points `X`. This should return the mean and
         full covariance matrix of the given points.
         """
-        pass
 
     @abstractmethod
     def posterior(self, X, grad=False):
@@ -191,7 +202,6 @@ class GP(Parameterized):
         return their derivatives with respect to the input location as well
         (i.e. a 4-tuple).
         """
-        pass
 
     @abstractmethod
     def loglikelihood(self, grad=False):
@@ -199,4 +209,3 @@ class GP(Parameterized):
         Return the marginal loglikelihood of the data. If `grad == True` also
         return the gradient with respect to the hyperparameters.
         """
-        pass
