@@ -67,6 +67,19 @@ class GP(Parameterized):
         params += dot_params('kern', self._kernel._params())
         return params
 
+    @classmethod
+    def from_gp(cls, gp, *args, **kwargs):
+        """
+        Create a new GP object given another. This allows one to make a "copy"
+        of a GP using the same likelihood, kernel, etc. and using the same
+        data, but possibly a different inference method.
+        """
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), *args, **kwargs)
+        if gp.ndata > 0:
+            X, y = gp.data
+            newgp.add_data(X, y)
+        return newgp
+
     def get_hyper(self):
         # NOTE: if subclasses define any "inference" hyperparameters they can
         # implement their own get/set methods and call super().
