@@ -128,7 +128,28 @@ class FITC(GP):
         if not grad:
             return (mu, s2)
 
-        raise NotImplementedError
+        # Get the prior gradients. Note that this assumes a constant mean and
+        # stationary kernel.
+        dmu = np.zeros_like(X)
+        ds2 = np.zeros_like(X)
+
+        if self._X is not None:
+            p = self._U.shape[0]
+            dK = self._kernel.grady(self._U, X)
+            dK = dK.reshape(p, -1)
+
+            LdK = sla.solve_triangular(self._L, dK, trans=True)
+            RdK = sla.solve_triangular(self._R, dK, trans=True)
+
+            dmu += np.dot(RdK.T, self._b).reshape(X.shape)
+
+            LdK = np.rollaxis(np.reshape(LdK, (p,) + X.shape), 2)
+            RdK = np.rollaxis(np.reshape(RdK, (p,) + X.shape), 2)
+
+            ds2 += 2 * np.sum(RdK * RK, axis=1).T
+            ds2 -= 2 * np.sum(LdK * LK, axis=1).T
+
+        return (mu, s2, dmu, ds2)
 
     def loglikelihood(self, grad=False):
         # noise hyperparameters

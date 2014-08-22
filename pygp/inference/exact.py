@@ -97,13 +97,10 @@ class ExactGP(GP):
             dK = dK.reshape(self.ndata, -1)
 
             RdK = sla.solve_triangular(self._R, dK, trans=True)
+            dmu += np.dot(RdK.T, self._a).reshape(X.shape)
 
-            dmu = np.dot(RdK.T, self._a)
-            dmu = np.reshape(dmu, X.shape)
-
-            RdK = np.reshape(RdK, (-1,) + X.shape)
-            RdK = np.rollaxis(RdK, 2)
-            ds2 = -2 * np.sum(RdK * RK, axis=1).T
+            RdK = np.rollaxis(np.reshape(RdK, (-1,) + X.shape), 2)
+            ds2 -= 2 * np.sum(RdK * RK, axis=1).T
 
         return (mu, s2, dmu, ds2)
 

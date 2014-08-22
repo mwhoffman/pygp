@@ -91,22 +91,16 @@ class RealTest(InferenceTest):
         self.y = gp._likelihood.sample(rng.rand(10), rng)
 
     def test_posterior_mu(self):
-        try:
-            f = lambda x: self.gp.posterior(x[None])[0]
-            G1 = self.gp.posterior(self.X, grad=True)[2]
-            G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
-            nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
-        except NotImplementedError:
-            raise nose.SkipTest()
+        f = lambda x: self.gp.posterior(x[None])[0]
+        G1 = self.gp.posterior(self.X, grad=True)[2]
+        G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
+        nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
 
     def test_posterior_s2(self):
-        try:
-            f = lambda x: self.gp.posterior(x[None])[1]
-            G1 = self.gp.posterior(self.X, grad=True)[3]
-            G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
-            nt.assert_allclose(G1, G2, rtol=1e-6, atol=1e-6)
-        except NotImplementedError:
-            raise nose.SkipTest()
+        f = lambda x: self.gp.posterior(x[None])[1]
+        G1 = self.gp.posterior(self.X, grad=True)[3]
+        G2 = np.array([spop.approx_fprime(x, f, 1e-8) for x in self.X])
+        nt.assert_allclose(G1, G2, rtol=1e-5, atol=1e-5)
 
 
 ### PER INFERENCE METHOD TESTS ################################################
