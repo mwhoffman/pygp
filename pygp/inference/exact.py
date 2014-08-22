@@ -76,13 +76,13 @@ class ExactGP(GP):
 
         if self._X is not None:
             K = self._kernel.get(self._X, X)
-            V = sla.solve_triangular(self._R, K, trans=True)
+            RK = sla.solve_triangular(self._R, K, trans=True)
 
             # add the contribution to the mean coming from the posterior and
             # subtract off the information gained in the posterior from the
             # prior variance.
-            mu += np.dot(V.T, self._a)
-            s2 -= np.sum(V**2, axis=0)
+            mu += np.dot(RK.T, self._a)
+            s2 -= np.sum(RK**2, axis=0)
 
         if not grad:
             return (mu, s2)
@@ -93,19 +93,17 @@ class ExactGP(GP):
         ds2 = np.zeros_like(X)
 
         if self._X is not None:
-            dK = self._kernel.gradx(X, self._X)  # (ntest, ndata, dim)
-            ntest, dim = X.shape
-            dK = np.rollaxis(dK, 1)              # (ndata, ntest, dim)
-            dK = np.reshape(dK, (self.ndata, ntest * dim))
+            dK = self._kernel.grady(self._X, X)
+            dK = dK.reshape(self.ndata, -1)
 
-            RiK = sla.solve_triangular(self._R, K, trans=True)
-            RidK = sla.solve_triangular(self._R, dK, trans=True)
+            RdK = sla.solve_triangular(self._R, dK, trans=True)
 
-            dmu = np.dot(RidK.T, self._a)
-            dmu = np.reshape(dmu, (ntest, dim))
-            RidK = np.reshape(RidK, (self.ndata, ntest, dim))
-            RidK = np.rollaxis(RidK, 2)
-            ds2 = -2 * np.sum(RidK * RiK, axis=1).T
+            dmu = np.dot(RdK.T, self._a)
+            dmu = np.reshape(dmu, X.shape)
+
+            RdK = np.reshape(RdK, (-1,) + X.shape)
+            RdK = np.rollaxis(RdK, 2)
+            ds2 = -2 * np.sum(RdK * RK, axis=1).T
 
         return (mu, s2, dmu, ds2)
 
