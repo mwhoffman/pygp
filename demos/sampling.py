@@ -32,8 +32,8 @@ if __name__ == '__main__':
 
     # create a prior structure.
     priors = dict(
-        sn =pygp.priors.Uniform(0.01, 1.0),
-        sf =pygp.priors.Uniform(0.01, 5.0),
+        sn=pygp.priors.Uniform(0.01, 1.0),
+        sf=pygp.priors.Uniform(0.01, 5.0),
         ell=pygp.priors.Uniform(0.01, 1.0))
 
     # create a meta-model which samples hyperparameters.
@@ -42,4 +42,5 @@ if __name__ == '__main__':
     # plot the fully Bayesian predictions.
     pygp.plotting.plot(model,
                        ymin=-3, ymax=3,
-                       figure=1, subplot=122, title='Bayes posterior')
+                       figure=1, subplot=122, legend=True,
+                       title='Bayes posterior')

@@ -21,7 +21,7 @@ __all__ = ['plot', 'sampleplot']
 def plot(model,
          xmin=None, xmax=None, ymin=None, ymax=None,
          mean=True, data=True, error=True, pseudoinputs=False,
-         xlabel='', ylabel='', title='',
+         xlabel='', ylabel='', title='', legend=False,
          figure=None, subplot=None,
          draw=True):
 
@@ -49,14 +49,20 @@ def plot(model,
     lo = mu - 2 * np.sqrt(s2)
     hi = mu + 2 * np.sqrt(s2)
 
+    if mean:
+        ax.plot(x, mu, lw=2, color='b', label='mean')
+
     if error:
         ax.fill_between(x, lo, hi, color='k', alpha=0.15)
-
-    if mean:
-        ax.plot(x, mu, lw=2, color='b')
+        ax.plot([], [], color='k', alpha=0.15, linewidth=10,
+                label='uncertainty')
 
     if data and X is not None:
-        ax.scatter(X.ravel(), y, s=20, lw=1, facecolors='none', color='k')
+        if len(X) > 100:
+            ax.scatter(X.ravel(), y, marker='.', color='k', label='data')
+        else:
+            ax.scatter(X.ravel(), y, s=20, lw=1, facecolors='none', color='k',
+                       label='data')
 
     ax.set_title(title)
     ax.set_xlabel(xlabel)
@@ -68,7 +74,10 @@ def plot(model,
         ymin, ymax = ax.get_ylim()
         U = model.pseudoinputs.ravel()
         ax.scatter(U, np.ones_like(U) * (ymin + 0.1 * (ymax-ymin)),
-                   s=20, lw=1, marker='x', color='k')
+                   s=20, lw=1, marker='x', color='k', label='pseudo-inputs')
+
+    if legend:
+        ax.legend(loc='best')
 
     if draw:
         ax.figure.canvas.draw()

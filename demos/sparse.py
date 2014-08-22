@@ -33,6 +33,8 @@ if __name__ == '__main__':
     pygp.optimize(gp2)
 
     # plot them.
-    pygp.plotting.plot(gp1, figure=1, subplot=121, title='Full GP')
-    pygp.plotting.plot(gp2, figure=1, subplot=122, title='Sparse GP',
-                       pseudoinputs=True)
+    pygp.plotting.plot(gp1, figure=1, subplot=121, ymin=-2.5, ymax=3,
+                       title='Full GP')
+
+    pygp.plotting.plot(gp2, figure=1, subplot=122, ymin=-2.5, ymax=3,
+                       title='Sparse GP', pseudoinputs=True, legend=True)

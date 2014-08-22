@@ -16,20 +16,21 @@ import pygp.kernels as pk
 # load the file from the current directory and get rid of any censored data.
 cdir = os.path.abspath(os.path.dirname(__file__))
 data = np.loadtxt(os.path.join(cdir, 'maunaloa.txt')).flatten()
-data = np.array([(x,y) for (x,y) in zip(np.arange(len(data)), data) if y>-99])
+data = np.array([(x, y) for x, y in zip(np.arange(len(data)), data) if y>-99])
 
 # minor manipulations of the data to make the ranges reasonable. also use the
 # empirical mean as the prior mean.
-X = data[:,0,None] / 12.
-y = data[:,1]
+X = data[:, 0, None] / 12.
+y = data[:, 1]
 y -= y.mean()
 
-# these are near the values called for in Rasmussen and Williams, so they should
-# give reasonable results and thus we'll skip the fit.
-kernel = pk.SE(60, 60) + \
-         pk.SE(2, 90) * pk.Periodic(1, 1, 1) + \
-         pk.RQ(0.7, 1.2, 0.7) + \
-         pk.SE(0.15, 0.15)
+# these are near the values called for in Rasmussen and Williams, so they
+# should give reasonable results and thus we'll skip the fit.
+kernel = \
+    pk.SE(60, 60) + \
+    pk.SE(2, 90) * pk.Periodic(1, 1, 1) + \
+    pk.RQ(0.7, 1.2, 0.7) + \
+    pk.SE(0.15, 0.15)
 
 # use a gaussian likeihood with this standard deviation.
 likelihood = pygp.likelihoods.Gaussian(sigma=0.1)
@@ -39,4 +40,4 @@ gp = pygp.inference.ExactGP(likelihood, kernel)
 gp.add_data(X, y)
 
 # plot everything.
-pygp.plotting.plot(gp, data=False, xmax=100)
+pygp.plotting.plot(gp, mean=False, xmax=70, legend=True)
