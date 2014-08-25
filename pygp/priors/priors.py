@@ -26,6 +26,10 @@ class Uniform(object):
         if np.any(self._b < self._a):
             raise RuntimeError("malformed upper/lower bounds")
 
+    def sample(self, size=1, log=True):
+        sample = self._a + (self._b - self._a) * np.random.rand(size, self.ndim)
+        return np.log(sample) if log else sample
+
     def logprior(self, theta):
         theta = np.array(theta, copy=False, ndmin=1)
         for a, b, t in zip(self._a, self._b, theta):

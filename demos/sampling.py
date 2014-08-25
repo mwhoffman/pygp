@@ -47,7 +47,7 @@ if __name__ == '__main__':
     # create a meta-model which samples hyperparameters via SMC.
     # NOTE -- Bobak: in practice we shouldn't need to burn in but since we are
     # not evolving the particles sequentially here, burn-in helps.
-    meta_smc = pygp.meta.SMC(model, priors, n=200, burn=10)
+    meta_smc = pygp.meta.SMC(model, priors, n=2000)
 
     # plot the fully Bayesian predictions.
     pygp.plotting.plot(meta_smc,
