@@ -119,8 +119,9 @@ class ExactGP(GP):
             return lZ
 
         # intermediate terms.
-        alpha = sla.solve_triangular(self._R, self._a, trans=False)
-        Q = sla.cho_solve((self._R, False), np.eye(self.ndata))
+        alpha = sla.solve_triangular(self._R[:n, :n], self._a[:n], trans=False)
+        Q = sla.cho_solve((self._R[:n, :n], False),
+                           np.eye(n if n else self.ndata))
         Q -= np.outer(alpha, alpha)
 
         dlZ = np.r_[
@@ -129,7 +130,7 @@ class ExactGP(GP):
 
             # derivative wrt each kernel hyperparameter.
             [-0.5*np.sum(Q*dK)
-              for dK in self._kernel.grad(self._X)]]
+                for dK in self._kernel.grad(self._X[:n])]]
 
         return lZ, dlZ
 
