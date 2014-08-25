@@ -102,26 +102,18 @@ class ExactGP(GP):
 
         return (mu, s2, dmu, ds2)
 
-    def loglikelihood(self, grad=False, n=None):
-        """
-        Compute the log likelihood of last `n` data points conditioned on the
-        rest of the observations.
-        """
-        if (not n) and (n > self.ndata):
-            raise ValueError
-
-        lZ = -0.5 * np.inner(self._a[:n], self._a[:n])
-        lZ -= 0.5 * np.log(2 * np.pi) * (n if n else self.ndata)
-        lZ -= np.sum(np.log(self._R[:n, :n].diagonal()))
+    def loglikelihood(self, grad=False):
+        lZ = -0.5 * np.inner(self._a, self._a)
+        lZ -= 0.5 * np.log(2 * np.pi) * self.ndata
+        lZ -= np.sum(np.log(self._R.diagonal()))
 
         # bail early if we don't need the gradient.
         if not grad:
             return lZ
 
         # intermediate terms.
-        alpha = sla.solve_triangular(self._R[:n, :n], self._a[:n], trans=False)
-        Q = sla.cho_solve((self._R[:n, :n], False),
-                           np.eye(n if n else self.ndata))
+        alpha = sla.solve_triangular(self._R, self._a, trans=False)
+        Q = sla.cho_solve((self._R, False), np.eye(self.ndata))
         Q -= np.outer(alpha, alpha)
 
         dlZ = np.r_[
@@ -130,7 +122,7 @@ class ExactGP(GP):
 
             # derivative wrt each kernel hyperparameter.
             [-0.5*np.sum(Q*dK)
-                for dK in self._kernel.grad(self._X[:n])]]
+                for dK in self._kernel.grad(self._X)]]
 
         return lZ, dlZ
 

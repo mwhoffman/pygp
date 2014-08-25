@@ -35,22 +35,6 @@ class SMC(object):
     def __iter__(self):
         return self._samples.__iter__()
 
-    def _update(self):
-        # incremental weights are given by Eq. 31 in (Del Moral et al., 2006)
-        logratio = [model.loglikelihood() - model.loglikelihood(n=self.ndata-1)
-                    for model in self._samples]
-        self._logweights += np.array(logratio)
-
-        # resample if effective sample size is less than N/2
-        w2 = np.exp(2 * (self._logweights - logsumexp(self._logweights)))
-        if w2.sum() * self._n > 2:
-            self._resample()
-
-        # propagate particles according to MCMC kernel as per Eq. 30 in
-        # (Del Moral et al., 2006)
-        self._samples = [sample(model, self._prior, self._mcmc+1, raw=False)[-1]
-                         for model in self._samples]
-
     def _prior_sampling(self, model, priors):
         # unpack priors
         # TODO -- Bobak: This snippet is copied from learning/sampling.py
@@ -87,11 +71,6 @@ class SMC(object):
             sample._y = None
         return samples
 
-    def _resample(self):
-        weights = np.exp(self._logweights - logsumexp(self._logweights))
-        self._samples = np.random.choice(self._samples, size=self._n, p=weights)
-        self._logweights = np.zeros(self._n) - np.log(self._n)
-
     @property
     def ndata(self):
         return self._samples[-1].ndata
@@ -100,11 +79,40 @@ class SMC(object):
     def data(self):
         return self._samples[-1].data
 
+    @property
+    def ess(self):
+        w2 = np.exp(2 * (self._logweights - logsumexp(self._logweights)))
+        return 1.0 / w2.sum()
+
     def add_data(self, X, y):
         for (xi, yi) in zip(X, y):
+            # compute likelihood of previous data
+            loglikes = [model.loglikelihood() for model in self._samples]
+
+            # add data
             for model in self._samples:
                 model.add_data(xi, yi)
-            self._update()
+
+            # resample if effective sample size is less than N/2
+            if self.ess < self._n / 2:
+                weights = np.exp(self._logweights - logsumexp(self._logweights))
+                self._samples = np.random.choice(self._samples,
+                                                 size=self._n,
+                                                 p=weights)
+                self._logweights = np.zeros(self._n) - np.log(self._n)
+
+            # incremental weights are given by Eq. 31 in (Del Moral et al., 2006)
+            # Note: according to Eq. 31 this likelihood has to be computed
+            # before propagation but after data is added.
+            logratio = [model.loglikelihood() - loglike_prev
+                        for (model, loglike_prev) in zip(self._samples, loglikes)]
+            self._logweights += np.array(logratio)
+
+            # propagate particles according to MCMC kernel as per Eq. 30 in
+            # (Del Moral et al., 2006)
+            self._samples = [sample(model, self._prior, self._mcmc+1, raw=False)[-1]
+                             for model in self._samples]
+
 
     def posterior(self, X, grad=False):
         parts = map(np.array, zip(*[_.posterior(X, grad) for _ in self._samples]))
