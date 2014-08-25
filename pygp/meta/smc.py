@@ -96,16 +96,16 @@ class SMC(object):
             # resample if effective sample size is less than N/2
             if self.ess < self._n / 2:
                 weights = np.exp(self._logweights - logsumexp(self._logweights))
-                self._samples = np.random.choice(self._samples,
-                                                 size=self._n,
-                                                 p=weights)
+                idx = np.random.choice(self._n, self._n, p=weights)
+                self._samples = self._samples[idx]
+                loglikes = loglikes[idx]
                 self._logweights = np.zeros(self._n) - np.log(self._n)
 
             # incremental weights are given by Eq. 31 in (Del Moral et al., 2006)
             # Note: according to Eq. 31 this likelihood has to be computed
             # before propagation but after data is added.
-            logratio = [model.loglikelihood() - loglike_prev
-                        for (model, loglike_prev) in zip(self._samples, loglikes)]
+            logratio = [model.loglikelihood() - loglike_
+                        for (model, loglike_) in zip(self._samples, loglikes)]
             self._logweights += np.array(logratio)
 
             # propagate particles according to MCMC kernel as per Eq. 30 in
