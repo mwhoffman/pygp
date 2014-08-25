@@ -97,8 +97,8 @@ class SMC(object):
             if self.ess < self._n / 2:
                 weights = np.exp(self._logweights - logsumexp(self._logweights))
                 idx = np.random.choice(self._n, self._n, p=weights)
-                self._samples = self._samples[idx]
-                loglikes = loglikes[idx]
+                loglikes = [loglikes[i] for i in idx]
+                self._samples = [self._samples[i] for i in idx]
                 self._logweights = np.zeros(self._n) - np.log(self._n)
 
             # incremental weights are given by Eq. 31 in (Del Moral et al., 2006)
