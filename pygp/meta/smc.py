@@ -79,11 +79,6 @@ class SMC(object):
     def data(self):
         return self._samples[-1].data
 
-    @property
-    def ess(self):
-        w2 = np.exp(2 * (self._logweights - logsumexp(self._logweights)))
-        return 1.0 / w2.sum()
-
     def add_data(self, X, y):
         for (xi, yi) in zip(X, y):
             # compute likelihood of previous data
@@ -94,29 +89,38 @@ class SMC(object):
                 model.add_data(xi, yi)
 
             # resample if effective sample size is less than N/2
-            if self.ess < self._n / 2:
-                weights = np.exp(self._logweights - logsumexp(self._logweights))
-                idx = np.random.choice(self._n, self._n, p=weights)
+            if -logsumexp(2*self._logweights) < np.log(self._n/2):
+                # FIXME: can use a better resampling strategy here. ie,
+                # stratified, etc.
+                p = np.exp(self._logweights)
+                idx = np.random.choice(self._n, self._n, p=p)
                 loglikes = [loglikes[i] for i in idx]
-                self._samples = [self._samples[i] for i in idx]
+                self._samples = [self._samples[i].copy() for i in idx]
                 self._logweights = np.zeros(self._n) - np.log(self._n)
 
-            # incremental weights are given by Eq. 31 in (Del Moral et al., 2006)
-            # Note: according to Eq. 31 this likelihood has to be computed
-            # before propagation but after data is added.
+            # incremental weights are given by Eq. 31 in (Del Moral et al.,
+            # 2006) Note: according to Eq. 31 this likelihood has to be
+            # computed before propagation but after data is added.
             logratio = [model.loglikelihood() - loglike_
                         for (model, loglike_) in zip(self._samples, loglikes)]
+
+            # update logweights and normalize.
             self._logweights += np.array(logratio)
+            self._logweights -= logsumexp(self._logweights)
 
             # propagate particles according to MCMC kernel as per Eq. 30 in
             # (Del Moral et al., 2006)
-            self._samples = [sample(model, self._prior, self._mcmc+1, raw=False)[-1]
+            self._samples = [sample(model, self._prior, self._mcmc+1,
+                                    raw=False)[-1]
                              for model in self._samples]
 
+            # FIXME: I think the models can just be updated in place here.
 
     def posterior(self, X, grad=False):
-        parts = map(np.array, zip(*[_.posterior(X, grad) for _ in self._samples]))
-        weights = np.exp(self._logweights - logsumexp(self._logweights))
+        parts = [_.posterior(X, grad) for _ in self._samples]
+        parts = [np.array(_) for _ in zip(*parts)]
+
+        weights = np.exp(self._logweights)
 
         mu_, s2_ = parts[:2]
         mu = np.average(mu_, weights=weights, axis=0)
@@ -127,8 +131,11 @@ class SMC(object):
 
         dmu_, ds2_ = parts[2:]
         dmu = np.average(dmu_, weights=weights, axis=0)
+
         Dmu = dmu_ - dmu
-        ds2 = np.average(ds2_ + 2 * mu_[:, :, None] * Dmu
-                         - 2 * mu[None, :, None] * Dmu, weights=weights, axis=0)
+        ds2 = np.average(ds2_
+                         + 2 * mu_[:, :, None] * Dmu
+                         - 2 * mu[None, :, None] * Dmu,
+                         weights=weights, axis=0)
 
         return mu, s2, dmu, ds2
