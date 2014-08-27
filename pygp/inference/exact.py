@@ -38,6 +38,11 @@ class ExactGP(GP):
         self._R = None
         self._a = None
 
+    def reset(self):
+        for attr in 'Ra':
+            setattr(self, '_' + attr, None)
+        super(ExactGP, self).reset()
+
     def _update(self):
         sn2 = self._likelihood.s2
         K = self._kernel.get(self._X) + sn2 * np.eye(len(self._X))

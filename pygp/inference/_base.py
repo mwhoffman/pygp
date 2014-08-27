@@ -52,6 +52,11 @@ class GP(Parameterized):
         self.nhyper = (self._likelihood.nhyper +
                        self._kernel.nhyper)
 
+    def reset(self):
+        """Remove all data from the model."""
+        self._X = None
+        self._y = None
+
     def __repr__(self):
         models = [repr(self._likelihood),
                   repr(self._kernel)]

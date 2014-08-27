@@ -45,6 +45,11 @@ class FITC(GP):
         self._A = None
         self._a = None
 
+    def reset(self):
+        for attr in 'LRbAa':
+            setattr(self, '_' + attr, None)
+        super(FITC, self).reset()
+
     @property
     def pseudoinputs(self):
         """The pseudo-input points."""
