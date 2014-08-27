@@ -12,21 +12,31 @@ import numpy as np
 
 # local imports
 from ._base import RealLikelihood
-from ..utils.models import Printable
+from ..utils.models import printable
 from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['Gaussian']
 
 
-class Gaussian(RealLikelihood, Printable):
+@printable
+class Gaussian(RealLikelihood):
+    """
+    Likelihood model for standard Gaussian distributed errors.
+    """
     def __init__(self, sigma):
         self._logsigma = np.log(float(sigma))
         self.nhyper = 1
 
     def _params(self):
         return [
-            ('sigma', 1),]
+            ('sigma', 1),
+        ]
+
+    @property
+    def s2(self):
+        """Simple access to the noise variance."""
+        return np.exp(self._logsigma*2)
 
     def get_hyper(self):
         return np.r_[self._logsigma]

@@ -11,15 +11,16 @@ from __future__ import print_function
 import numpy as np
 
 # local imports
-from ._base import RealKernel
+from ._real import RealKernel
 from ._distances import sqdist
-from ..utils.models import Printable
+from ..utils.models import printable
 
 # exported symbols
 __all__ = ['Periodic']
 
 
-class Periodic(RealKernel, Printable):
+@printable
+class Periodic(RealKernel):
     def __init__(self, sf, ell, p):
         self._logsf = np.log(float(sf))
         self._logell = np.log(float(ell))
@@ -29,9 +30,10 @@ class Periodic(RealKernel, Printable):
 
     def _params(self):
         return [
-            ('sf',  1),
+            ('sf', 1),
             ('ell', 1),
-            ('p',   1),]
+            ('p', 1),
+        ]
 
     def get_hyper(self):
         return np.r_[self._logsf, self._logell, self._logp]
@@ -71,3 +73,15 @@ class Periodic(RealKernel, Printable):
         yield 2 * self.dget(X)
         yield np.zeros(len(X))
         yield np.zeros(len(X))
+
+    def gradx(self, X1, X2=None):
+        raise NotImplementedError
+
+    def grady(self, X1, X2=None):
+        raise NotImplementedError
+
+    def gradxy(self, X1, X2=None):
+        raise NotImplementedError
+
+    def sample_spectrum(self, N, rng=None):
+        raise NotImplementedError

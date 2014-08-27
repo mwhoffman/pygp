@@ -1,3 +1,7 @@
+"""
+Interface to GP inference.
+"""
+
 # import the basic things by default
 from . import inference
 from . import kernels

@@ -32,9 +32,9 @@ class MCMC(object):
             self._samples = sample(self._model, self._prior, self._n, False)
 
         else:
-            # FIXME: the likelihood won't play a role, so we can sample directly
-            # from the prior. This of course requires the prior to also be
-            # a well-defined distribution.
+            # FIXME: the likelihood won't play a role, so we can sample
+            # directly from the prior. This of course requires the prior to
+            # also be a well-defined distribution.
             pass
 
     def __iter__(self):
@@ -63,7 +63,8 @@ class MCMC(object):
         self._samples = sample(self._model, self._prior, self._n, False)
 
     def posterior(self, X, grad=False):
-        parts = map(np.array, zip(*[_.posterior(X, grad) for _ in self._samples]))
+        parts = map(np.array,
+                    zip(*[_.posterior(X, grad) for _ in self._samples]))
 
         mu_, s2_ = parts[:2]
         mu = np.mean(mu_, axis=0)
@@ -75,7 +76,8 @@ class MCMC(object):
         dmu_, ds2_ = parts[2:]
         dmu = np.mean(dmu_, axis=0)
         Dmu = dmu_ - dmu
-        ds2 = np.mean(ds2_ + 2 * mu_[   :,:,None] * Dmu
-                           - 2 * mu [None,:,None] * Dmu, axis=0)
+        ds2 = np.mean(ds2_
+                      + 2 * mu_[:, :, None] * Dmu
+                      - 2 * mu[None, :, None] * Dmu, axis=0)
 
         return mu, s2, dmu, ds2

@@ -28,7 +28,8 @@ class FourierSample(object):
 
         if not isinstance(likelihood, Gaussian):
             # FIXME: generalize this?
-            raise ModelError('Fourier samples only defined for Gaussian likelihoods')
+            raise ModelError('Fourier samples only defined for Gaussian'
+                             'likelihoods')
 
         # this randomizes the feature.
         self.W, self.alpha = kernel.sample_spectrum(N, rng)
@@ -44,8 +45,8 @@ class FourierSample(object):
             A += sigma**2 * np.eye(Phi.shape[1])
             R = sla.cholesky(A)
 
-            # FIXME: we can do a smarter update here when the number of points is
-            # less than the number of features.
+            # FIXME: we can do a smarter update here when the number of points
+            # is less than the number of features.
 
             self.theta = sla.cho_solve((R, False), np.dot(Phi.T, y))
             self.theta += sla.solve_triangular(R, sigma*rng.randn(N))
