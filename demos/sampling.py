@@ -28,7 +28,7 @@ if __name__ == '__main__':
     pygp.optimize(model)
     pygp.plotting.plot(model,
                        ymin=-3, ymax=3,
-                       figure=1, subplot=121, title='ML posterior')
+                       figure=1, subplot=131, title='ML posterior')
 
     # create a prior structure.
     priors = dict(
@@ -36,11 +36,19 @@ if __name__ == '__main__':
         sf=pygp.priors.Uniform(0.01, 5.0),
         ell=pygp.priors.Uniform(0.01, 1.0))
 
-    # create a meta-model which samples hyperparameters.
-    model = pygp.meta.MCMC(model, priors, n=2000, burn=100)
+    # create a meta-model which samples hyperparameters via MCMC.
+    meta_mcmc = pygp.meta.MCMC(model, priors, n=200, burn=100)
 
     # plot the fully Bayesian predictions.
-    pygp.plotting.plot(model,
+    pygp.plotting.plot(meta_mcmc,
                        ymin=-3, ymax=3,
-                       figure=1, subplot=122, legend=True,
-                       title='Bayes posterior')
+                       figure=1, subplot=132, title='Bayes posterior (MCMC)')
+
+    # create a meta-model which samples hyperparameters via SMC.
+    meta_smc = pygp.meta.SMC(model, priors, n=200)
+
+    # plot the fully Bayesian predictions.
+    pygp.plotting.plot(meta_smc,
+                       ymin=-3, ymax=3,
+                       figure=1, subplot=133, legend=True,
+                       title='Bayes posterior (SMC)')

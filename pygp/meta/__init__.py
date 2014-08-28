@@ -5,8 +5,11 @@ hyperparameters.
 
 # pylint: disable=wildcard-import
 from .mcmc import *
+from .smc import *
 
 from . import mcmc
+from . import smc
 
 __all__ = []
 __all__ += mcmc.__all__
+__all__ += smc.__all__

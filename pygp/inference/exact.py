@@ -38,6 +38,11 @@ class ExactGP(GP):
         self._R = None
         self._a = None
 
+    def reset(self):
+        for attr in 'Ra':
+            setattr(self, '_' + attr, None)
+        super(ExactGP, self).reset()
+
     def _update(self):
         sn2 = self._likelihood.s2
         K = self._kernel.get(self._X) + sn2 * np.eye(len(self._X))
@@ -106,7 +111,7 @@ class ExactGP(GP):
 
     def loglikelihood(self, grad=False):
         lZ = -0.5 * np.inner(self._a, self._a)
-        lZ -= 0.5 * np.log(2*np.pi) * self.ndata
+        lZ -= 0.5 * np.log(2 * np.pi) * self.ndata
         lZ -= np.sum(np.log(self._R.diagonal()))
 
         # bail early if we don't need the gradient.
