@@ -93,19 +93,22 @@ class SMC(object):
             for model in self._samples:
                 model.add_data(xi, yi)
 
-            # get the loglikelihoods after adding this new data.
+            # we will propose new hyperparameters using an MCMC kernel, which
+            # corresponds to Eqs. 30--31 of (Del Moral et al, 2006). To compute
+            # the incremental weights we just need the loglikelihoods before
+            # and after adding the new data but before propagating the
+            # particles.
+
+            # self._loglikes already contains the loglikelihood before adding
+            # the data, so what follows computes it after adding the data.
             loglikes = np.fromiter((model.loglikelihood()
                                     for model in self._samples), float)
 
-            # incremental weights are given by Eq. 31 in (Del Moral et al.,
-            # 2006)
-
+            # update and normalize the weights.
             self._logweights += loglikes - self._loglikes
             self._logweights -= logsumexp(self._logweights)
 
-            # propagate particles according to MCMC kernel. Note: this is given
-            # in Eqs. 30--31 of (Del Moral et al, 2006). This allows us to
-            # update the weights without looking at the new sample.
+            # propagate the particles.
             for model in self._samples:
                 sample(model, self._prior, 1)
 
