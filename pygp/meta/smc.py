@@ -20,56 +20,54 @@ from ..utils.models import get_params
 __all__ = ['SMC']
 
 
+def _sample_prior(model, priors, n):
+    # unpack priors
+    # TODO -- Bobak: This snippet is copied from learning/sampling.py
+    # and should probably be put into a Prior base class.
+    priors = dict(priors)
+    active = np.ones(model.nhyper, dtype=bool)
+    logged = np.ones(model.nhyper, dtype=bool)
+
+    for (key, block, log) in get_params(model):
+        inactive = (key in priors) and (priors[key] is None)
+        logged[block] = log
+        active[block] = not inactive
+        if inactive:
+            del priors[key]
+        else:
+            priors[key] = (block, log, priors[key])
+    priors = priors.values()
+
+    # sample hyperparameters from prior
+    hypers = np.zeros((n, model.nhyper))
+    for (block, log, prior) in priors:
+        hypers[:, block] = prior.sample(n, log=log)
+
+    return hypers
+
+
 class SMC(object):
-    def __init__(self, model, prior, n=100, mcmc=0):
+    def __init__(self, model, prior, n=100):
         self._prior = prior
         self._n = n
-        self._mcmc = mcmc   # number of mcmc steps in particle propagation
 
-        self._samples = self._prior_sampling(model, prior)
-        self._logweights = np.zeros(n) - np.log(n)
+        # we won't add any data unless the model already has it.
+        data = None
 
         if model.ndata > 0:
-            self.add_data(*model.data)
+            data = model.data
+            model = model.copy()
+            model.reset()
+
+        self._samples = [model.copy(h) for h in _sample_prior(model, prior, n)]
+        self._logweights = np.zeros(n) - np.log(n)
+        self._loglikes = np.zeros(n)
+
+        if data is not None:
+            self.add_data(data[0], data[1])
 
     def __iter__(self):
         return self._samples.__iter__()
-
-    def _prior_sampling(self, model, priors):
-        # unpack priors
-        # TODO -- Bobak: This snippet is copied from learning/sampling.py
-        # and should probably be put into a Prior base class.
-        priors = dict(priors)
-        active = np.ones(model.nhyper, dtype=bool)
-        logged = np.ones(model.nhyper, dtype=bool)
-
-        for (key, block, log) in get_params(model):
-            inactive = (key in priors) and (priors[key] is None)
-            logged[block] = log
-            active[block] = not inactive
-            if inactive:
-                del priors[key]
-            else:
-                priors[key] = (block, log, priors[key])
-        priors = priors.values()
-
-        # sample hyperparameters from prior
-        hypers = np.zeros((self._n, model.nhyper))
-        for (block, log, prior) in priors:
-            hypers[:, block] = prior.sample(self._n, log=log)
-
-        # TODO -- Bobak: The following functionality should be provided by the
-        # base model e.g. in the form of a model.reset() function. model.copy()
-        # could be made to take an optional nodata=False kwarg that copies the
-        # object without its data. In which case the following lines can simply
-        # be replaced with:
-        #
-        # return [model.copy(h, nodata=True) for h in hypers]
-        samples = [model.copy(h) for h in hypers]
-        for sample in samples:
-            sample._X = None
-            sample._y = None
-        return samples
 
     @property
     def ndata(self):
@@ -81,40 +79,39 @@ class SMC(object):
 
     def add_data(self, X, y):
         for (xi, yi) in zip(X, y):
-            # compute likelihood of previous data
-            loglikes = [model.loglikelihood() for model in self._samples]
-
-            # add data
-            for model in self._samples:
-                model.add_data(xi, yi)
-
             # resample if effective sample size is less than N/2
             if -logsumexp(2*self._logweights) < np.log(self._n/2):
                 # FIXME: can use a better resampling strategy here. ie,
                 # stratified, etc.
                 p = np.exp(self._logweights)
                 idx = np.random.choice(self._n, self._n, p=p)
-                loglikes = [loglikes[i] for i in idx]
                 self._samples = [self._samples[i].copy() for i in idx]
                 self._logweights = np.zeros(self._n) - np.log(self._n)
+                self._loglikes = self._loglikes[idx]
+
+            # add data
+            for model in self._samples:
+                model.add_data(xi, yi)
+
+            # get the loglikelihoods after adding this new data.
+            loglikes = np.fromiter((model.loglikelihood()
+                                    for model in self._samples), float)
 
             # incremental weights are given by Eq. 31 in (Del Moral et al.,
-            # 2006) Note: according to Eq. 31 this likelihood has to be
-            # computed before propagation but after data is added.
-            logratio = [model.loglikelihood() - loglike_
-                        for (model, loglike_) in zip(self._samples, loglikes)]
+            # 2006)
 
-            # update logweights and normalize.
-            self._logweights += np.array(logratio)
+            self._logweights += loglikes - self._loglikes
             self._logweights -= logsumexp(self._logweights)
 
-            # propagate particles according to MCMC kernel as per Eq. 30 in
-            # (Del Moral et al., 2006)
-            self._samples = [sample(model, self._prior, self._mcmc+1,
-                                    raw=False)[-1]
-                             for model in self._samples]
+            # propagate particles according to MCMC kernel. Note: this is given
+            # in Eqs. 30--31 of (Del Moral et al, 2006). This allows us to
+            # update the weights without looking at the new sample.
+            for model in self._samples:
+                sample(model, self._prior, 1)
 
-            # FIXME: I think the models can just be updated in place here.
+            # update the loglikelihoods given the new samples.
+            self._loglikes = np.fromiter((model.loglikelihood()
+                                          for model in self._samples), float)
 
     def posterior(self, X, grad=False):
         parts = [_.posterior(X, grad) for _ in self._samples]
