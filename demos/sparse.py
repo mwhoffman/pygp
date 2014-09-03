@@ -26,15 +26,20 @@ if __name__ == '__main__':
     # create a sparse GP.
     U = np.linspace(-1.3, 2, 10)[:, None]
     gp2 = pygp.inference.FITC.from_gp(gp1, U)
-    gp2.add_data(X, y)
 
     # find the ML parameters for both
     pygp.optimize(gp1)
     pygp.optimize(gp2)
 
+    # create a Nystrom GP
+    gp3 = pygp.inference.NystromGP.from_gp(gp1, U)
+
     # plot them.
-    pygp.plotting.plot(gp1, figure=1, subplot=121, ymin=-2.5, ymax=3,
+    pygp.plotting.plot(gp1, figure=1, subplot=131, ymin=-2.5, ymax=3,
                        title='Full GP')
 
-    pygp.plotting.plot(gp2, figure=1, subplot=122, ymin=-2.5, ymax=3,
-                       title='Sparse GP', pseudoinputs=True, legend=True)
+    pygp.plotting.plot(gp2, figure=1, subplot=132, ymin=-2.5, ymax=3,
+                       title='SGP (FITC)', pseudoinputs=True, legend=True)
+
+    pygp.plotting.plot(gp3, figure=1, subplot=133, ymin=-2.5, ymax=3,
+                       title='SGP (Nystrom)', pseudoinputs=True)
