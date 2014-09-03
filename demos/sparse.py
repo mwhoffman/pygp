@@ -26,7 +26,6 @@ if __name__ == '__main__':
     # create a sparse GP.
     U = np.linspace(-1.3, 2, 10)[:, None]
     gp2 = pygp.inference.FITC.from_gp(gp1, U)
-    gp2.add_data(X, y)
 
     # find the ML parameters for both
     pygp.optimize(gp1)
