@@ -32,11 +32,16 @@ class NystromGP(GP):
         super(NystromGP, self).__init__(likelihood, kernel)
         # save the pseudo-input locations.
         self._U = np.array(U, ndmin=2, dtype=float, copy=True)
+        # NOTE -- Bobak: if self._U is changed at any point, self._Ruu must be
+        # recomputed as well.
+        Kuu = self._kernel.get(self._U)
 
-        self._Kinv = None
-        # approximate eigenvalues and eigenvectors
-        self._w = None
-        self._V = None
+
+        # choleskies of Kuu and (Kuu + Kfu * Kuf / sn2), respectively,
+        # see Eq 20b of (Quinonero-Candela and Rasmussen, 2005)
+        self._Ruu = sla.cholesky(Kuu)
+        self._Ruf = None
+        self._a = None
 
     @property
     def pseudoinputs(self):
@@ -44,28 +49,13 @@ class NystromGP(GP):
         return self._U
 
     def _update(self):
-        sn2 = self._likelihood.s2
-        m = self._U.shape[0]
-        eye = np.eye(m)
-
-        Kuu = self._kernel.get(self._U)
-
-        # compute eigenvalues and eigenvectors of smaller problem
-        w, V = sla.eigh(Kuu)
-
-        # approximate eigenvalues and eigenvectors of larger problem
-        Knm = self._kernel.get(self._X, self._U)
-        scalar = self.ndata / m
-        self._V = np.dot(Knm, V / w) / np.sqrt(scalar)
-        self._w = w * scalar
-
-        # compute the inverse efficiently using Eq. 11 from
-        # (Williams and Seeger, 2001)
-        b = self._w * self._V
-        A = np.dot(b.T, self._V) + sn2 * eye
-        self._Kinv = sla.solve(A, b.T)
-        self._Kinv = np.eye(self.ndata) - np.dot(self._V, self._Kinv)
-        self._Kinv /= sn2
+        # compute cholesky of data dependent problem
+        Kuf = self._kernel.get(self._U, self._X)
+        S = Kuu + np.dot(Kuf, Kuf.T) / self._likelihood.s2
+        self._Ruf = sla.cholesky(S)
+        self._a = sla.solve_triangular(self._Ruf,
+                                       np.dot(Kuf, self._y),
+                                       trans=True)
 
     def _posterior(self, X):
         # grab the prior mean and covariance.
@@ -73,14 +63,15 @@ class NystromGP(GP):
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
-            K = self._kernel.get(self._X, X)
-            KinvK = np.dot(self._Kinv, K)
+            K = self._kernel.get(self._U, X)
+            b = sla.solve_triangular(self._Ruu, K, trans=True)
+            c = sla.solve_triangular(self._Ruf, K, trans=True)
 
             # add the contribution to the mean coming from the posterior and
             # subtract off the information gained in the posterior from the
             # prior variance.
-            mu += np.dot(KinvK.T, self._y)
-            Sigma -= np.dot(K.T, KinvK)
+            mu += np.dot(c.T, self._a)
+            Sigma += -np.dot(b.T, b) + np.dot(c.T, c) * self._likelihood.s2
 
         return mu, Sigma
 
@@ -90,14 +81,15 @@ class NystromGP(GP):
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
-            K = self._kernel.get(self._X, X)
-            KinvK = np.dot(self._Kinv, K)
+            K = self._kernel.get(self._U, X)
+            b = sla.solve_triangular(self._Ruu, K, trans=True)
+            c = sla.solve_triangular(self._Ruf, K, trans=True)
 
             # add the contribution to the mean coming from the posterior and
             # subtract off the information gained in the posterior from the
             # prior variance.
-            mu += np.dot(KinvK.T, self._y)
-            s2 -= np.sum(K * KinvK, axis=0)
+            mu += np.dot(c.T, self._a) / self._likelihood.s2
+            s2 += -np.sum(b * b, axis=0) + np.sum(c * c, axis=0)
 
         if not grad:
             return (mu, s2)
@@ -108,14 +100,18 @@ class NystromGP(GP):
         ds2 = np.zeros_like(X)
 
         if self._X is not None:
-            dK = self._kernel.grady(self._X, X)
-            dK = dK.reshape(self.ndata, -1)
+            dK = self._kernel.grady(self._U, X)
+            dK = dK.reshape(self._U.shape[0], -1)
 
-            KinvdK = np.dot(self._Kinv.T, dK)
-            dmu += np.dot(KinvdK.T, self._y).reshape(X.shape)
+            db = sla.solve_triangular(self._Ruu, dK, trans=True)
+            db = np.rollaxis(np.reshape(db, (-1,) + X.shape), 2)
 
-            dK = np.rollaxis(np.reshape(dK, (-1,) + X.shape), 2)
-            ds2 -= 2 * np.sum(dK * KinvK, axis=1).T
+            dc = sla.solve_triangular(self._Ruf, dK, trans=True)
+            dmu += np.dot(dc.T, self._a).reshape(X.shape)
+
+            dc = np.rollaxis(np.reshape(dc, (-1,) + X.shape), 2)
+            ds2 += -2 * np.sum(db * b, axis=1).T + \
+                    2 * np.sum(dc * c, axis=1).T
 
         return (mu, s2, dmu, ds2)
 

@@ -42,4 +42,4 @@ if __name__ == '__main__':
                        title='SGP (FITC)', pseudoinputs=True, legend=True)
 
     pygp.plotting.plot(gp3, figure=1, subplot=133, ymin=-2.5, ymax=3,
-                       title='SGP (Nystrom)', pseudoinputs=True)
+                       title='SGP (DTC)', pseudoinputs=True)
