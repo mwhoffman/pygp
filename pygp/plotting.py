@@ -15,85 +15,84 @@ import matplotlib.pyplot as pl
 from .utils.models import get_params
 
 # exported symbols
-__all__ = ['plot', 'sampleplot']
+__all__ = ['plot_posterior', 'plot_samples']
 
 
-def plot(model,
-         xmin=None, xmax=None, ymin=None, ymax=None,
-         mean=True, data=True, error=True, pseudoinputs=False,
-         xlabel='', ylabel='', title='', legend=False,
-         figure=None, subplot=None,
-         draw=True):
+def plot_posterior(model,
+                   xmin=None, xmax=None,
+                   mean=True, data=True, error=True, pseudoinputs=False):
+    """
+    Plot a one-dimensional posterior model.
 
-    # get the axes object and clear it.
-    fg = pl.gcf() if (figure is None) else pl.figure(figure)
-
-    if subplot is None:
-        fg.clf()
-        ax = fg.gca()
-    else:
-        ax = fg.add_subplot(subplot)
-        ax.cla()
+    Parameters:
+        xmin: minimum x value
+        xmax: maximum x value
+        mean: plot the mean
+        data: plot the data
+        error: plot the error bands
+        pseudoinputs: plot pseudoinputs (if there are any)
+    """
 
     # grab the data.
     X, y = model.data
-
     if X is None and (xmin is None or xmax is None):
         raise Exception('bounds must be given if no data is present')
 
+    # get the input points.
     xmin = X[:, 0].min() if (xmin is None) else xmin
     xmax = X[:, 0].max() if (xmax is None) else xmax
-
     x = np.linspace(xmin, xmax, 500)
+
+    # get the mean and confidence bands.
     mu, s2 = model.posterior(x[:, None])
     lo = mu - 2 * np.sqrt(s2)
     hi = mu + 2 * np.sqrt(s2)
 
+    # get the axes.
+    ax = pl.gca()
+
     if mean:
+        # plot the mean
         ax.plot(x, mu, lw=2, color='b', label='mean')
 
     if error:
+        # plot the error bars and add an empty plot that will be used by the
+        # legend if it's called for.
         ax.fill_between(x, lo, hi, color='k', alpha=0.15)
         ax.plot([], [], color='k', alpha=0.15, linewidth=10,
                 label='uncertainty')
 
     if data and X is not None:
+        # plot the data; use smaller markers if we have a lot of data.
         if len(X) > 100:
             ax.scatter(X.ravel(), y, marker='.', color='k', label='data')
         else:
             ax.scatter(X.ravel(), y, s=20, lw=1, facecolors='none', color='k',
                        label='data')
 
-    ax.set_title(title)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.axis('tight')
-    ax.axis((xmin, xmax, ymin, ymax))
-
     if hasattr(model, 'pseudoinputs') and pseudoinputs:
+        # plot any pseudo-inputs.
         ymin, ymax = ax.get_ylim()
         U = model.pseudoinputs.ravel()
         ax.scatter(U, np.ones_like(U) * (ymin + 0.1 * (ymax-ymin)),
                    s=20, lw=1, marker='x', color='k', label='pseudo-inputs')
 
-    if legend:
-        ax.legend(loc='best')
-
-    if draw:
-        ax.figure.canvas.draw()
+    pl.axis('tight')
 
 
-def sampleplot(model, samples,
-               figure=None, draw=True):
-
+def plot_samples(model):
+    """
+    Plot the posterior over hyperparameters for a sample-based meta model.
+    """
     # get the figure and clear it.
-    fg = pl.gcf() if (figure is None) else pl.figure(figure)
+    fg = pl.gcf()
     fg.clf()
 
+    samples = np.array(list(m.get_hyper() for m in model))
     values = np.zeros((samples.shape[0], 0))
     labels = []
 
-    for key, block, log in get_params(model):
+    for key, block, log in get_params(next(model.__iter__())):
         for i in range(block.start, block.stop):
             vals = samples[:, i]
             size = block.stop - block.start
@@ -126,6 +125,3 @@ def sampleplot(model, samples,
                 ax.set_xlabel(labels[i])
             else:
                 ax.set_xticklabels([])
-
-    if draw:
-        fg.canvas.draw()

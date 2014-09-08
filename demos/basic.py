@@ -6,10 +6,11 @@ optimize its hyperparameters.
 # global imports.
 import os
 import numpy as np
+import matplotlib.pyplot as pl
 
 # local imports
 import pygp
-import pygp.plotting
+import pygp.plotting as pp
 
 
 if __name__ == '__main__':
@@ -19,10 +20,15 @@ if __name__ == '__main__':
     X = data['X']
     y = data['y']
 
-    # create the model and add data to it.
+    # create the model, add data, and optimize it.
     gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp.add_data(X, y)
-
-    # find the ML parameters and sample from the posterior.
     pygp.optimize(gp)
-    pygp.plotting.plot(gp, figure=1, legend=True)
+
+    # plot the posterior.
+    pl.figure(1)
+    pl.clf()
+    pp.plot_posterior(gp)
+    pl.legend(loc='best')
+    pl.draw()
+    pl.show()
