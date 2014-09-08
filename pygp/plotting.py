@@ -15,7 +15,7 @@ import matplotlib.pyplot as pl
 from .utils.models import get_params
 
 # exported symbols
-__all__ = ['plot_posterior', 'sampleplot']
+__all__ = ['plot_posterior', 'plot_samples']
 
 
 def plot_posterior(model,
@@ -80,17 +80,19 @@ def plot_posterior(model,
     pl.axis('tight')
 
 
-def sampleplot(model, samples,
-               figure=None, draw=True):
-
+def plot_samples(model):
+    """
+    Plot the posterior over hyperparameters for a sample-based meta model.
+    """
     # get the figure and clear it.
-    fg = pl.gcf() if (figure is None) else pl.figure(figure)
+    fg = pl.gcf()
     fg.clf()
 
+    samples = np.array(list(m.get_hyper() for m in model))
     values = np.zeros((samples.shape[0], 0))
     labels = []
 
-    for key, block, log in get_params(model):
+    for key, block, log in get_params(next(model.__iter__())):
         for i in range(block.start, block.stop):
             vals = samples[:, i]
             size = block.stop - block.start
@@ -123,6 +125,3 @@ def sampleplot(model, samples,
                 ax.set_xlabel(labels[i])
             else:
                 ax.set_xticklabels([])
-
-    if draw:
-        fg.canvas.draw()
