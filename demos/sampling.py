@@ -6,11 +6,12 @@ optimize its hyperparameters.
 # global imports.
 import os
 import numpy as np
+import matplotlib.pyplot as pl
 
 # local imports
 import pygp
 import pygp.priors
-import pygp.plotting
+import pygp.plotting as pp
 
 
 if __name__ == '__main__':
@@ -26,9 +27,6 @@ if __name__ == '__main__':
 
     # find the ML hyperparameters and plot the predictions.
     pygp.optimize(model)
-    pygp.plotting.plot(model,
-                       ymin=-3, ymax=3,
-                       figure=1, subplot=131, title='ML posterior')
 
     # create a prior structure.
     priors = dict(
@@ -36,19 +34,27 @@ if __name__ == '__main__':
         sf=pygp.priors.Uniform(0.01, 5.0),
         ell=pygp.priors.Uniform(0.01, 1.0))
 
-    # create a meta-model which samples hyperparameters via MCMC.
-    meta_mcmc = pygp.meta.MCMC(model, priors, n=200, burn=100)
+    # create sample-based models.
+    mcmc = pygp.meta.MCMC(model, priors, n=200, burn=100)
+    smc = pygp.meta.SMC(model, priors, n=200)
 
-    # plot the fully Bayesian predictions.
-    pygp.plotting.plot(meta_mcmc,
-                       ymin=-3, ymax=3,
-                       figure=1, subplot=132, title='Bayes posterior (MCMC)')
+    pl.figure(1)
+    pl.clf()
 
-    # create a meta-model which samples hyperparameters via SMC.
-    meta_smc = pygp.meta.SMC(model, priors, n=200)
+    pl.subplot(131)
+    pp.plot_posterior(model)
+    pl.axis(ymin=-3, ymax=3)
+    pl.title('Type-II ML')
+    pl.legend(loc='best')
 
-    # plot the fully Bayesian predictions.
-    pygp.plotting.plot(meta_smc,
-                       ymin=-3, ymax=3,
-                       figure=1, subplot=133, legend=True,
-                       title='Bayes posterior (SMC)')
+    pl.subplot(132)
+    pp.plot_posterior(mcmc)
+    pl.axis(ymin=-3, ymax=3)
+    pl.title('MCMC')
+
+    pl.subplot(133)
+    pp.plot_posterior(mcmc)
+    pl.axis(ymin=-3, ymax=3)
+    pl.title('SMC')
+    pl.draw()
+    pl.show()

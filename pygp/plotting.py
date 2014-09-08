@@ -77,6 +77,8 @@ def plot_posterior(model,
         ax.scatter(U, np.ones_like(U) * (ymin + 0.1 * (ymax-ymin)),
                    s=20, lw=1, marker='x', color='k', label='pseudo-inputs')
 
+    pl.axis('tight')
+
 
 def sampleplot(model, samples,
                figure=None, draw=True):

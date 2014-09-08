@@ -7,9 +7,10 @@ would just take some time.
 
 import os
 import numpy as np
+import matplotlib.pyplot as pl
 
 import pygp
-import pygp.plotting
+import pygp.plotting as pp
 import pygp.kernels as pk
 
 
@@ -40,4 +41,9 @@ gp = pygp.inference.ExactGP(likelihood, kernel)
 gp.add_data(X, y)
 
 # plot everything.
-pygp.plotting.plot(gp, mean=False, xmax=70, legend=True)
+pl.figure(1)
+pl.clf()
+pp.plot_posterior(gp, mean=False, xmax=70)
+pl.legend(loc='upper left')
+pl.draw()
+pl.show()

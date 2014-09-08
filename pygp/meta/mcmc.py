@@ -20,7 +20,7 @@ __all__ = ['MCMC']
 
 class MCMC(object):
     def __init__(self, model, prior, n=100, burn=100):
-        self._model = model
+        self._model = model.copy()
         self._prior = prior
         self._samples = []
         self._n = n

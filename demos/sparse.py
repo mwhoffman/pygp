@@ -6,10 +6,11 @@ optimize its hyperparameters.
 # global imports.
 import os
 import numpy as np
+import matplotlib.pyplot as pl
 
 # local imports
 import pygp
-import pygp.plotting
+import pygp.plotting as pp
 
 
 if __name__ == '__main__':
@@ -32,8 +33,17 @@ if __name__ == '__main__':
     pygp.optimize(gp2)
 
     # plot them.
-    pygp.plotting.plot(gp1, figure=1, subplot=121, ymin=-2.5, ymax=3,
-                       title='Full GP')
+    pl.figure(1)
+    pl.clf()
+    pl.subplot(121)
+    pp.plot_posterior(gp1)
+    pl.title('Full GP')
+    pl.legend(loc='upper left')
+    pl.axis(ymin=-2.5, ymax=3)
 
-    pygp.plotting.plot(gp2, figure=1, subplot=122, ymin=-2.5, ymax=3,
-                       title='Sparse GP', pseudoinputs=True, legend=True)
+    pl.subplot(122)
+    pp.plot_posterior(gp2, pseudoinputs=True)
+    pl.title('Sparse GP')
+    pl.axis(ymin=-2.5, ymax=3)
+    pl.draw()
+    pl.show()
