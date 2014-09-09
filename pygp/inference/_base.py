@@ -81,7 +81,7 @@ class GP(Parameterized):
         of a GP using the same likelihood, kernel, etc. and using the same
         data, but possibly a different inference method.
         """
-        args = [gp._likelihood.copy(), gp._kernel.copy(), gp._mean] + args
+        args = (gp._likelihood.copy(), gp._kernel.copy(), gp._mean) + args
         newgp = cls(*args, **kwargs)
         if gp.ndata > 0:
             X, y = gp.data
