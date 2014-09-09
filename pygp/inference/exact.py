@@ -57,7 +57,7 @@ class ExactGP(GP):
         y = y
         self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
 
-    def _posterior(self, X):
+    def _full_posterior(self, X):
         # grab the prior mean and covariance.
         mu = np.zeros(X.shape[0])
         Sigma = self._kernel.get(X)
@@ -74,7 +74,7 @@ class ExactGP(GP):
 
         return mu, Sigma
 
-    def posterior(self, X, grad=False):
+    def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
         mu = np.zeros(X.shape[0])
         s2 = self._kernel.dget(X)

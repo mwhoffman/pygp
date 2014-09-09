@@ -154,7 +154,7 @@ class GP(Parameterized):
 
         # add a tiny amount to the diagonal to make the cholesky of Sigma
         # stable and then add this correlated noise onto mu to get the sample.
-        mu, Sigma = self._posterior(X)
+        mu, Sigma = self._full_posterior(X)
         Sigma += 1e-10 * np.eye(n)
         f = mu[None] + np.dot(rng.normal(size=(m, n)), sla.cholesky(Sigma))
 
@@ -162,6 +162,15 @@ class GP(Parameterized):
             f = self._likelihood.sample(f.ravel(), rng).reshape(m, n)
 
         return f.ravel() if flatten else f
+
+    def posterior(self, X, grad=False):
+        """
+        Return the marginal posterior. This should return the mean and variance
+        of the given points, and if `grad == True` should return their
+        derivatives with respect to the input location as well (i.e. a
+        4-tuple).
+        """
+        return self._marg_posterior(self._kernel.transform(X), grad)
 
     def sample_fourier(self, N, rng=None):
         """
@@ -193,20 +202,12 @@ class GP(Parameterized):
         raise NotImplementedError
 
     @abstractmethod
-    def _posterior(self, X):
-        """
-        Compute the posterior at points `X`. This should return the mean and
-        full covariance matrix of the given points.
-        """
+    def _full_posterior(self, X):
+        """Compute the full posterior at points `X`."""
 
     @abstractmethod
-    def posterior(self, X, grad=False):
-        """
-        Compute the marginal posterior at points `X`. This should return the
-        mean and variance of the given points, and if `grad == True` should
-        return their derivatives with respect to the input location as well
-        (i.e. a 4-tuple).
-        """
+    def _marg_posterior(self, X, grad=False):
+        """Compute the marginal posterior at points `X`."""
 
     @abstractmethod
     def loglikelihood(self, grad=False):
