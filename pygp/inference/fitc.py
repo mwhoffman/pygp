@@ -91,7 +91,7 @@ class FITC(GP):
         self._R = np.dot(sla.cholesky(self._A), self._L)
         self._b = sla.solve_triangular(self._R, self._a, trans=True)
 
-    def _posterior(self, X):
+    def _full_posterior(self, X):
         mu = np.zeros(X.shape[0])
         Sigma = self._kernel.get(X)
 
@@ -111,7 +111,7 @@ class FITC(GP):
 
         return mu, Sigma
 
-    def posterior(self, X, grad=False):
+    def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
         mu = np.zeros(X.shape[0])
         s2 = self._kernel.dget(X)
