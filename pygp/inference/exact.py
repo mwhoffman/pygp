@@ -29,12 +29,12 @@ class ExactGP(GP):
     only works with regression so an exception will be thrown if the given
     likelihood is not Gaussian.
     """
-    def __init__(self, likelihood, kernel):
+    def __init__(self, likelihood, kernel, mean):
         # NOTE: exact inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
             raise ModelError('exact inference requires a Gaussian likelihood')
 
-        super(ExactGP, self).__init__(likelihood, kernel)
+        super(ExactGP, self).__init__(likelihood, kernel, mean)
         self._R = None
         self._a = None
 
@@ -46,20 +46,20 @@ class ExactGP(GP):
     def _update(self):
         sn2 = self._likelihood.s2
         K = self._kernel.get(self._X) + sn2 * np.eye(len(self._X))
-        y = self._y
+        r = self._y - self._mean
         self._R = sla.cholesky(K)
-        self._a = sla.solve_triangular(self._R, y, trans=True)
+        self._a = sla.solve_triangular(self._R, r, trans=True)
 
     def _updateinc(self, X, y):
         sn2 = self._likelihood.s2
         Kss = self._kernel.get(X) + sn2 * np.eye(len(X))
         Kxs = self._kernel.get(self._X, X)
-        y = y
-        self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, y)
+        r = y - self._mean
+        self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, r)
 
     def _full_posterior(self, X):
         # grab the prior mean and covariance.
-        mu = np.zeros(X.shape[0])
+        mu = np.full(X.shape[0], self._mean)
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
@@ -76,7 +76,7 @@ class ExactGP(GP):
 
     def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
-        mu = np.zeros(X.shape[0])
+        mu = np.full(X.shape[0], self._mean)
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
@@ -92,10 +92,12 @@ class ExactGP(GP):
         if not grad:
             return (mu, s2)
 
-        # Get the prior gradients. Note that this assumes a constant mean and
-        # stationary kernel.
+        # Get the prior gradients.
         dmu = np.zeros_like(X)
         ds2 = np.zeros_like(X)
+
+        # NOTE: the above assumes a constant mean and stationary kernel (which
+        # we satisfy, but should we change either assumption...).
 
         if self._X is not None:
             dK = self._kernel.grady(self._X, X)
@@ -129,7 +131,10 @@ class ExactGP(GP):
 
             # derivative wrt each kernel hyperparameter.
             [-0.5*np.sum(Q*dK)
-             for dK in self._kernel.grad(self._X)]]
+             for dK in self._kernel.grad(self._X)],
+
+            # derivative wrt the mean.
+            np.sum(alpha)]
 
         return lZ, dlZ
 
