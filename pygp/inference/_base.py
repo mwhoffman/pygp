@@ -60,13 +60,14 @@ class GP(Parameterized):
         self._X = None
         self._y = None
 
-    # def __repr__(self):
-    #     models = [repr(self._likelihood),
-    #               repr(self._kernel)]
-    #     string = self.__class__.__name__ + '('
-    #     joiner = ',\n' + (len(string) * ' ')
-    #     string += joiner.join(models) + ')'
-    #     return string
+    def __repr__(self):
+        return ('%s(\n'
+                '\tlikelihood=%s,\n'
+                '\tkernel=%s,\n'
+                '\tmean=%s)') % (self.__class__.__name__,
+                                 repr(self._likelihood),
+                                 repr(self._kernel),
+                                 self._mean)
 
     def _params(self):
         params = dot_params('like', self._likelihood._params())

@@ -36,8 +36,11 @@ class BasicGP(ExactGP):
 
         super(BasicGP, self).__init__(likelihood, kernel, mu)
 
-    # def _params(self):
-    #     # replace the parameters for the base GP model with a simplified
-    #     # structure and rename the likelihood's sigma parameter to sn (ie its
-    #     # the sigma corresponding to the noise).
-    #     return [('sn', 1)] + self._kernel._params()
+    def _params(self):
+        # replace the parameters for the base GP model with a simplified
+        # structure and rename the likelihood's sigma parameter to sn (ie its
+        # the sigma corresponding to the noise).
+        params = [('sn', 1)]
+        params += self._kernel._params()
+        params += [('mu', 1, False)]
+        return params

@@ -28,10 +28,11 @@ if __name__ == '__main__':
     pygp.optimize(model)
 
     # create a prior structure.
-    priors = dict(
-        sn=pygp.priors.Uniform(0.01, 1.0),
-        sf=pygp.priors.Uniform(0.01, 5.0),
-        ell=pygp.priors.Uniform(0.01, 1.0))
+    priors = {
+        'sn': pygp.priors.Uniform(0.01, 1.0),
+        'sf': pygp.priors.Uniform(0.01, 5.0),
+        'ell': pygp.priors.Uniform(0.01, 1.0),
+        'mu': pygp.priors.Uniform(-2, 2)}
 
     # create a sample-based model.
     mcmc = pygp.meta.MCMC(model, priors, n=5000)

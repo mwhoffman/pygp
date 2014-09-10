@@ -32,18 +32,21 @@ if __name__ == '__main__':
     pygp.optimize(gp1)
     pygp.optimize(gp2)
 
-    # plot them.
+    # plot the dense gp.
     pl.figure(1)
     pl.clf()
     pl.subplot(121)
     pp.plot_posterior(gp1)
     pl.title('Full GP')
-    pl.legend(loc='upper left')
-    pl.axis(ymin=-2.5, ymax=3)
 
+    # grab the axis limits.
+    axis = pl.axis()
+
+    # plot the sparse gp.
     pl.subplot(122)
     pp.plot_posterior(gp2, pseudoinputs=True)
     pl.title('Sparse GP')
-    pl.axis(ymin=-2.5, ymax=3)
+    pl.axis(axis)
+    pl.legend(loc='upper left')
     pl.draw()
     pl.show()
