@@ -19,11 +19,9 @@ cdir = os.path.abspath(os.path.dirname(__file__))
 data = np.loadtxt(os.path.join(cdir, 'maunaloa.txt')).flatten()
 data = np.array([(x, y) for x, y in zip(np.arange(len(data)), data) if y>-99])
 
-# minor manipulations of the data to make the ranges reasonable. also use the
-# empirical mean as the prior mean.
+# minor manipulations of the data to make the ranges reasonable.
 X = data[:, 0, None] / 12.
 y = data[:, 1]
-y -= y.mean()
 
 # these are near the values called for in Rasmussen and Williams, so they
 # should give reasonable results and thus we'll skip the fit.
@@ -37,7 +35,7 @@ kernel = \
 likelihood = pygp.likelihoods.Gaussian(sigma=0.1)
 
 # construct the model and add the data.
-gp = pygp.inference.ExactGP(likelihood, kernel)
+gp = pygp.inference.ExactGP(likelihood, kernel, y.mean())
 gp.add_data(X, y)
 
 # plot everything.

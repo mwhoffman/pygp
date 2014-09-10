@@ -21,7 +21,7 @@ if __name__ == '__main__':
     y = data['y']
 
     # create the model, add data, and optimize it.
-    gp = pygp.BasicGP(sn=.1, sf=1, ell=.1)
+    gp = pygp.BasicGP(sn=.1, sf=1, ell=.1, mu=0)
     gp.add_data(X, y)
     pygp.optimize(gp)
 

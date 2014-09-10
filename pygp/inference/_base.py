@@ -43,14 +43,17 @@ class GP(Parameterized):
 
         `_updateinc`: incremental update given new data.
     """
-    def __init__(self, likelihood, kernel):
+    def __init__(self, likelihood, kernel, mean):
         self._likelihood = likelihood
         self._kernel = kernel
+        self._mean = float(mean)
         self._X = None
         self._y = None
 
+        # record the number of hyperparameters. the additional +1 is due to the
+        # mean hyperparameter.
         self.nhyper = (self._likelihood.nhyper +
-                       self._kernel.nhyper)
+                       self._kernel.nhyper + 1)
 
     def reset(self):
         """Remove all data from the model."""
@@ -58,18 +61,18 @@ class GP(Parameterized):
         self._y = None
 
     def __repr__(self):
-        models = [repr(self._likelihood),
-                  repr(self._kernel)]
-
-        string = self.__class__.__name__ + '('
-        joiner = ',\n' + (len(string) * ' ')
-        string += joiner.join(models) + ')'
-
-        return string
+        return ('%s(\n'
+                '\tlikelihood=%s,\n'
+                '\tkernel=%s,\n'
+                '\tmean=%s)') % (self.__class__.__name__,
+                                 repr(self._likelihood),
+                                 repr(self._kernel),
+                                 self._mean)
 
     def _params(self):
         params = dot_params('like', self._likelihood._params())
         params += dot_params('kern', self._kernel._params())
+        params += [('mean', 1, False)]
         return params
 
     @classmethod
@@ -79,7 +82,8 @@ class GP(Parameterized):
         of a GP using the same likelihood, kernel, etc. and using the same
         data, but possibly a different inference method.
         """
-        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), *args, **kwargs)
+        args = (gp._likelihood.copy(), gp._kernel.copy(), gp._mean) + args
+        newgp = cls(*args, **kwargs)
         if gp.ndata > 0:
             X, y = gp.data
             newgp.add_data(X, y)
@@ -89,13 +93,18 @@ class GP(Parameterized):
         # NOTE: if subclasses define any "inference" hyperparameters they can
         # implement their own get/set methods and call super().
         return np.r_[self._likelihood.get_hyper(),
-                     self._kernel.get_hyper()]
+                     self._kernel.get_hyper(),
+                     self._mean]
 
     def set_hyper(self, hyper):
-        a = 0
-        for model in [self._likelihood, self._kernel]:
-            model.set_hyper(hyper[a:a+model.nhyper])
-            a += model.nhyper
+        # FIXME: should set_hyper check the number of hyperparameters?
+        a = self._likelihood.nhyper
+        b = self._kernel.nhyper
+
+        self._likelihood.set_hyper(hyper[:a])
+        self._kernel.set_hyper(hyper[a:a+b])
+        self._mean = hyper[-1]
+
         if self.ndata > 0:
             self._update()
 
@@ -144,7 +153,12 @@ class GP(Parameterized):
         `rng` can be used to seed the randomness.
         """
         X = self._kernel.transform(X)
+
+        # this boolean indicates whether we'll flatten the sample to return a
+        # vector, or if we'll return a set of samples as an array.
         flatten = (m is None)
+
+        # get the relevant sizes.
         m = 1 if flatten else m
         n = len(X)
 
@@ -203,11 +217,18 @@ class GP(Parameterized):
 
     @abstractmethod
     def _full_posterior(self, X):
-        """Compute the full posterior at points `X`."""
+        """
+        Compute the full posterior at points `X`. Return the mean vector and
+        full covariance matrix for the given inputs.
+        """
 
     @abstractmethod
     def _marg_posterior(self, X, grad=False):
-        """Compute the marginal posterior at points `X`."""
+        """
+        Compute the marginal posterior at points `X`. Return the mean and
+        variance vectors for the given inputs. If `grad` is True return the
+        gradients with respect to the inputs as well.
+        """
 
     @abstractmethod
     def loglikelihood(self, grad=False):

@@ -23,7 +23,7 @@ class BasicGP(ExactGP):
     Basic GP frontend which assumes an ARD kernel and a Gaussian likelihood
     (and hence performs exact inference).
     """
-    def __init__(self, sn, sf, ell, ndim=None, kernel='se'):
+    def __init__(self, sn, sf, ell, mu=0, ndim=None, kernel='se'):
         likelihood = Gaussian(sn)
         kernel = (
             SE(sf, ell, ndim) if (kernel == 'se') else
@@ -34,10 +34,13 @@ class BasicGP(ExactGP):
         if kernel is None:
             raise RuntimeError('Unknown kernel type')
 
-        super(BasicGP, self).__init__(likelihood, kernel)
+        super(BasicGP, self).__init__(likelihood, kernel, mu)
 
     def _params(self):
         # replace the parameters for the base GP model with a simplified
         # structure and rename the likelihood's sigma parameter to sn (ie its
         # the sigma corresponding to the noise).
-        return [('sn', 1)] + self._kernel._params()
+        params = [('sn', 1)]
+        params += self._kernel._params()
+        params += [('mu', 1, False)]
+        return params

@@ -29,10 +29,11 @@ if __name__ == '__main__':
     pygp.optimize(model)
 
     # create a prior structure.
-    priors = dict(
-        sn=pygp.priors.Uniform(0.01, 1.0),
-        sf=pygp.priors.Uniform(0.01, 5.0),
-        ell=pygp.priors.Uniform(0.01, 1.0))
+    priors = {
+        'sn': pygp.priors.Uniform(0.01, 1.0),
+        'sf': pygp.priors.Uniform(0.01, 5.0),
+        'ell': pygp.priors.Uniform(0.01, 1.0),
+        'mu': pygp.priors.Uniform(-2, 2)}
 
     # create sample-based models.
     mcmc = pygp.meta.MCMC(model, priors, n=200, burn=100)
@@ -43,18 +44,19 @@ if __name__ == '__main__':
 
     pl.subplot(131)
     pp.plot_posterior(model)
-    pl.axis(ymin=-3, ymax=3)
     pl.title('Type-II ML')
     pl.legend(loc='best')
 
+    axis = pl.axis()
+
     pl.subplot(132)
     pp.plot_posterior(mcmc)
-    pl.axis(ymin=-3, ymax=3)
+    pl.axis(axis)
     pl.title('MCMC')
 
     pl.subplot(133)
     pp.plot_posterior(mcmc)
-    pl.axis(ymin=-3, ymax=3)
+    pl.axis(axis)
     pl.title('SMC')
     pl.draw()
     pl.show()
