@@ -23,16 +23,15 @@ if __name__ == '__main__':
     gp1 = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp1.add_data(X, y)
 
-    # create a sparse GP.
+    # create a sparse GPs.
     U = np.linspace(-1.3, 2, 10)[:, None]
     gp2 = pygp.inference.FITC.from_gp(gp1, U)
+    gp3 = pygp.inference.DTC.from_gp(gp1, U)
 
-    # find the ML parameters for both
+    # find the ML parameters
     pygp.optimize(gp1)
     pygp.optimize(gp2)
-
-    # create a Nystrom GP
-    gp3 = pygp.inference.NystromGP.from_gp(gp1, U)
+    pygp.optimize(gp3)
 
     # plot them.
     pygp.plotting.plot(gp1, figure=1, subplot=131, ymin=-2.5, ymax=3,
