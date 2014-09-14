@@ -29,6 +29,6 @@ if __name__ == '__main__':
     pl.figure(1)
     pl.clf()
     pp.plot_posterior(gp)
-    pl.legend(loc='best')
+    pl.legend(loc=2)
     pl.draw()
     pl.show()

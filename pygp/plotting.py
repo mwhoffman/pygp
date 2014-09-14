@@ -20,7 +20,8 @@ __all__ = ['plot_posterior', 'plot_samples']
 
 def plot_posterior(model,
                    xmin=None, xmax=None,
-                   mean=True, data=True, error=True, pseudoinputs=False):
+                   mean=True, data=True, error=True, pseudoinputs=True,
+                   lw=2, ls='-', color=None, marker='o', marker2='x'):
     """
     Plot a one-dimensional posterior model.
 
@@ -51,31 +52,40 @@ def plot_posterior(model,
     # get the axes.
     ax = pl.gca()
 
+    if color is None:
+        color = next(ax._get_lines.color_cycle)
+
+    # default arguments for markers.
+    margs = dict(color='k', zorder=3)
+    margs = {
+        'x': dict(marker='x', facecolors='none', s=30, lw=1, **margs),
+        'o': dict(marker='o', facecolors='none', s=30, lw=1, **margs),
+        '*': dict(marker='*', facecolors='none', s=30, lw=1, **margs),
+        ',': dict(marker=',', facecolors='none', s=30, lw=1, **margs),
+        '.': dict(marker='.', **margs)}
+
     if mean:
         # plot the mean
-        ax.plot(x, mu, lw=2, color='b', label='mean')
+        ax.plot(x, mu, lw=lw, ls=ls, label='mean', color=color)
 
     if error:
         # plot the error bars and add an empty plot that will be used by the
         # legend if it's called for.
-        ax.fill_between(x, lo, hi, color='k', alpha=0.15)
-        ax.plot([], [], color='k', alpha=0.15, linewidth=10,
+        alpha = 0.25
+        ax.fill_between(x, lo, hi, color=color, alpha=alpha)
+        ax.plot([], [], color=color, alpha=alpha, linewidth=10,
                 label='uncertainty')
 
     if data and X is not None:
         # plot the data; use smaller markers if we have a lot of data.
-        if len(X) > 100:
-            ax.scatter(X.ravel(), y, marker='.', color='k', label='data')
-        else:
-            ax.scatter(X.ravel(), y, s=20, lw=1, facecolors='none', color='k',
-                       label='data')
+        ax.scatter(X.ravel(), y, label='data', **margs[marker])
 
     if hasattr(model, 'pseudoinputs') and pseudoinputs:
         # plot any pseudo-inputs.
         ymin, ymax = ax.get_ylim()
-        U = model.pseudoinputs.ravel()
-        ax.scatter(U, np.ones_like(U) * (ymin + 0.1 * (ymax-ymin)),
-                   s=20, lw=1, marker='x', color='k', label='pseudo-inputs')
+        u = model.pseudoinputs.ravel()
+        v = np.full_like(u, ymin + 0.1 * (ymax-ymin))
+        ax.scatter(u, v, label='pseudo-inputs', **margs[marker2])
 
     pl.axis('tight')
 

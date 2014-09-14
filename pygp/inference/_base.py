@@ -61,13 +61,15 @@ class GP(Parameterized):
         self._y = None
 
     def __repr__(self):
-        return ('%s(\n'
-                '\tlikelihood=%s,\n'
-                '\tkernel=%s,\n'
-                '\tmean=%s)') % (self.__class__.__name__,
-                                 repr(self._likelihood),
-                                 repr(self._kernel),
-                                 self._mean)
+        def indent(pre, text):
+            return pre + ('\n' + ' '*len(pre)).join(text.splitlines())
+
+        return indent(
+            self.__class__.__name__ + '(',
+            ',\n'.join([
+                indent('likelihood=', repr(self._likelihood)),
+                indent('kernel=', repr(self._kernel)),
+                indent('mean=', str(self._mean))]) + ')')
 
     def _params(self):
         params = dot_params('like', self._likelihood._params())
