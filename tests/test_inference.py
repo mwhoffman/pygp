@@ -129,5 +129,7 @@ class TestDTC(RealTest):
         rng = np.random.RandomState(1)
         likelihood = pygp.likelihoods.Gaussian(1)
         kernel = pygp.kernels.SE(1, 1, ndim=2)
-        gp = pygp.inference.DTC(likelihood, kernel, rng.rand(10, kernel.ndim))
+        mean = 0.0
+        U = rng.rand(10, kernel.ndim)
+        gp = pygp.inference.DTC(likelihood, kernel, mean, U)
         RealTest.__init__(self, gp)
