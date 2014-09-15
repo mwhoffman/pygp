@@ -100,6 +100,6 @@ def get_params(obj):
         key = param[0]
         size = param[1]
         block = slice(offset, offset+size)
-        log = not(len(param) > 2 and param[2])
+        log = (len(param) < 3) or param[2]
         offset += size
         yield key, block, log

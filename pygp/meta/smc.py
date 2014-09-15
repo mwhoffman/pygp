@@ -78,6 +78,9 @@ class SMC(object):
         return self._samples[-1].data
 
     def add_data(self, X, y):
+        X = self._samples[0]._kernel.transform(X)
+        y = self._samples[0]._likelihood.transform(y)
+
         for (xi, yi) in zip(X, y):
             # resample if effective sample size is less than N/2
             if -logsumexp(2*self._logweights) < np.log(self._n/2):

@@ -1,6 +1,5 @@
 """
-Basic demo showing how to instantiate a simple GP model, add data to it, and
-optimize its hyperparameters.
+Basic demo plotting the resulting hyperparameter samples by using MCMC.
 """
 
 # global imports.
@@ -35,28 +34,10 @@ if __name__ == '__main__':
         'ell': pygp.priors.Uniform(0.01, 1.0),
         'mu': pygp.priors.Uniform(-2, 2)}
 
-    # create sample-based models.
-    mcmc = pygp.meta.MCMC(model, priors, n=200, burn=100)
-    smc = pygp.meta.SMC(model, priors, n=200)
+    # create a sample-based model.
+    mcmc = pygp.meta.MCMC(model, priors, n=5000)
 
     pl.figure(1)
-    pl.clf()
-
-    pl.subplot(131)
-    pp.plot_posterior(model)
-    pl.title('Type-II ML')
-    pl.legend(loc='best')
-
-    axis = pl.axis()
-
-    pl.subplot(132)
-    pp.plot_posterior(mcmc)
-    pl.axis(axis)
-    pl.title('MCMC')
-
-    pl.subplot(133)
-    pp.plot_posterior(mcmc)
-    pl.axis(axis)
-    pl.title('SMC')
+    pp.plot_samples(mcmc)
     pl.draw()
     pl.show()

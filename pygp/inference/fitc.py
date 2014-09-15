@@ -25,12 +25,12 @@ class FITC(GP):
     """
     GP inference using sparse pseudo-inputs.
     """
-    def __init__(self, likelihood, kernel, U):
+    def __init__(self, likelihood, kernel, mean, U):
         # NOTE: exact FITC inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
             raise ModelError('exact inference requires a Gaussian likelihood')
 
-        super(FITC, self).__init__(likelihood, kernel)
+        super(FITC, self).__init__(likelihood, kernel, mean)
 
         # save the pseudo-input locations.
         self._U = np.array(U, ndmin=2, dtype=float, copy=True)
@@ -70,7 +70,7 @@ class FITC(GP):
         # evaluate the kernel and residuals at the new points
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
-        r = self._y.copy()
+        r = self._y - self._mean
 
         # the cholesky of Q.
         V = sla.solve_triangular(self._L, Kux, trans=True)
@@ -91,8 +91,8 @@ class FITC(GP):
         self._R = np.dot(sla.cholesky(self._A), self._L)
         self._b = sla.solve_triangular(self._R, self._a, trans=True)
 
-    def _posterior(self, X):
-        mu = np.zeros(X.shape[0])
+    def _full_posterior(self, X):
+        mu = np.full(X.shape[0], self._mean)
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
@@ -111,9 +111,9 @@ class FITC(GP):
 
         return mu, Sigma
 
-    def posterior(self, X, grad=False):
+    def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
-        mu = np.zeros(X.shape[0])
+        mu = np.full(X.shape[0], self._mean)
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
@@ -164,7 +164,7 @@ class FITC(GP):
         # get the rest of the kernels and the residual.
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
-        r = self._y.copy()
+        r = self._y - self._mean
 
         # the cholesky of Q.
         V = sla.solve_triangular(self._L, Kux, trans=True)
@@ -192,7 +192,7 @@ class FITC(GP):
         v = 2*su2*np.sum(B**2, axis=0)
 
         # allocate space for the gradients.
-        dlZ = np.zeros(1+self._kernel.nhyper)
+        dlZ = np.zeros(self.nhyper)
 
         # gradient wrt the noise parameter.
         dlZ[0] = (
@@ -217,5 +217,8 @@ class FITC(GP):
                 - np.inner(w, dKuu.dot(w) - 2*dKux.dot(alpha))
                 + np.inner(alpha, v*alpha) + np.inner(np.sum(W**2, axis=0), v)
                 + np.sum(M.dot(W.T) * B.dot(W.T))) / 2.0
+
+        # gradient wrt the constant mean.
+        dlZ[-1] = np.sum(alpha)
 
         return lZ, dlZ

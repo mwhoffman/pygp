@@ -25,12 +25,12 @@ __all__ = ['DTC']
 class DTC(GP):
     """Deterministic training conditional approximation to GP inference."""
 
-    def __init__(self, likelihood, kernel, U):
+    def __init__(self, likelihood, kernel, mean, U):
         # NOTE: exact inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
             raise ModelError('exact inference requires a Gaussian likelihood')
 
-        super(DTC, self).__init__(likelihood, kernel)
+        super(DTC, self).__init__(likelihood, kernel, mean)
         # save the pseudo-input locations.
         self._U = np.array(U, ndmin=2, dtype=float, copy=True)
 
@@ -57,14 +57,15 @@ class DTC(GP):
         S = Kuu + np.dot(Kux, Kux.T) / self._likelihood.s2
 
         # compute cholesky of data dependent problem
+        r = self._y - self._mean
         self._Rux = sla.cholesky(S + su2 * np.eye(p))
         self._a = sla.solve_triangular(self._Rux,
-                                       np.dot(Kux, self._y),
+                                       np.dot(Kux, r),
                                        trans=True)
 
-    def _posterior(self, X):
+    def _full_posterior(self, X):
         # grab the prior mean and covariance.
-        mu = np.zeros(X.shape[0])
+        mu = np.full(X.shape[0], self._mean)
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
@@ -80,9 +81,9 @@ class DTC(GP):
 
         return mu, Sigma
 
-    def posterior(self, X, grad=False):
+    def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
-        mu = np.zeros(X.shape[0])
+        mu = np.full(X.shape[0], self._mean)
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
@@ -123,12 +124,13 @@ class DTC(GP):
     def loglikelihood(self, grad=False):
         # noise hyperparameters
         sn2 = self._likelihood.s2
-        su2 = self._likelihood.s2 * 1e-6
+        su2 = sn2 * 1e-6
         ell = np.sqrt(sn2)
 
         # get the rest of the kernels and the residual.
         Kux = self._kernel.get(self._U, self._X)
-        r = self._y.copy() / ell
+        r = self._y.copy() - self._mean
+        r /= ell
 
         # the cholesky of Q.
         V = sla.solve_triangular(self._Ruu, Kux, trans=True)
@@ -154,7 +156,7 @@ class DTC(GP):
         v = V.dot(alpha)
 
         # allocate space for the gradients.
-        dlZ = np.zeros(1+self._kernel.nhyper)
+        dlZ = np.zeros(self.nhyper)
 
         # gradient wrt the noise parameter.
         dlZ[0] = -(
@@ -179,8 +181,11 @@ class DTC(GP):
         for i, (dKuu, dKux) in enumerate(dK, i):
             M = 2 * dKux / ell - dKuu.dot(B)
             dlZ[i] = -0.5 * (
-                        - np.inner(w, np.dot(M, alpha))
-                        + np.sum(M*B)
-                        - np.sum(M.dot(W.T) * B.dot(W.T)))
+                - np.inner(w, np.dot(M, alpha))
+                + np.sum(M*B)
+                - np.sum(M.dot(W.T) * B.dot(W.T)))
+
+        # gradient wrt the constant mean.
+        dlZ[-1] = np.sum(alpha) / ell
 
         return lZ, dlZ
