@@ -78,7 +78,7 @@ class InferenceTest(object):
 class RealTest(InferenceTest):
     def __init__(self, gp):
         # create some data.
-        rng = np.random.RandomState(0)
+        rng = np.random.RandomState(1)
         X = rng.rand(10, gp._kernel.ndim)
         y = gp._likelihood.sample(rng.rand(10), rng)
 
@@ -119,4 +119,13 @@ class TestFITC(RealTest):
         likelihood = pygp.likelihoods.Gaussian(1)
         kernel = pygp.kernels.SE(1, 1, ndim=2)
         gp = pygp.inference.FITC(likelihood, kernel, rng.rand(10, kernel.ndim))
+        RealTest.__init__(self, gp)
+
+
+class TestDTC(RealTest):
+    def __init__(self):
+        rng = np.random.RandomState(1)
+        likelihood = pygp.likelihoods.Gaussian(1)
+        kernel = pygp.kernels.SE(1, 1, ndim=2)
+        gp = pygp.inference.DTC(likelihood, kernel, rng.rand(10, kernel.ndim))
         RealTest.__init__(self, gp)

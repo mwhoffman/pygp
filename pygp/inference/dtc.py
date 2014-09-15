@@ -157,7 +157,7 @@ class DTC(GP):
         dlZ = np.zeros(1+self._kernel.nhyper)
 
         # gradient wrt the noise parameter.
-        dlZ[0] = -0.5 * (
+        dlZ[0] = -(
             # gradient of the mahalanobis term
             - np.inner(r, r)
             + np.inner(beta, beta)
