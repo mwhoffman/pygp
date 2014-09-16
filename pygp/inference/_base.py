@@ -194,8 +194,9 @@ class GP(Parameterized):
         expansion with N bases. See the documentation on `FourierSample` for
         details on the returned function object.
         """
-        return FourierSample(N, self._likelihood, self._kernel, self._X,
-                             self._y, rng)
+        return FourierSample(N,
+                             self._likelihood, self._kernel, self._mean,
+                             self._X, self._y, rng)
 
     @abstractmethod
     def _update(self):
