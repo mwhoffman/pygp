@@ -12,7 +12,7 @@ import numpy as np
 import scipy.stats as ss
 
 # exported symbols
-__all__ = ['Uniform', 'Gaussian']
+__all__ = ['Uniform', 'Gaussian', 'Gamma']
 
 
 class Uniform(object):
@@ -74,3 +74,25 @@ class Gaussian(object):
                                                    mean=self._mu,
                                                    cov=self._s2)
         return logpdf
+
+
+class Gamma(object):
+    def __init__(self, k, scale):
+        self._k = np.array(k, copy=True, ndmin=1)
+        self._scale = np.array(scale, copy=True, ndmin=1)
+        self.ndim = len(self._k)
+
+    def sample(self, size=1, log=True):
+        sample = np.array([np.random.gamma(k, s)
+                           for k, s in zip(self._k, self._scale)])
+
+        return np.log(sample) if log else sample
+
+    def logprior(self, theta):
+        # note the theta in this function *does not* correspond to the scale
+        # parameter of a Gamma distribution which is denoted here as _scale.
+        theta = np.array(theta, copy=False, ndmin=1)
+
+        logpdf = ss.gamma.logpdf(self._k, theta, scale=self._scale)
+
+        return logpdf.sum()
