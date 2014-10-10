@@ -7,14 +7,17 @@ from .se import *
 from .periodic import *
 from .rq import *
 from .matern import *
+from .spectrum import *
 
 from . import se
 from . import periodic
 from . import rq
 from . import matern
+from . import spectrum
 
 __all__ = []
 __all__ += se.__all__
 __all__ += periodic.__all__
 __all__ += rq.__all__
 __all__ += matern.__all__
+__all__ += spectrum.__all__
