@@ -122,11 +122,13 @@ class GP(Parameterized):
             self._update()
 
         else:
+            raise NotImplementedError
+
             try:
                 self._updateinc(X, y)
                 self._X = np.r_[self._X, X]
                 self._y = np.r_[self._y, y]
-
+                
             except NotImplementedError:
                 self._X = np.r_[self._X, X]
                 self._y = np.r_[self._y, y]
