@@ -12,7 +12,7 @@ import numpy as np
 
 # local imports
 from ._real import RealKernel
-from ._distances import sqdist
+from ._distances import diff, sqdist
 from ..utils.models import printable
 
 # exported symbols
@@ -21,6 +21,13 @@ __all__ = ['Periodic']
 
 @printable
 class Periodic(RealKernel):
+    """
+    Covariance function for a 1-dimensional smooth periodic function with
+    period p, lenthscale ell, and signal variance sf. The kernel function is
+    given by::
+
+        k(x, y) = sf^2 exp(-2 sin^2( ||x-y|| pi / p ) / ell^2)
+    """
     def __init__(self, sf, ell, p):
         self._logsf = np.log(float(sf))
         self._logell = np.log(float(ell))
@@ -75,10 +82,19 @@ class Periodic(RealKernel):
         yield np.zeros(len(X))
 
     def gradx(self, X1, X2=None):
-        raise NotImplementedError
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        p = np.exp(self._logp)
+
+        # get the distance and a few transformations
+        D = diff(X1, X2) * np.pi / p
+        K = sf2 * np.exp(-2*(np.sin(D) / ell)**2)
+        G = -2 * np.pi / ell**2 / p * K * np.sin(2*D)
+
+        return G
 
     def grady(self, X1, X2=None):
-        raise NotImplementedError
+        return -self.gradx(X1, X2)
 
     def gradxy(self, X1, X2=None):
         raise NotImplementedError
