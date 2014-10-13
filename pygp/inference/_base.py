@@ -43,14 +43,17 @@ class GP(Parameterized):
 
         `_updateinc`: incremental update given new data.
     """
-    def __init__(self, likelihood, kernel):
+    def __init__(self, likelihood, kernel, mean):
         self._likelihood = likelihood
         self._kernel = kernel
+        self._mean = float(mean)
         self._X = None
         self._y = None
 
+        # record the number of hyperparameters. the additional +1 is due to the
+        # mean hyperparameter.
         self.nhyper = (self._likelihood.nhyper +
-                       self._kernel.nhyper)
+                       self._kernel.nhyper + 1)
 
     def reset(self):
         """Remove all data from the model."""
@@ -58,18 +61,20 @@ class GP(Parameterized):
         self._y = None
 
     def __repr__(self):
-        models = [repr(self._likelihood),
-                  repr(self._kernel)]
+        def indent(pre, text):
+            return pre + ('\n' + ' '*len(pre)).join(text.splitlines())
 
-        string = self.__class__.__name__ + '('
-        joiner = ',\n' + (len(string) * ' ')
-        string += joiner.join(models) + ')'
-
-        return string
+        return indent(
+            self.__class__.__name__ + '(',
+            ',\n'.join([
+                indent('likelihood=', repr(self._likelihood)),
+                indent('kernel=', repr(self._kernel)),
+                indent('mean=', str(self._mean))]) + ')')
 
     def _params(self):
         params = dot_params('like', self._likelihood._params())
         params += dot_params('kern', self._kernel._params())
+        params += [('mean', 1, False)]
         return params
 
     @classmethod
@@ -79,7 +84,8 @@ class GP(Parameterized):
         of a GP using the same likelihood, kernel, etc. and using the same
         data, but possibly a different inference method.
         """
-        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), *args, **kwargs)
+        args = (gp._likelihood.copy(), gp._kernel.copy(), gp._mean) + args
+        newgp = cls(*args, **kwargs)
         if gp.ndata > 0:
             X, y = gp.data
             newgp.add_data(X, y)
@@ -89,13 +95,18 @@ class GP(Parameterized):
         # NOTE: if subclasses define any "inference" hyperparameters they can
         # implement their own get/set methods and call super().
         return np.r_[self._likelihood.get_hyper(),
-                     self._kernel.get_hyper()]
+                     self._kernel.get_hyper(),
+                     self._mean]
 
     def set_hyper(self, hyper):
-        a = 0
-        for model in [self._likelihood, self._kernel]:
-            model.set_hyper(hyper[a:a+model.nhyper])
-            a += model.nhyper
+        # FIXME: should set_hyper check the number of hyperparameters?
+        a = self._likelihood.nhyper
+        b = self._kernel.nhyper
+
+        self._likelihood.set_hyper(hyper[:a])
+        self._kernel.set_hyper(hyper[a:a+b])
+        self._mean = hyper[-1]
+
         if self.ndata > 0:
             self._update()
 
@@ -146,7 +157,12 @@ class GP(Parameterized):
         `rng` can be used to seed the randomness.
         """
         X = self._kernel.transform(X)
+
+        # this boolean indicates whether we'll flatten the sample to return a
+        # vector, or if we'll return a set of samples as an array.
         flatten = (m is None)
+
+        # get the relevant sizes.
         m = 1 if flatten else m
         n = len(X)
 
@@ -156,7 +172,7 @@ class GP(Parameterized):
 
         # add a tiny amount to the diagonal to make the cholesky of Sigma
         # stable and then add this correlated noise onto mu to get the sample.
-        mu, Sigma = self._posterior(X)
+        mu, Sigma = self._full_posterior(X)
         Sigma += 1e-10 * np.eye(n)
         f = mu[None] + np.dot(rng.normal(size=(m, n)), sla.cholesky(Sigma))
 
@@ -165,14 +181,24 @@ class GP(Parameterized):
 
         return f.ravel() if flatten else f
 
+    def posterior(self, X, grad=False):
+        """
+        Return the marginal posterior. This should return the mean and variance
+        of the given points, and if `grad == True` should return their
+        derivatives with respect to the input location as well (i.e. a
+        4-tuple).
+        """
+        return self._marg_posterior(self._kernel.transform(X), grad)
+
     def sample_fourier(self, N, rng=None):
         """
         Approximately sample a function from the GP using a fourier-basis
         expansion with N bases. See the documentation on `FourierSample` for
         details on the returned function object.
         """
-        return FourierSample(N, self._likelihood, self._kernel, self._X,
-                             self._y, rng)
+        return FourierSample(N,
+                             self._likelihood, self._kernel, self._mean,
+                             self._X, self._y, rng)
 
     @abstractmethod
     def _update(self):
@@ -195,19 +221,18 @@ class GP(Parameterized):
         raise NotImplementedError
 
     @abstractmethod
-    def _posterior(self, X):
+    def _full_posterior(self, X):
         """
-        Compute the posterior at points `X`. This should return the mean and
-        full covariance matrix of the given points.
+        Compute the full posterior at points `X`. Return the mean vector and
+        full covariance matrix for the given inputs.
         """
 
     @abstractmethod
-    def posterior(self, X, grad=False):
+    def _marg_posterior(self, X, grad=False):
         """
-        Compute the marginal posterior at points `X`. This should return the
-        mean and variance of the given points, and if `grad == True` should
-        return their derivatives with respect to the input location as well
-        (i.e. a 4-tuple).
+        Compute the marginal posterior at points `X`. Return the mean and
+        variance vectors for the given inputs. If `grad` is True return the
+        gradients with respect to the inputs as well.
         """
 
     @abstractmethod

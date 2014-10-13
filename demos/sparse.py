@@ -6,10 +6,11 @@ optimize its hyperparameters.
 # global imports.
 import os
 import numpy as np
+import matplotlib.pyplot as pl
 
 # local imports
 import pygp
-import pygp.plotting
+import pygp.plotting as pp
 
 
 if __name__ == '__main__':
@@ -23,17 +24,38 @@ if __name__ == '__main__':
     gp1 = pygp.BasicGP(sn=.1, sf=1, ell=.1)
     gp1.add_data(X, y)
 
-    # create a sparse GP.
+    # create a sparse GPs.
     U = np.linspace(-1.3, 2, 10)[:, None]
     gp2 = pygp.inference.FITC.from_gp(gp1, U)
+    gp3 = pygp.inference.DTC.from_gp(gp1, U)
 
-    # find the ML parameters for both
+    # find the ML parameters
     pygp.optimize(gp1)
     pygp.optimize(gp2)
+    pygp.optimize(gp3)
 
-    # plot them.
-    pygp.plotting.plot(gp1, figure=1, subplot=121, ymin=-2.5, ymax=3,
-                       title='Full GP')
+    # plot the dense gp.
+    pl.figure(1)
+    pl.clf()
+    pl.subplot(131)
+    pp.plot_posterior(gp1)
+    pl.title('Full GP')
 
-    pygp.plotting.plot(gp2, figure=1, subplot=122, ymin=-2.5, ymax=3,
-                       title='Sparse GP', pseudoinputs=True, legend=True)
+    # grab the axis limits.
+    axis = pl.axis()
+
+    # plot the FITC sparse gp.
+    pl.subplot(132)
+    pp.plot_posterior(gp2, pseudoinputs=True)
+    pl.title('Sparse GP (FITC)')
+    pl.axis(axis)
+    pl.draw()
+
+    # plot the sparse gp.
+    pl.subplot(133)
+    pp.plot_posterior(gp3, pseudoinputs=True)
+    pl.title('Sparse GP (DTC)')
+    pl.axis(axis)
+    pl.legend(loc='upper left')
+    pl.draw()
+    pl.show()
