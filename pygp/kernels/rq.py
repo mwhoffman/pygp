@@ -13,7 +13,7 @@ import numpy as np
 # local imports
 from ._real import RealKernel
 from ..utils.models import printable
-from ._distances import rescale, sqdist, sqdist_foreach
+from ._distances import rescale, diff, sqdist, sqdist_foreach
 
 # exported symbols
 __all__ = ['RQ']
@@ -93,10 +93,22 @@ class RQ(RealKernel):
         yield np.zeros(len(X))
 
     def gradx(self, X1, X2=None):
-        raise NotImplementedError
+        # hypers
+        sf2 = np.exp(self._logsf*2)
+        ell = np.exp(self._logell)
+        alpha = np.exp(self._logalpha)
+
+        # precomputations
+        X1, X2 = rescale(ell, X1, X2)
+        D = diff(X1, X2)
+        E = 1 + np.sum(D**2, axis=-1) / 2 / alpha
+        K = sf2 * E**(-alpha)
+        G = -(K/E)[:, :, None] * D / ell
+
+        return G
 
     def grady(self, X1, X2=None):
-        raise NotImplementedError
+        return -self.gradx(X1, X2)
 
     def gradxy(self, X1, X2=None):
         raise NotImplementedError
