@@ -83,10 +83,10 @@ class Gamma(object):
         self.ndim = len(self._k)
 
     def sample(self, size=1, log=True):
-        sample = np.array([np.random.gamma(k, s)
-                           for k, s in zip(self._k, self._scale)])
+        sample = np.vstack(np.random.gamma(k, s, size=size)
+                           for k, s in zip(self._k, self._scale))
 
-        return np.log(sample) if log else sample
+        return np.log(sample.T) if log else sample.T
 
     def logprior(self, theta):
         # note the theta in this function *does not* correspond to the scale
