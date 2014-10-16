@@ -14,7 +14,6 @@ from __future__ import print_function
 import numpy as np
 import numpy.testing as nt
 import scipy.optimize as spop
-import nose
 
 # local imports
 import pygp
@@ -61,7 +60,14 @@ class InferenceTest(object):
         _ = self.gp.sample(self.X, m=2, latent=False)
 
     def test_sample_fourier(self):
-        _ = self.gp.sample_fourier(10)
+        # sample a function
+        f = self.gp.sample_fourier(10)
+        x = self.X[0]
+
+        # get the gradient and test it
+        _, g1 = f(x, True)
+        g2 = spop.approx_fprime(x, f, 1e-8)
+        nt.assert_allclose(g1, g2, rtol=1e-5, atol=1e-5)
 
     def test_loglikelihood(self):
         x = self.gp.get_hyper()

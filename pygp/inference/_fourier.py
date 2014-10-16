@@ -21,6 +21,10 @@ __all__ = ['FourierSample']
 
 
 class FourierSample(object):
+    """
+    Approximate sample from a Gaussian process, approximated using random
+    Fourier features.
+    """
     def __init__(self, N, likelihood, kernel, mean, X, y, rng=None):
         # if given a seed or an instantiated RandomState make sure that we use
         # it here, but also within the sample_spectrum code.
@@ -59,16 +63,28 @@ class FourierSample(object):
         else:
             self._theta = rng.randn(N)
 
-    def get(self, X):
+    def get(self, X, grad=False):
         """
         Evaluate the function at a collection of points.
         """
         X = np.array(X, ndmin=2, copy=False)
         Z = np.dot(X, self._W.T) + self._b
-        Phi = np.cos(Z) * self._a
-        F = np.dot(Phi, self._theta) + self._mean
 
-        return F
+        # evaluate the sample
+        F = np.dot(self._a * np.cos(Z), self._theta) + self._mean
 
-    def __call__(self, x):
-        return self.get(x)[0]
+        if not grad:
+            return F
+
+        # evaluate the gradient
+        dPhi = (-self._a * np.sin(Z))[:, :, None] * self._W[None]
+        G = np.einsum('ijk,j', dPhi, self._theta)
+
+        return F, G
+
+    def __call__(self, x, grad=False):
+        if grad:
+            F, G = self.get(x, True)
+            return F[0], G[0]
+        else:
+            return self.get(x)[0]
