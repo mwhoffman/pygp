@@ -92,6 +92,8 @@ class Gamma(object):
         # note the theta in this function *does not* correspond to the scale
         # parameter of a Gamma distribution which is denoted here as _scale.
         theta = np.array(theta, copy=False, ndmin=1)
+        if np.any(theta <= 0):
+            return -np.inf
 
         logpdf = ss.gamma.logpdf(self._k, theta, scale=self._scale)
 
