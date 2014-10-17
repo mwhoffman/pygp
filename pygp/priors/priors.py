@@ -77,13 +77,14 @@ class Gaussian(object):
 
 
 class Gamma(object):
-    def __init__(self, k, scale):
+    def __init__(self, k, scale, min=0.):
         self._k = np.array(k, copy=True, ndmin=1)
         self._scale = np.array(scale, copy=True, ndmin=1)
+        self._min = min
         self.ndim = len(self._k)
 
     def sample(self, size=1, log=True):
-        sample = np.vstack(np.random.gamma(k, s, size=size)
+        sample = np.vstack(self._min + np.random.gamma(k, s, size=size)
                            for k, s in zip(self._k, self._scale)).T
 
         return np.log(sample) if log else sample
@@ -92,31 +93,39 @@ class Gamma(object):
         # note the theta in this function *does not* correspond to the scale
         # parameter of a Gamma distribution which is denoted here as _scale.
         theta = np.array(theta, copy=False, ndmin=1)
-        if np.any(theta <= 0):
+        if np.any(theta <= self._min):
             return -np.inf
 
-        logpdf = ss.gamma.logpdf(self._k, theta, scale=self._scale)
+        logpdf = ss.gamma.logpdf(self._k,
+                                 theta,
+                                 scale=self._scale,
+                                 loc=self._min)
 
         return logpdf.sum()
 
 
 class LogNormal(object):
-    def __init__(self, mu=0., sigma=1.):
+    def __init__(self, mu=0., sigma=1., min=0.):
         self._mu = np.array(mu, copy=True, ndmin=1)
         self._sigma = np.array(sigma, copy=True, ndmin=1)
+        self._min = min
         self.ndim = len(self._mu)
 
     def sample(self, size=1, log=True):
-        sample = np.vstack(np.random.lognormal(m, s, size=size)
+        sample = np.vstack(self._min + np.random.lognormal(m, s, size=size)
                            for m, s in zip(self._mu, self._sigma)).T
 
         return np.log(sample) if log else sample
 
     def logprior(self, theta):
         theta = np.array(theta, copy=False, ndmin=1)
-        if np.any(theta <= 0):
+        if np.any(theta <= self._min):
             return -np.inf
 
-        logpdf = ss.lognorm.logpdf(theta, self._sigma, scale=np.exp(self._mu))
+        logpdf = ss.lognorm.logpdf(theta,
+                                   self._sigma,
+                                   scale=np.exp(self._mu),
+                                   loc=self._min)
 
         return logpdf.sum()
+
