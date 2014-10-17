@@ -12,7 +12,7 @@ import numpy as np
 import scipy.stats as ss
 
 # exported symbols
-__all__ = ['Uniform', 'Gaussian', 'Gamma']
+__all__ = ['Uniform', 'Gaussian', 'Gamma', 'LogNormal']
 
 
 class Uniform(object):
@@ -84,9 +84,9 @@ class Gamma(object):
 
     def sample(self, size=1, log=True):
         sample = np.vstack(np.random.gamma(k, s, size=size)
-                           for k, s in zip(self._k, self._scale))
+                           for k, s in zip(self._k, self._scale)).T
 
-        return np.log(sample.T) if log else sample.T
+        return np.log(sample) if log else sample
 
     def logprior(self, theta):
         # note the theta in this function *does not* correspond to the scale
@@ -96,5 +96,27 @@ class Gamma(object):
             return -np.inf
 
         logpdf = ss.gamma.logpdf(self._k, theta, scale=self._scale)
+
+        return logpdf.sum()
+
+
+class LogNormal(object):
+    def __init__(self, mu=0., sigma=1.):
+        self._mu = np.array(mu, copy=True, ndmin=1)
+        self._sigma = np.array(sigma, copy=True, ndmin=1)
+        self.ndim = len(self._mu)
+
+    def sample(self, size=1, log=True):
+        sample = np.vstack(np.random.lognormal(m, s, size=size)
+                           for m, s in zip(self._mu, self._sigma)).T
+
+        return np.log(sample) if log else sample
+
+    def logprior(self, theta):
+        theta = np.array(theta, copy=False, ndmin=1)
+        if np.any(theta <= 0):
+            return -np.inf
+
+        logpdf = ss.lognorm.logpdf(theta, self._sigma, scale=np.exp(self._mu))
 
         return logpdf.sum()
