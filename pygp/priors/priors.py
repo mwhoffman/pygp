@@ -12,7 +12,7 @@ import numpy as np
 import scipy.stats as ss
 
 # exported symbols
-__all__ = ['Uniform', 'Gaussian', 'Gamma', 'LogNormal']
+__all__ = ['Uniform', 'Gaussian', 'Gamma', 'LogNormal', 'Horseshoe']
 
 
 class Uniform(object):
@@ -129,3 +129,21 @@ class LogNormal(object):
 
         return logpdf.sum()
 
+
+class Horseshoe(object):
+    def __init__(self, scale=1., min=0.):
+        self._scale = np.array(scale, copy=True, ndmin=1)
+        self._min = min
+        self.ndim = len(self._scale)
+
+    def sample(self, size=1, log=True):
+        return NotImplementedError
+
+    def logprior(self, theta):
+        theta = np.array(theta, copy=False, ndmin=1)
+        if np.any(theta <= self._min):
+            return -np.inf
+
+        logpdf = np.log(np.log(1 + (self._scale / (theta - self._min))**2))
+
+        return logpdf.sum()
