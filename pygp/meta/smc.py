@@ -39,9 +39,12 @@ def _sample_prior(model, priors, n):
     priors = priors.values()
 
     # sample hyperparameters from prior
-    hypers = np.zeros((n, model.nhyper))
+    hypers = np.tile(model.get_hyper(), (n, 1))
     for (block, log, prior) in priors:
-        hypers[:, block] = prior.sample(n, log=log)
+        try:
+            hypers[:, block] = prior.sample(n, log=log)
+        except NotImplementedError:
+            pass
 
     return hypers
 

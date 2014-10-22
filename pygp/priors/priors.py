@@ -137,7 +137,7 @@ class Horseshoe(object):
         self.ndim = len(self._scale)
 
     def sample(self, size=1, log=True):
-        return NotImplementedError
+        raise NotImplementedError
 
     def logprior(self, theta):
         theta = np.array(theta, copy=False, ndmin=1)
