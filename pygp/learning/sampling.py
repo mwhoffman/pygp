@@ -12,6 +12,7 @@ import numpy as np
 
 # local imports
 from ..utils.models import get_params
+from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['sample']
@@ -20,18 +21,25 @@ __all__ = ['sample']
 #==============================================================================
 # basic sampler(s) that don't know anything about GP objects.
 
-def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
+def _slice_sample(logprob,
+                  x0,
+                  sigma=1.0,
+                  step_out=True,
+                  max_steps_out=1000,
+                  rng=None):
     """
     Implementation of slice sampling taken almost directly from Snoek's
     spearmint package (with a few minor modifications).
     """
+    rng = rstate(rng)
+
     def direction_slice(direction, x0):
         def dir_logprob(z):
             return logprob(direction*z + x0)
 
-        upper = sigma*np.random.rand()
+        upper = sigma*rng.rand()
         lower = upper - sigma
-        llh_s = np.log(np.random.rand()) + dir_logprob(0.0)
+        llh_s = np.log(rng.rand()) + dir_logprob(0.0)
 
         l_steps_out = 0
         u_steps_out = 0
@@ -44,7 +52,7 @@ def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
                 upper += sigma
 
         while True:
-            new_z = (upper - lower)*np.random.rand() + lower
+            new_z = (upper - lower)*rng.rand() + lower
             new_llh = dir_logprob(new_z)
             if np.isnan(new_llh):
                 raise Exception("Slice sampler got a NaN")
@@ -61,7 +69,7 @@ def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
 
     # FIXME: I've removed how blocks work because I want to rewrite that bit.
     # so right now this samples everything as one big block.
-    direction = np.random.randn(x0.shape[0])
+    direction = rng.randn(x0.shape[0])
     direction = direction / np.sqrt(np.sum(direction**2))
     return direction_slice(direction, x0)
 
@@ -69,7 +77,8 @@ def _slice_sample(logprob, x0, sigma=1.0, step_out=True, max_steps_out=1000):
 #==============================================================================
 # interface for sampling hyperparameters from a GP.
 
-def sample(gp, priors, n, raw=True):
+def sample(gp, priors, n, raw=True, rng=None):
+    rng = rstate(rng)
     priors = dict(priors)
     active = np.ones(gp.nhyper, dtype=bool)
     logged = np.ones(gp.nhyper, dtype=bool)
@@ -122,7 +131,7 @@ def sample(gp, priors, n, raw=True):
 
     # do the sampling.
     for i in xrange(n):
-        x = _slice_sample(logprob, x)
+        x = _slice_sample(logprob, x, rng=rng)
         hypers[i][active] = x
 
     # change the logspace components back into logspace.

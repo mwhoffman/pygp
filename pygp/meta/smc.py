@@ -15,12 +15,15 @@ from scipy.misc import logsumexp
 # local imports
 from ..learning.sampling import sample
 from ..utils.models import get_params
+from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['SMC']
 
 
-def _sample_prior(model, priors, n):
+def _sample_prior(model, priors, n, rng=None):
+    rng = rstate(rng)
+
     # unpack priors
     # TODO -- Bobak: This snippet is copied from learning/sampling.py
     # and should probably be put into a Prior base class.
@@ -42,7 +45,7 @@ def _sample_prior(model, priors, n):
     hypers = np.tile(model.get_hyper(), (n, 1))
     for (block, log, prior) in priors:
         try:
-            hypers[:, block] = prior.sample(n, log=log)
+            hypers[:, block] = prior.sample(n, log=log, rng=rng)
         except NotImplementedError:
             pass
 
@@ -50,9 +53,10 @@ def _sample_prior(model, priors, n):
 
 
 class SMC(object):
-    def __init__(self, model, prior, n=100):
+    def __init__(self, model, prior, n=100, rng=None):
         self._prior = prior
         self._n = n
+        self._rng = rstate(rng)
 
         # we won't add any data unless the model already has it.
         data = None
@@ -62,7 +66,8 @@ class SMC(object):
             model = model.copy()
             model.reset()
 
-        self._samples = [model.copy(h) for h in _sample_prior(model, prior, n)]
+        self._samples = [model.copy(h)
+                         for h in _sample_prior(model, prior, n, rng=self._rng)]
         self._logweights = np.zeros(n) - np.log(n)
         self._loglikes = np.zeros(n)
 
@@ -90,7 +95,7 @@ class SMC(object):
                 # FIXME: can use a better resampling strategy here. ie,
                 # stratified, etc.
                 p = np.exp(self._logweights)
-                idx = np.random.choice(self._n, self._n, p=p)
+                idx = self._rng.choice(self._n, self._n, p=p)
                 self._samples = [self._samples[i].copy() for i in idx]
                 self._logweights = np.zeros(self._n) - np.log(self._n)
                 self._loglikes = self._loglikes[idx]
@@ -116,7 +121,7 @@ class SMC(object):
 
             # propagate the particles.
             for model in self._samples:
-                sample(model, self._prior, 1)
+                sample(model, self._prior, 1, rng=self._rng)
 
             # update the loglikelihoods given the new samples.
             self._loglikes = np.fromiter((model.loglikelihood()

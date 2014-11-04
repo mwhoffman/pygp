@@ -11,6 +11,9 @@ from __future__ import print_function
 import numpy as np
 import scipy.stats as ss
 
+# local imports
+from ..utils.random import rstate
+
 # exported symbols
 __all__ = ['Uniform', 'Gaussian', 'Gamma', 'LogNormal', 'Horseshoe']
 
@@ -27,7 +30,8 @@ class Uniform(object):
         if np.any(self._b < self._a):
             raise RuntimeError("malformed upper/lower bounds")
 
-    def sample(self, size=1, log=True):
+    def sample(self, size=1, log=True, rng=None):
+        rng = rstate(rng)
         sample = self._a + (self._b - self._a) * np.random.rand(size, self.ndim)
         return np.log(sample) if log else sample
 
@@ -53,11 +57,12 @@ class Gaussian(object):
         else:
             raise ValueError('Argument `var` can be at most a rank 2 array.')
 
-    def sample(self, size=1, log=True):
+    def sample(self, size=1, log=True, rng=None):
+        rng = rstate(rng)
         if self._std.ndim == 1:
-            sample = self._mu + self._std * np.random.randn(size, self.ndim)
+            sample = self._mu + self._std * rng.randn(size, self.ndim)
         elif self._s2.ndim == 2:
-            sample = self._mu + np.dot(np.random.randn(size, self.ndim), self._std)
+            sample = self._mu + np.dot(rng.randn(size, self.ndim), self._std)
 
         return np.log(sample) if log else sample
 
@@ -83,8 +88,9 @@ class Gamma(object):
         self._min = min
         self.ndim = len(self._k)
 
-    def sample(self, size=1, log=True):
-        sample = np.vstack(self._min + np.random.gamma(k, s, size=size)
+    def sample(self, size=1, log=True, rng=None):
+        rng = rstate(rng)
+        sample = np.vstack(self._min + rng.gamma(k, s, size=size)
                            for k, s in zip(self._k, self._scale)).T
 
         return np.log(sample) if log else sample
@@ -111,8 +117,9 @@ class LogNormal(object):
         self._min = min
         self.ndim = len(self._mu)
 
-    def sample(self, size=1, log=True):
-        sample = np.vstack(self._min + np.random.lognormal(m, s, size=size)
+    def sample(self, size=1, log=True, rng=None):
+        rng = rstate(rng)
+        sample = np.vstack(self._min + rng.lognormal(m, s, size=size)
                            for m, s in zip(self._mu, self._sigma)).T
 
         return np.log(sample) if log else sample
@@ -136,7 +143,7 @@ class Horseshoe(object):
         self._min = min
         self.ndim = len(self._scale)
 
-    def sample(self, size=1, log=True):
+    def sample(self, size=1, log=True, rng=None):
         raise NotImplementedError
 
     def logprior(self, theta):

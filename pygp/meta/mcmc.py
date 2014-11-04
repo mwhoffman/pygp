@@ -13,23 +13,29 @@ import numpy as np
 
 # local imports
 from ..learning.sampling import sample
+from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['MCMC']
 
 
 class MCMC(object):
-    def __init__(self, model, prior, n=100, burn=100):
+    def __init__(self, model, prior, n=100, burn=100, rng=None):
         self._model = model.copy()
         self._prior = prior
         self._samples = []
         self._n = n
         self._burn = burn
+        self._rng = rstate(rng)
 
         if self._model.ndata > 0:
             if self._burn > 0:
-                sample(self._model, self._prior, self._burn)
-            self._samples = sample(self._model, self._prior, self._n, False)
+                sample(self._model, self._prior, self._burn, rng=self._rng)
+            self._samples = sample(self._model,
+                                   self._prior,
+                                   self._n,
+                                   raw=False,
+                                   rng=self._rng)
 
         else:
             # FIXME: the likelihood won't play a role, so we can sample
@@ -57,10 +63,14 @@ class MCMC(object):
         # burn off some samples. Not sure if this is entirely necessary, but it
         # also accounts for burnin right after initial data is added.
         if self._model.ndata > 2*nprev and self._burn > 0:
-            sample(self._model, self._prior, self._burn)
+            sample(self._model, self._prior, self._burn, rng=self._rng)
 
         # grab the samples.
-        self._samples = sample(self._model, self._prior, self._n, False)
+        self._samples = sample(self._model,
+                               self._prior,
+                               self._n,
+                               raw=False,
+                               rng=self._rng)
 
     def posterior(self, X, grad=False):
         parts = map(np.array,
