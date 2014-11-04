@@ -32,7 +32,7 @@ class Uniform(object):
 
     def sample(self, size=1, log=True, rng=None):
         rng = rstate(rng)
-        sample = self._a + (self._b - self._a) * np.random.rand(size, self.ndim)
+        sample = self._a + (self._b - self._a) * rng.rand(size, self.ndim)
         return np.log(sample) if log else sample
 
     def logprior(self, theta):
