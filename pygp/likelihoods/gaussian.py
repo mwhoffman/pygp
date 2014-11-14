@@ -9,11 +9,11 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+from mwhutils.random import rstate
 
 # local imports
 from ._base import RealLikelihood
 from ..utils.models import printable
-from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['Gaussian']

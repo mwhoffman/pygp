@@ -9,12 +9,11 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+from mwhutils.random import rstate
 
 # local imports
 from ._real import RealKernel
 from ._distances import rescale, diff, sqdist, sqdist_foreach
-
-from ..utils.random import rstate
 from ..utils.models import printable
 
 # exported symbols

@@ -3,22 +3,17 @@ Nystrom approximate inference in a Gaussian process model
 for regression.
 """
 
-# future imports
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-# global imports
 import numpy as np
 import scipy.linalg as sla
 import itertools as it
 
-# local imports
-from ..utils.exceptions import ModelError
 from ..likelihoods import Gaussian
 from ._base import GP
 
-# exported symbols
 __all__ = ['DTC']
 
 
@@ -28,7 +23,7 @@ class DTC(GP):
     def __init__(self, likelihood, kernel, mean, U):
         # NOTE: exact inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
-            raise ModelError('exact inference requires a Gaussian likelihood')
+            raise ValueError('exact inference requires a Gaussian likelihood')
 
         super(DTC, self).__init__(likelihood, kernel, mean)
         # save the pseudo-input locations.

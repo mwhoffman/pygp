@@ -11,11 +11,11 @@ from __future__ import print_function
 # global imports
 import numpy as np
 from scipy.misc import logsumexp
+from mwhutils.random import rstate
 
 # local imports
 from ..learning.sampling import sample
 from ..utils.models import get_params
-from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['SMC']

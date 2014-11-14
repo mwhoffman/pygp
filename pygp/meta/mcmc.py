@@ -10,10 +10,10 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+from mwhutils.random import rstate
 
 # local imports
 from ..learning.sampling import sample
-from ..utils.random import rstate
 
 # exported symbols
 __all__ = ['MCMC']

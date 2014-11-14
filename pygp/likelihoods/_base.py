@@ -9,9 +9,9 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+from abc import abstractmethod
 
 # local imports
-from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized
 
 # exported symbols

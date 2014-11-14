@@ -7,8 +7,10 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
+# global imports
+from abc import abstractmethod
+
 # local imports
-from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized
 
 # exported symbols

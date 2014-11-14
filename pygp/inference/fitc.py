@@ -2,22 +2,17 @@
 FITC approximation for sparse pseudo-input GPs.
 """
 
-# future imports
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-# global imports
 import numpy as np
 import scipy.linalg as sla
 import itertools as it
 
-# local imports
-from ..utils.exceptions import ModelError
-from ..likelihoods import Gaussian
 from ._base import GP
+from ..likelihoods import Gaussian
 
-# exported symbols
 __all__ = ['FITC']
 
 
@@ -28,7 +23,7 @@ class FITC(GP):
     def __init__(self, likelihood, kernel, mean, U):
         # NOTE: exact FITC inference will only work with Gaussian likelihoods.
         if not isinstance(likelihood, Gaussian):
-            raise ModelError('exact inference requires a Gaussian likelihood')
+            raise ValueError('exact inference requires a Gaussian likelihood')
 
         super(FITC, self).__init__(likelihood, kernel, mean)
 
