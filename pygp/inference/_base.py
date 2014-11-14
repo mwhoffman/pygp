@@ -13,8 +13,9 @@ from __future__ import print_function
 import numpy as np
 import scipy.linalg as sla
 
+from abc import abstractmethod
+
 # local imports
-from ..utils.abc import abstractmethod
 from ..utils.models import Parameterized, dot_params
 from ..utils.random import rstate
 from ._fourier import FourierSample

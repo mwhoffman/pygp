@@ -11,8 +11,8 @@ from __future__ import print_function
 import numpy as np
 import copy
 
-# local imports
-from .abc import ABCMeta, abstractmethod
+# ABC imports.
+from mwhutils.abc import ABCMeta, abstractmethod
 
 # exported symbols
 __all__ = ['Parameterized', 'printable', 'dot_params', 'get_params']

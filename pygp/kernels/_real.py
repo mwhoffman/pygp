@@ -9,10 +9,10 @@ from __future__ import print_function
 
 # global imports
 import numpy as np
+from abc import abstractmethod
 
 # local imports
 from ._base import Kernel
-from ..utils.abc import abstractmethod
 
 # import the generic sum/product kernels and change their names. We'll call the
 # real-valued versions SumKernel and ProductKernel as well since they really
