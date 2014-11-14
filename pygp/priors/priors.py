@@ -11,8 +11,7 @@ from __future__ import print_function
 import numpy as np
 import scipy.stats as ss
 
-# local imports
-from ..utils.random import rstate
+from mwhutils.random import rstate
 
 # exported symbols
 __all__ = ['Uniform', 'Gaussian', 'Gamma', 'LogNormal', 'Horseshoe']

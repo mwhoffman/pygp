@@ -11,8 +11,9 @@ from __future__ import print_function
 import numpy as np
 import scipy.linalg as sla
 
+from mwhutils.random import rstate
+
 # local imports
-from ..utils.random import rstate
 from ..utils.exceptions import ModelError
 from ..likelihoods import Gaussian
 
