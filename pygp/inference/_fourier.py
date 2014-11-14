@@ -2,22 +2,16 @@
 Approximations to the GP using random Fourier features.
 """
 
-# future imports
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-# global imports
 import numpy as np
 import scipy.linalg as sla
 
 from mwhutils.random import rstate
-
-# local imports
-from ..utils.exceptions import ModelError
 from ..likelihoods import Gaussian
 
-# exported symbols
 __all__ = ['FourierSample']
 
 
@@ -32,7 +26,7 @@ class FourierSample(object):
         rng = rstate(rng)
 
         if not isinstance(likelihood, Gaussian):
-            raise ModelError('Fourier samples only defined for Gaussian'
+            raise ValueError('Fourier samples only defined for Gaussian'
                              'likelihoods')
 
         # this randomizes the feature.
