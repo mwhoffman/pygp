@@ -11,9 +11,6 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as pl
 
-# local imports
-from .utils.models import get_params
-
 # exported symbols
 __all__ = ['plot_posterior', 'plot_samples']
 
