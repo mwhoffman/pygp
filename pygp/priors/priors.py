@@ -29,10 +29,9 @@ class Uniform(object):
         if np.any(self._b < self._a):
             raise RuntimeError("malformed upper/lower bounds")
 
-    def sample(self, size=1, log=True, rng=None):
+    def sample(self, size=1, rng=None):
         rng = rstate(rng)
-        sample = self._a + (self._b - self._a) * rng.rand(size, self.ndim)
-        return np.log(sample) if log else sample
+        return self._a + (self._b - self._a) * rng.rand(size, self.ndim)
 
     def logprior(self, theta):
         theta = np.array(theta, copy=False, ndmin=1)
@@ -56,14 +55,14 @@ class Gaussian(object):
         else:
             raise ValueError('Argument `var` can be at most a rank 2 array.')
 
-    def sample(self, size=1, log=True, rng=None):
+    def sample(self, size=1, rng=None):
         rng = rstate(rng)
         if self._std.ndim == 1:
             sample = self._mu + self._std * rng.randn(size, self.ndim)
         elif self._s2.ndim == 2:
             sample = self._mu + np.dot(rng.randn(size, self.ndim), self._std)
 
-        return np.log(sample) if log else sample
+        return sample
 
     def logprior(self, theta):
         theta = np.array(theta, copy=False, ndmin=1)
@@ -87,12 +86,10 @@ class Gamma(object):
         self._min = min
         self.ndim = len(self._k)
 
-    def sample(self, size=1, log=True, rng=None):
+    def sample(self, size=1, rng=None):
         rng = rstate(rng)
-        sample = np.vstack(self._min + rng.gamma(k, s, size=size)
-                           for k, s in zip(self._k, self._scale)).T
-
-        return np.log(sample) if log else sample
+        return np.vstack(self._min + rng.gamma(k, s, size=size)
+                         for k, s in zip(self._k, self._scale)).T
 
     def logprior(self, theta):
         # note the theta in this function *does not* correspond to the scale
@@ -116,12 +113,10 @@ class LogNormal(object):
         self._min = min
         self.ndim = len(self._mu)
 
-    def sample(self, size=1, log=True, rng=None):
+    def sample(self, size=1, rng=None):
         rng = rstate(rng)
-        sample = np.vstack(self._min + rng.lognormal(m, s, size=size)
-                           for m, s in zip(self._mu, self._sigma)).T
-
-        return np.log(sample) if log else sample
+        return np.vstack(self._min + rng.lognormal(m, s, size=size)
+                         for m, s in zip(self._mu, self._sigma)).T
 
     def logprior(self, theta):
         theta = np.array(theta, copy=False, ndmin=1)
@@ -142,7 +137,7 @@ class Horseshoe(object):
         self._min = min
         self.ndim = len(self._scale)
 
-    def sample(self, size=1, log=True, rng=None):
+    def sample(self, size=1, rng=None):
         raise NotImplementedError
 
     def logprior(self, theta):
