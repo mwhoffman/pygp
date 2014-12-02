@@ -40,9 +40,9 @@ class RQ(RealKernel):
 
     def _params(self):
         return [
-            ('sf', 1),
-            ('ell', self.nhyper-2),
-            ('alpha', 1),
+            ('sf', 1, True),
+            ('ell', self.nhyper-2, True),
+            ('alpha', 1, True),
         ]
 
     def get_hyper(self):

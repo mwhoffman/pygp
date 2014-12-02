@@ -97,9 +97,7 @@ def get_params(obj):
     """
     offset = 0
     for param in obj._params():
-        key = param[0]
-        size = param[1]
+        key, size, log = param
         block = slice(offset, offset+size)
-        log = (len(param) < 3) or param[2]
         offset += size
         yield key, block, log

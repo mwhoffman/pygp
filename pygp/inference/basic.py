@@ -40,7 +40,7 @@ class BasicGP(ExactGP):
         # replace the parameters for the base GP model with a simplified
         # structure and rename the likelihood's sigma parameter to sn (ie its
         # the sigma corresponding to the noise).
-        params = [('sn', 1)]
+        params = [('sn', 1, True)]
         params += self._kernel._params()
         params += [('mu', 1, False)]
         return params

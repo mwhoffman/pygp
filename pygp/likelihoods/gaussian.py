@@ -30,7 +30,7 @@ class Gaussian(RealLikelihood):
 
     def _params(self):
         return [
-            ('sigma', 1),
+            ('sigma', 1, True),
         ]
 
     @property
