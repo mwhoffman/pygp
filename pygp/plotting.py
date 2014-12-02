@@ -102,14 +102,15 @@ def plot_samples(model):
     values = np.zeros((samples.shape[0], 0))
     labels = []
 
-    for key, block, log in get_params(next(model.__iter__())):
-        for i in range(block.start, block.stop):
-            vals = samples[:, i]
-            size = block.stop - block.start
-            name = key + ('' if (size == 1) else '_%d' % (i - block.start))
+    offset = 0
+    for key, size, log in next(model.__iter__())._params():
+        for i in xrange(size):
+            vals = samples[:, offset+i]
+            name = key + ('' if (size == 1) else '_%d' % i)
             if not np.allclose(vals, vals[0]):
                 values = np.c_[values, np.exp(vals) if log else vals]
                 labels.append(name)
+        offset += size
 
     naxes = values.shape[1]
 
