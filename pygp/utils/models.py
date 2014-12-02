@@ -15,7 +15,7 @@ import copy
 from mwhutils.abc import ABCMeta, abstractmethod
 
 # exported symbols
-__all__ = ['Parameterized', 'printable', 'dot_params', 'get_params']
+__all__ = ['Parameterized', 'printable', 'get_params']
 
 
 class Parameterized(object):
@@ -74,16 +74,6 @@ def printable(cls):
         return obj.__class__.__name__ + '(' + ', '.join(substrings) + ')'
     cls.__repr__ = _repr
     return cls
-
-
-# FIXME: it's unclear how useful dot_params is. This might be replaced.
-
-def dot_params(ns, params):
-    """
-    Extend a param tuple with a 'namespace'. IE prepend the key string with ns
-    plus a dot.
-    """
-    return [("%s.%s" % (ns, p[0]),) + p[1:] for p in params]
 
 
 # FIXME: the get_params function is kind of a hack in order to allow for

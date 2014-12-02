@@ -17,7 +17,7 @@ from abc import abstractmethod
 from mwhutils.random import rstate
 
 # local imports
-from ..utils.models import Parameterized, dot_params
+from ..utils.models import Parameterized
 from ._fourier import FourierSample
 
 # exported symbols
@@ -73,8 +73,9 @@ class GP(Parameterized):
                 indent('mean=', str(self._mean))]) + ')')
 
     def _params(self):
-        params = dot_params('like', self._likelihood._params())
-        params += dot_params('kern', self._kernel._params())
+        params = []
+        params += [("like.%s" % p[0],) + p[1:] for p in self._likelihood._params()]
+        params += [("kern.%s" % p[0],) + p[1:] for p in self._kernel._params()]
         params += [('mean', 1, False)]
         return params
 

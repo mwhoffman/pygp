@@ -15,7 +15,6 @@ import operator as op
 
 # local imports
 from ._base import Kernel
-from ..utils.models import dot_params
 
 # exported symbols
 __all__ = ['ComboKernel', 'SumKernel', 'ProductKernel', 'combine']
@@ -83,7 +82,8 @@ class ComboKernel(Kernel):
             if isinstance(part, ComboKernel):
                 parts.extend(reversed(part._parts))
             else:
-                params.extend(dot_params('part%d' % nparts, part._params()))
+                params.extend([("part%d.%s" % (nparts, p[0]),) + p[1:]
+                               for p in part._params()])
                 nparts += 1
         return params
 
