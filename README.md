@@ -8,3 +8,7 @@ Gaussian Processes (GPs) that is loosely based on Carl Rasmussen's `GPML`
 toolbox. Here "loosely" means that some of the structure and ideas are based on
 that toolbox's implementations, but some changes have been made to make this
 package somewhat more pythonic.
+
+[![Build Status](https://travis-ci.org/mwhoffman/pygp.svg)]
+(https://travis-ci.org/mwhoffman/pygp)
+
