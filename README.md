@@ -1,6 +1,5 @@
-====
 pygp
-====
+----
 
 `pygp` is a python package for inference with Gaussian processes.
 
