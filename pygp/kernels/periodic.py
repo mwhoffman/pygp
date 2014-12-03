@@ -37,9 +37,9 @@ class Periodic(RealKernel):
 
     def _params(self):
         return [
-            ('sf', 1),
-            ('ell', 1),
-            ('p', 1),
+            ('sf', 1, True),
+            ('ell', 1, True),
+            ('p', 1, True),
         ]
 
     def get_hyper(self):

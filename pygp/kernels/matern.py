@@ -55,8 +55,8 @@ class Matern(RealKernel):
 
     def _params(self):
         return [
-            ('sf', 1),
-            ('ell', self.nhyper-1),
+            ('sf', 1, True),
+            ('ell', self.nhyper-1, True),
         ]
 
     def get_hyper(self):
