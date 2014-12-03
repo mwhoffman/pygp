@@ -5,19 +5,18 @@ python:
 
 before_install:
     - "wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh"
-    - "chmod +x miniconda.sh"
-    - "./miniconda.sh -b"
-    - "export PATH=/home/travis/miniconda/bin:$PATH"
-    - "conda update --yes conda"
-    # The next couple lines fix a crash with multiprocessing on Travis and are
-    # not specific to using Miniconda
-    - "sudo rm -rf /dev/shm"
-    - "sudo ln -s /run/shm /dev/shm"
+    - "bash miniconda.sh -b -p $HOME/miniconda"
+    - "export PATH=$HOME/miniconda/bin:$PATH"
+    - "hash -r"
+    - "conda config --set always_yes yes --set changeps1 no"
+    - "conda update -q conda"
+    - "conda info -a"
+    - "conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip atlas numpy scipy nose"
+    - "source activate test-environment"
 
 install:
-  - "conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose"
-  - "pip install git+https://github.com/mwhoffman/mwhutils.git"
+    - "pip install git+https://github.com/mwhoffman/mwhutils.git"
 
 script:
-  - "nosetests"
+    - "nosetests"
 
