@@ -16,6 +16,7 @@ before_install:
 
 install:
   - "conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose"
+  - "pip install git+https://github.com/mwhoffman/mwhutils.git"
 
 script:
   - "nosetests"
