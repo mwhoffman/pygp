@@ -3,12 +3,10 @@ Basic demo showing how to instantiate a simple GP model, add data to it, and
 optimize its hyperparameters.
 """
 
-# global imports.
 import os
 import numpy as np
 import matplotlib.pyplot as pl
 
-# local imports
 import pygp
 import pygp.plotting as pp
 

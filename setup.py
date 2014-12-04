@@ -1,20 +1,12 @@
-NAME = 'pygp'
-VERSION = '0.0.1'
-AUTHOR = 'Matthew W. Hoffman'
-AUTHOR_EMAIL = 'mwh30@cam.ac.uk'
-URL = 'http://github.com/mwhoffman/pygp2'
-DESCRIPTION = 'A python library for inference with Gaussian processes'
-
-
 from setuptools import setup, find_packages
 
+setup(name='pygp',
+      version='0.0.1',
+      author='Matthew W. Hoffman',
+      author_email='mwh30@cam.ac.uk',
+      description='A Python package for inference with Gaussian processes',
+      url='http://github.com/mwhoffman/pygp',
+      license='Simplified BSD',
+      packages=find_packages(),
+      package_data={'': ['*.txt', '*.npz']})
 
-if __name__ == '__main__':
-    setup(
-        name=NAME,
-        version=VERSION,
-        author=AUTHOR,
-        author_email=AUTHOR_EMAIL,
-        description=DESCRIPTION,
-        url=URL,
-        packages=find_packages())
