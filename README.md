@@ -11,4 +11,6 @@ package somewhat more pythonic.
 
 [![Build Status](https://travis-ci.org/mwhoffman/pygp.svg)]
 (https://travis-ci.org/mwhoffman/pygp)
+[![Coverage Status](https://coveralls.io/repos/mwhoffman/pygp/badge.png)]
+(https://coveralls.io/r/mwhoffman/pygp)
 
