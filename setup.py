@@ -1,3 +1,7 @@
+"""
+Setup script for pygp.
+"""
+
 from setuptools import setup, find_packages
 
 setup(name='pygp',
@@ -9,4 +13,3 @@ setup(name='pygp',
       license='Simplified BSD',
       packages=find_packages(),
       package_data={'': ['*.txt', '*.npz']})
-
