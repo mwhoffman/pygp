@@ -18,8 +18,7 @@ Installation
 
 The easiest way to install this package is by running
 
-    pip install git+https://github.com/mwhoffman/mwhutils.git
-    pip install git+https://github.com/mwhoffman/pygp.git
+    pip install git+https://github.com/mwhoffman/{mwhutils,pygp}.git
 
 Alternatively the packages above can be installed by cloning their repositories
 and using `setup.py` directly. Once the package is installed the included demos
