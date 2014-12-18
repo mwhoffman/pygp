@@ -15,6 +15,9 @@ before_install:
     - "source activate test-environment"
     - "pip install python-coveralls"
 
+install:
+    - "pip install git+https://github.com/mwhoffman/mwhutils.git"
+
 script:
     - "nosetests  --with-coverage --cover-inclusive --cover-package=pygp"
 
