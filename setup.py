@@ -13,6 +13,4 @@ setup(name='pygp',
       license='Simplified BSD',
       packages=find_packages(),
       package_data={'': ['*.txt', '*.npz']},
-      install_requires=['mwhutils'],
-      dependency_links=[
-          'http://github.com/mwhoffman/mwhutils/tarball/master#egg=mwhutils'])
+      install_requires=['numpy', 'scipy', 'matplotlib', 'mwhutils'])

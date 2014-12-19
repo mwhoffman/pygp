@@ -1,0 +1,4 @@
+numpy
+scipy
+matplotlib
+-e git+https://github.com/mwhoffman/mwhutils.git#egg=mwhutils
