@@ -26,5 +26,5 @@ after_success:
 
 notifications:
     slack:
-        secure: YFLpwhsoTCSUgJZerBXYUyblDMkU0aEFHIo8AJgTxFgKtw/NUpFhpfe/Yr1BmmK9qO2a+vqyYvF0qKG38PC/CFyX0IvYCl/mYbQpsRUEDF7fVH1jjHxjwPGm7x7EtacCJD40eFGpkw8sypHGeRkJ4EKwB4VyNwzWOXjYRX89lHI=
+        secure: "gz9jMiDyDT6qO6a7BqHizZ0wV7OpLywJjKHNtUKOLuJdcZkSb+4FDGMZHvwvDbk4lSfu08Rz3zUmu77zsY//9AbzXFrRbFKp236pgXcFVRigvlGahN4QFKuYdd5/OZsaxFudupibPx4nm69iKosgi0DKjahqTwMXnX/1LAQhlXk="
 
