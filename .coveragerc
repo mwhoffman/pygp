@@ -2,3 +2,13 @@
 branch = True
 omit = 
     pygp/demos/*
+
+[report]
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # ignore abstract methods/properties
+    @abstractmethod
+    @abstractproperty
+

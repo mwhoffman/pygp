@@ -14,7 +14,6 @@ before_install:
     - "conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pip nose atlas numpy scipy matplotlib"
     - "source activate test-environment"
     - "pip install python-coveralls"
-    - "pip install codecov"
 
 install:
     - "pip install -r requirements.txt"
@@ -24,7 +23,6 @@ script:
 
 after_success:
     - "coveralls"
-    - "codecov"
 
 notifications:
     slack:
