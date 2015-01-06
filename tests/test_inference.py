@@ -58,11 +58,22 @@ class InferenceTest(object):
 
     def test_sample(self):
         _ = self.gp.sample(self.X, m=2, latent=False)
+        _ = self.gp.sample(self.X, m=2, latent=True)
 
     def test_sample_fourier(self):
         # sample a function
         f = self.gp.sample_fourier(10)
         x = self.X[0]
+
+        # get the gradient and test it
+        _, g1 = f(x, True)
+        g2 = spop.approx_fprime(x, f, 1e-8)
+        nt.assert_allclose(g1, g2, rtol=1e-5, atol=1e-5)
+
+        # reset the gp and sample from the prior.
+        gp = self.gp.copy()
+        gp.reset()
+        f = gp.sample_fourier(10)
 
         # get the gradient and test it
         _, g1 = f(x, True)
@@ -96,6 +107,33 @@ class RealTest(InferenceTest):
         self.X = rng.rand(10, gp._kernel.ndim)
         self.y = gp._likelihood.sample(rng.rand(10), rng)
 
+    def test_reset(self):
+        gp = self.gp.copy()
+        gp.reset()
+
+        # test that we can get the prior predictions.
+        gp.posterior(self.X)
+
+        # test that adding the data gets the same thing.
+        gp.add_data(*self.gp.data)
+        mu1, va1 = gp.posterior(self.X)
+        mu2, va2 = self.gp.posterior(self.X)
+
+        nt.assert_allclose(mu1, mu2, rtol=1e-6, atol=1e-6)
+        nt.assert_allclose(va1, va2, rtol=1e-6, atol=1e-6)
+
+    def test_hyper(self):
+        # set the hyperparameters with the given data.
+        gp = self.gp.copy()
+        gp.set_hyper(gp.get_hyper() + 1)
+        gp.posterior(self.X)
+
+        # set the hyperparameters after a reset.
+        gp = self.gp.copy()
+        gp.reset()
+        gp.set_hyper(gp.get_hyper() + 1)
+        gp.posterior(self.X)
+
     def test_posterior_mu(self):
         f = lambda x: self.gp.posterior(x[None])[0]
         G1 = self.gp.posterior(self.X, grad=True)[2]
@@ -119,6 +157,12 @@ class TestExact(RealTest):
         RealTest.__init__(self, gp)
 
 
+class TestBasic(RealTest):
+    def __init__(self):
+        gp = pygp.inference.BasicGP(1, 1, 1, 0, ndim=2)
+        RealTest.__init__(self, gp)
+
+
 class TestFITC(RealTest):
     def __init__(self):
         rng = np.random.RandomState(1)
@@ -139,3 +183,13 @@ class TestDTC(RealTest):
         U = rng.rand(10, kernel.ndim)
         gp = pygp.inference.DTC(likelihood, kernel, mean, U)
         RealTest.__init__(self, gp)
+
+
+### INITIALIZATION TESTS ######################################################
+
+# the following tests attempt to initialize a few models with invalid
+# parameters, each of which should raise an exception.
+
+def test_init_basic():
+    nt.assert_raises(RuntimeError,
+                     pygp.inference.BasicGP, 1, 1, 1, 0, 2, 'foo')
