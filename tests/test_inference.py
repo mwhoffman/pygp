@@ -35,8 +35,19 @@ class InferenceTest(object):
         _ = self.gp.copy()
 
     def test_from(self):
+        # make sure we can call from_gp on the same class.
         _ = self.gp.__class__.from_gp(self.gp)
         _ = pygp.inference.ExactGP.from_gp(self.gp)
+
+        # reinterpret as exact inference and reset the data.
+        gp = pygp.inference.ExactGP.from_gp(self.gp)
+        gp.reset()
+
+        # make sure we can move from an ExactGP to the current class.
+        if hasattr(self.gp, 'pseudoinputs'):
+            _ = self.gp.__class__.from_gp(gp, self.gp.pseudoinputs)
+        else:
+            _ = self.gp.__class__.from_gp(gp)
 
     def test_hyper(self):
         hyper1 = self.gp.get_hyper()
@@ -195,5 +206,18 @@ class TestDTC(RealTest):
 # parameters, each of which should raise an exception.
 
 def test_init_basic():
+    # make sure we can initialize correctly.
+    _ = pygp.BasicGP.from_gp(pygp.BasicGP(1, 1, 1, 0, 2, 'se'))
+    _ = pygp.BasicGP.from_gp(pygp.BasicGP(1, 1, 1, 0, 2, 'matern1'))
+    _ = pygp.BasicGP.from_gp(pygp.BasicGP(1, 1, 1, 0, 2, 'matern3'))
+    _ = pygp.BasicGP.from_gp(pygp.BasicGP(1, 1, 1, 0, 2, 'matern5'))
+
+    # throw an error with an unknown kernel.
     nt.assert_raises(ValueError,
                      pygp.inference.BasicGP, 1, 1, 1, 0, 2, 'foo')
+
+    # throw an error for from_gp with incorrect kernel.
+    likelihood = pygp.likelihoods.Gaussian(1)
+    kernel = pygp.kernels.Periodic(1, 1, 1)
+    gp = pygp.inference.ExactGP(likelihood, kernel, 0)
+    nt.assert_raises(ValueError, pygp.BasicGP.from_gp, gp)
