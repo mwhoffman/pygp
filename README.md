@@ -8,10 +8,13 @@ Gaussian Processes (GPs) that is loosely based on Carl Rasmussen's `GPML`
 toolbox. The structure and ideas are based on that toolbox's implementations,
 but some changes have been made to make this package more pythonic.
 
-[![Build Status](https://travis-ci.org/mwhoffman/pygp.svg)]
-(https://travis-ci.org/mwhoffman/pygp)
-[![Coverage Status](https://coveralls.io/repos/mwhoffman/pygp/badge.png)]
-(https://coveralls.io/r/mwhoffman/pygp)
+[![Build Status][travis-shield]][travis]
+[![Coverage Status][coveralls-shield]][coveralls]
+
+[travis]: https://travis-ci.org/mwhoffman/pygp
+[coveralls]: https://coveralls.io/r/mwhoffman/pygp
+[travis-shield]: https://img.shields.io/travis/mwhoffman/pygp.svg?style=flat
+[coveralls-shield]: https://img.shields.io/coveralls/mwhoffman/pygp.svg?style=flat
 
 Installation
 ============
