@@ -34,6 +34,10 @@ class InferenceTest(object):
     def test_copy(self):
         _ = self.gp.copy()
 
+    def test_from(self):
+        _ = self.gp.__class__.from_gp(self.gp)
+        _ = pygp.inference.ExactGP.from_gp(self.gp)
+
     def test_hyper(self):
         hyper1 = self.gp.get_hyper()
         self.gp.set_hyper(self.gp.get_hyper())
@@ -191,5 +195,5 @@ class TestDTC(RealTest):
 # parameters, each of which should raise an exception.
 
 def test_init_basic():
-    nt.assert_raises(RuntimeError,
+    nt.assert_raises(ValueError,
                      pygp.inference.BasicGP, 1, 1, 1, 0, 2, 'foo')

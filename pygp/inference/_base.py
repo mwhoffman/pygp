@@ -13,7 +13,7 @@ from __future__ import print_function
 import numpy as np
 import scipy.linalg as sla
 
-from abc import abstractmethod
+from mwhutils.abc import abstractmethod, abstractclassmethod
 from mwhutils.random import rstate
 
 # local imports
@@ -79,19 +79,14 @@ class GP(Parameterized):
         params += [('mean', 1, False)]
         return params
 
-    @classmethod
-    def from_gp(cls, gp, *args, **kwargs):
+    @abstractclassmethod
+    def from_gp(cls, gp):
         """
         Create a new GP object given another. This allows one to make a "copy"
         of a GP using the same likelihood, kernel, etc. and using the same
         data, but possibly a different inference method.
         """
-        args = (gp._likelihood.copy(), gp._kernel.copy(), gp._mean) + args
-        newgp = cls(*args, **kwargs)
-        if gp.ndata > 0:
-            X, y = gp.data
-            newgp.add_data(X, y)
-        return newgp
+        raise NotImplementedError
 
     def get_hyper(self):
         # NOTE: if subclasses define any "inference" hyperparameters they can
@@ -206,6 +201,7 @@ class GP(Parameterized):
         Update any internal parameters (ie sufficient statistics) given the
         entire set of current data.
         """
+        raise NotImplementedError
 
     # NOTE: the following method is not abstract since we don't require that it
     # is implemented. if it is not implemented the full _update is performed

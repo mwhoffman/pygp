@@ -2,18 +2,17 @@
 Simple wrapper class for a Basic GP.
 """
 
-# future imports
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-# local imports
+import numpy as np
+
 from ..utils.models import printable
 from ..likelihoods import Gaussian
 from ..kernels import SE, Matern
 from .exact import ExactGP
 
-# exported symbols
 __all__ = ['BasicGP']
 
 
@@ -32,7 +31,7 @@ class BasicGP(ExactGP):
             Matern(sf, ell, 5, ndim) if (kernel == 'matern5') else None)
 
         if kernel is None:
-            raise RuntimeError('Unknown kernel type')
+            raise ValueError('Unknown kernel type')
 
         super(BasicGP, self).__init__(likelihood, kernel, mu)
 
@@ -44,3 +43,28 @@ class BasicGP(ExactGP):
         params += self._kernel._params()
         params += [('mu', 1, False)]
         return params
+
+    @classmethod
+    def from_gp(cls, gp):
+        if not isinstance(gp._likelihood, Gaussian):
+            raise ValueError('BasicGP instances must have Gaussian likelihood')
+
+        if isinstance(gp._kernel, SE):
+            kernel = 'se'
+        elif isinstance(gp._kernel, Matern):
+            kernel = 'matern%d' % gp._kernel._d
+        else:
+            raise ValueError('BasicGP instances must have a SE/Matern kernel')
+
+        # get the relevant parameters.
+        sn = np.sqrt(gp._likelihood.s2)
+        sf = np.exp(gp._kernel._logsf)
+        ell = np.exp(gp._kernel._logell)
+        mu = gp._mean
+
+        # create the new gp and maybe add data.
+        newgp = cls(sn, sf, ell, mu)
+        if gp.ndata > 0:
+            X, y = gp.data
+            newgp.add_data(X, y)
+        return newgp

@@ -12,3 +12,6 @@ exclude_lines =
     @abstractmethod
     @abstractproperty
 
+    # ignore NotImplementedError exceptions
+    raise NotImplementedError
+

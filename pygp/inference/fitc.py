@@ -50,6 +50,19 @@ class FITC(GP):
         """The pseudo-input points."""
         return self._U
 
+    @classmethod
+    def from_gp(cls, gp, U=None):
+        if U is None:
+            if hasattr(gp, 'pseudoinputs'):
+                U = gp.pseudoinputs.copy()
+            else:
+                raise ValueError('gp has no pseudoinputs and none are given')
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean, U)
+        if gp.ndata > 0:
+            X, y = gp.data
+            newgp.add_data(X, y)
+        return newgp
+
     def _update(self):
         sn2 = self._likelihood.s2
         su2 = sn2 / 1e6
