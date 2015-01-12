@@ -222,6 +222,7 @@ class GP(Parameterized):
         Compute the full posterior at points `X`. Return the mean vector and
         full covariance matrix for the given inputs.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def _marg_posterior(self, X, grad=False):
@@ -230,6 +231,7 @@ class GP(Parameterized):
         variance vectors for the given inputs. If `grad` is True return the
         gradients with respect to the inputs as well.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def loglikelihood(self, grad=False):
@@ -237,3 +239,4 @@ class GP(Parameterized):
         Return the marginal loglikelihood of the data. If `grad == True` also
         return the gradient with respect to the hyperparameters.
         """
+        raise NotImplementedError

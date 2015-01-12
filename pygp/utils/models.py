@@ -32,14 +32,17 @@ class Parameterized(object):
         of tuples of the form `(name, size, islog)`. If only a 2-tuple is given
         then islog will be assumed to be `True`.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def get_hyper(self):
         """Return a vector of model hyperparameters."""
+        raise NotImplementedError
 
     @abstractmethod
     def set_hyper(self, hyper):
         """Set the model hyperparameters to the given vector."""
+        raise NotImplementedError
 
     def copy(self, hyper=None):
         """

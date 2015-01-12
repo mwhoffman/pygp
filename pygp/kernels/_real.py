@@ -44,6 +44,7 @@ class RealKernel(Kernel):
         Derivatives of the kernel with respect to its first argument. Returns
         an (m,n,d)-array.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def grady(self, X1, X2=None):
@@ -51,6 +52,7 @@ class RealKernel(Kernel):
         Derivatives of the kernel with respect to its second argument. Returns
         an (m,n,d)-array.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def gradxy(self, X1, X2=None):
@@ -59,6 +61,7 @@ class RealKernel(Kernel):
         arguments. Returns an (m,n,d,d)-array. The (a,b,i,j)th element
         corresponds to the derivative with respect to `X1[a,i]` and `X2[b,j]`.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def sample_spectrum(self, N, rng=None):
@@ -67,6 +70,7 @@ class RealKernel(Kernel):
         set of weights W of size (n,d) and a scalar value representing the
         normalizing constant.
         """
+        raise NotImplementedError
 
 
 def _can_combine(*parts):

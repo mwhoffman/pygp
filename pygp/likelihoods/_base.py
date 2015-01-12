@@ -24,13 +24,23 @@ class Likelihood(Parameterized):
     """
     @abstractmethod
     def transform(self, y):
-        pass
+        """
+        Perform any cleanup transformations (data arranging, etc) on outputs
+        given by the vector `y`.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def sample(self, f, rng=None):
-        pass
+        """
+        Sample noisy outputs given evaluations from the latent function.
+        """
+        raise NotImplementedError
 
 
 class RealLikelihood(Likelihood):
+    """
+    Likelihood model with real-valued outputs.
+    """
     def transform(self, y):
         return np.array(y, ndmin=1, dtype=float, copy=False)
