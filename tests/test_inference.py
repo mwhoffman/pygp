@@ -46,6 +46,7 @@ class InferenceTest(object):
         # make sure we can move from an ExactGP to the current class.
         if hasattr(self.gp, 'pseudoinputs'):
             _ = self.gp.__class__.from_gp(gp, self.gp.pseudoinputs)
+            nt.assert_raises(ValueError, self.gp.__class__.from_gp, gp)
         else:
             _ = self.gp.__class__.from_gp(gp)
 
