@@ -34,6 +34,12 @@ class InferenceTest(object):
     def test_copy(self):
         _ = self.gp.copy()
 
+    def test_prior(self):
+        gp = self.gp.copy()
+        gp.reset()
+        _ = gp.posterior(self.X, grad=True)
+        _ = gp.sample(self.X)
+
     def test_from(self):
         # make sure we can call from_gp on the same class.
         _ = self.gp.__class__.from_gp(self.gp)
