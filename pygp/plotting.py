@@ -34,7 +34,7 @@ def plot_posterior(model,
     # grab the data.
     X, y = model.data
     if X is None and (xmin is None or xmax is None):
-        raise Exception('bounds must be given if no data is present')
+        raise ValueError('bounds must be given if no data is present')
 
     # get the input points.
     xmin = X[:, 0].min() if (xmin is None) else xmin
