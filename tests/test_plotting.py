@@ -8,10 +8,16 @@ from __future__ import print_function
 
 import numpy as np
 import numpy.testing as nt
+import matplotlib.pyplot as pl
 import mwhutils.random as mr
 
 import pygp
 import pygp.plotting as pg
+
+
+# we have to do this so we don't get complaints about the fact that there is no
+# display.
+pl.switch_backend('Agg')
 
 
 def test_plot_posterior():
