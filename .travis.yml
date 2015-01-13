@@ -25,6 +25,7 @@ after_success:
     - "coveralls"
 
 notifications:
+    email: false
     slack:
         secure: "gz9jMiDyDT6qO6a7BqHizZ0wV7OpLywJjKHNtUKOLuJdcZkSb+4FDGMZHvwvDbk4lSfu08Rz3zUmu77zsY//9AbzXFrRbFKp236pgXcFVRigvlGahN4QFKuYdd5/OZsaxFudupibPx4nm69iKosgi0DKjahqTwMXnX/1LAQhlXk="
 
