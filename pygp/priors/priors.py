@@ -24,10 +24,10 @@ class Uniform(object):
         self.ndim = len(self._a)
 
         if len(self._a) != len(self._b):
-            raise RuntimeError("bound sizes don't match")
+            raise ValueError("bound sizes don't match")
 
         if np.any(self._b < self._a):
-            raise RuntimeError("malformed upper/lower bounds")
+            raise ValueError("malformed upper/lower bounds")
 
     def sample(self, size=1, rng=None):
         rng = rstate(rng)

@@ -34,6 +34,14 @@ class ExactGP(GP):
         self._R = None
         self._a = None
 
+    @classmethod
+    def from_gp(cls, gp):
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean)
+        if gp.ndata > 0:
+            X, y = gp.data
+            newgp.add_data(X, y)
+        return newgp
+
     def reset(self):
         for attr in 'Ra':
             setattr(self, '_' + attr, None)

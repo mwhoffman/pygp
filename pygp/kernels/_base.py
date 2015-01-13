@@ -35,10 +35,12 @@ class Kernel(Parameterized):
         `X2` is not given this will return the pairwise covariances between
         points in `X1`.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def dget(self, X):
         """Evaluate the self covariances."""
+        raise NotImplementedError
 
     @abstractmethod
     def grad(self, X1, X2=None):
@@ -49,11 +51,14 @@ class Kernel(Parameterized):
         points in `X1` and `X2`. If `X2` is not given this will iterate over
         the the gradients of the pairwise covariances.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def dgrad(self, X):
         """Evaluate the gradients of the self covariances."""
+        raise NotImplementedError
 
     @abstractmethod
     def transform(self, X):
         """Format the inputs X as arrays."""
+        raise NotImplementedError
