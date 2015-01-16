@@ -50,13 +50,13 @@ def test_plot_samples():
     priors1 = {'sn': pygp.priors.Uniform(0.01, 1.0),
                'sf': pygp.priors.Uniform(0.01, 5.0),
                'ell': pygp.priors.Uniform(0.01, 1.0),
-               'mu': pygp.priors.Uniform(-2, 2)}
+               'bias': pygp.priors.Uniform(-2, 2)}
 
     # create a prior datastructure which holds fixed all but one parameter
     priors2 = {'sn': pygp.priors.Uniform(0.01, 1.0),
                'sf': None,
                'ell': None,
-               'mu': None}
+               'bias': None}
 
     # sample and plot the models
     pg.plot_samples(pygp.meta.SMC(model, priors1, 200))

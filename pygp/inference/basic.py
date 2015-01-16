@@ -41,7 +41,7 @@ class BasicGP(ExactGP):
         # the sigma corresponding to the noise).
         params = [('sn', 1, True)]
         params += self._kernel._params()
-        params += [('mu', 1, False)]
+        params += self._mean._params()
         return params
 
     @classmethod
@@ -60,7 +60,7 @@ class BasicGP(ExactGP):
         sn = np.sqrt(gp._likelihood.s2)
         sf = np.exp(gp._kernel._logsf)
         ell = np.exp(gp._kernel._logell)
-        mu = gp._mean
+        mu = gp._mean.copy()
 
         # create the new gp and maybe add data.
         newgp = cls(sn, sf, ell, mu)

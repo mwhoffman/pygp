@@ -57,7 +57,7 @@ class FITC(GP):
                 U = gp.pseudoinputs.copy()
             else:
                 raise ValueError('gp has no pseudoinputs and none are given')
-        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean, U)
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean.copy(), U)
         if gp.ndata > 0:
             X, y = gp.data
             newgp.add_data(X, y)
@@ -78,7 +78,7 @@ class FITC(GP):
         # evaluate the kernel and residuals at the new points
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
-        r = self._y - self._mean
+        r = self._y - self._mean.get(self._X)
 
         # the cholesky of Q.
         V = sla.solve_triangular(self._L, Kux, trans=True)
@@ -100,7 +100,7 @@ class FITC(GP):
         self._b = sla.solve_triangular(self._R, self._a, trans=True)
 
     def _full_posterior(self, X):
-        mu = np.full(X.shape[0], self._mean)
+        mu = self._mean.get(X)
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
@@ -121,7 +121,7 @@ class FITC(GP):
 
     def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
-        mu = np.full(X.shape[0], self._mean)
+        mu = self._mean.get(X)
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
@@ -143,7 +143,7 @@ class FITC(GP):
 
         # Get the prior gradients. Note that this assumes a constant mean and
         # stationary kernel.
-        dmu = np.zeros_like(X)
+        dmu = self._mean.gradx(X)
         ds2 = np.zeros_like(X)
 
         if self._X is not None:
@@ -172,7 +172,7 @@ class FITC(GP):
         # get the rest of the kernels and the residual.
         Kux = self._kernel.get(self._U, self._X)
         kxx = self._kernel.dget(self._X)
-        r = self._y - self._mean
+        r = self._y - self._mean.get(self._X)
 
         # the cholesky of Q.
         V = sla.solve_triangular(self._L, Kux, trans=True)
@@ -227,6 +227,7 @@ class FITC(GP):
                 + np.sum(M.dot(W.T) * B.dot(W.T))) / 2.0
 
         # gradient wrt the constant mean.
-        dlZ[-1] = np.sum(alpha)
+        for i, dmu in enumerate(self._mean.grad(self._X), i+1):
+            dlZ[i] = np.dot(dmu, alpha)
 
         return lZ, dlZ

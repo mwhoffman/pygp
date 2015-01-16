@@ -36,7 +36,7 @@ class ExactGP(GP):
 
     @classmethod
     def from_gp(cls, gp):
-        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean)
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean.copy())
         if gp.ndata > 0:
             X, y = gp.data
             newgp.add_data(X, y)
@@ -50,7 +50,7 @@ class ExactGP(GP):
     def _update(self):
         sn2 = self._likelihood.s2
         K = self._kernel.get(self._X) + sn2 * np.eye(len(self._X))
-        r = self._y - self._mean
+        r = self._y - self._mean.get(self._X)
         self._R = sla.cholesky(K)
         self._a = sla.solve_triangular(self._R, r, trans=True)
 
@@ -58,12 +58,12 @@ class ExactGP(GP):
         sn2 = self._likelihood.s2
         Kss = self._kernel.get(X) + sn2 * np.eye(len(X))
         Kxs = self._kernel.get(self._X, X)
-        r = y - self._mean
+        r = y - self._mean.get(X)
         self._R, self._a = chol_update(self._R, Kxs, Kss, self._a, r)
 
     def _full_posterior(self, X):
         # grab the prior mean and covariance.
-        mu = np.full(X.shape[0], self._mean)
+        mu = self._mean.get(X)
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
@@ -80,7 +80,7 @@ class ExactGP(GP):
 
     def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
-        mu = np.full(X.shape[0], self._mean)
+        mu = self._mean.get(X)
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
@@ -97,7 +97,7 @@ class ExactGP(GP):
             return (mu, s2)
 
         # Get the prior gradients.
-        dmu = np.zeros_like(X)
+        dmu = self._mean.gradx(X)
         ds2 = np.zeros_like(X)
 
         # NOTE: the above assumes a constant mean and stationary kernel (which
@@ -138,6 +138,8 @@ class ExactGP(GP):
              for dK in self._kernel.grad(self._X)],
 
             # derivative wrt the mean.
-            np.sum(alpha)]
+            [np.dot(dmu, alpha)
+             for dmu in self._mean.grad(self._X)]
+            ]
 
         return lZ, dlZ

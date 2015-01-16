@@ -45,7 +45,7 @@ class DTC(GP):
                 U = gp.pseudoinputs.copy()
             else:
                 raise ValueError('gp has no pseudoinputs and none are given')
-        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean, U)
+        newgp = cls(gp._likelihood.copy(), gp._kernel.copy(), gp._mean.copy(), U)
         if gp.ndata > 0:
             X, y = gp.data
             newgp.add_data(X, y)
@@ -65,7 +65,7 @@ class DTC(GP):
         S = Kuu + np.dot(Kux, Kux.T) / self._likelihood.s2
 
         # compute cholesky of data dependent problem
-        r = self._y - self._mean
+        r = self._y - self._mean.get(self._X)
         self._Rux = sla.cholesky(S + su2 * np.eye(p))
         self._a = sla.solve_triangular(self._Rux,
                                        np.dot(Kux, r),
@@ -73,7 +73,7 @@ class DTC(GP):
 
     def _full_posterior(self, X):
         # grab the prior mean and covariance.
-        mu = np.full(X.shape[0], self._mean)
+        mu = self._mean.get(X)
         Sigma = self._kernel.get(X)
 
         if self._X is not None:
@@ -91,7 +91,7 @@ class DTC(GP):
 
     def _marg_posterior(self, X, grad=False):
         # grab the prior mean and variance.
-        mu = np.full(X.shape[0], self._mean)
+        mu = self._mean.get(X)
         s2 = self._kernel.dget(X)
 
         if self._X is not None:
@@ -110,7 +110,7 @@ class DTC(GP):
 
         # Get the prior gradients. Note that this assumes a constant mean and
         # stationary kernel.
-        dmu = np.zeros_like(X)
+        dmu = self._mean.gradx(X)
         ds2 = np.zeros_like(X)
 
         if self._X is not None:
@@ -137,7 +137,7 @@ class DTC(GP):
 
         # get the rest of the kernels and the residual.
         Kux = self._kernel.get(self._U, self._X)
-        r = self._y.copy() - self._mean
+        r = self._y.copy() - self._mean.get(self._X)
         r /= ell
 
         # the cholesky of Q.
@@ -194,6 +194,7 @@ class DTC(GP):
                 - np.sum(M.dot(W.T) * B.dot(W.T)))
 
         # gradient wrt the constant mean.
-        dlZ[-1] = np.sum(alpha) / ell
+        for i, dmu in enumerate(self._mean.grad(self._X), i+1):
+            dlZ[i] = np.dot(dmu, alpha) / ell
 
         return lZ, dlZ

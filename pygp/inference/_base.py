@@ -17,6 +17,7 @@ from mwhutils.abc import abstractmethod, abstractclassmethod
 from mwhutils.random import rstate
 
 # local imports
+from ..means import Constant
 from ..utils.models import Parameterized
 from ._fourier import FourierSample
 
@@ -47,14 +48,18 @@ class GP(Parameterized):
     def __init__(self, likelihood, kernel, mean):
         self._likelihood = likelihood
         self._kernel = kernel
-        self._mean = float(mean)
+        try:
+            self._mean = Constant(float(mean))
+        except TypeError:
+            self._mean = mean
         self._X = None
         self._y = None
 
         # record the number of hyperparameters. the additional +1 is due to the
         # mean hyperparameter.
         self.nhyper = (self._likelihood.nhyper +
-                       self._kernel.nhyper + 1)
+                       self._kernel.nhyper +
+                       self._mean.nhyper)
 
     def reset(self):
         """Remove all data from the model."""
@@ -76,7 +81,7 @@ class GP(Parameterized):
         params = []
         params += [("like.%s" % p[0],) + p[1:] for p in self._likelihood._params()]
         params += [("kern.%s" % p[0],) + p[1:] for p in self._kernel._params()]
-        params += [('mean', 1, False)]
+        params += [("mean.%s" % p[0],) + p[1:] for p in self._mean._params()]
         return params
 
     @abstractclassmethod
@@ -93,7 +98,7 @@ class GP(Parameterized):
         # implement their own get/set methods and call super().
         return np.r_[self._likelihood.get_hyper(),
                      self._kernel.get_hyper(),
-                     self._mean]
+                     self._mean.get_hyper()]
 
     def set_hyper(self, hyper):
         # FIXME: should set_hyper check the number of hyperparameters?
@@ -102,7 +107,7 @@ class GP(Parameterized):
 
         self._likelihood.set_hyper(hyper[:a])
         self._kernel.set_hyper(hyper[a:a+b])
-        self._mean = hyper[-1]
+        self._mean.set_hyper(hyper[a+b:])
 
         if self.ndata > 0:
             self._update()

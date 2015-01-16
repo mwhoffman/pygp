@@ -46,7 +46,7 @@ class FourierSample(object):
             # get the components for regression
             A = np.dot(Phi.T, Phi) + likelihood.s2 * np.eye(Phi.shape[1])
             R = sla.cholesky(A)
-            r = y - mean
+            r = y - mean.get(X)
             p = np.sqrt(likelihood.s2) * rng.randn(N)
 
             # FIXME: we can do a smarter update here when the number of points
@@ -66,7 +66,7 @@ class FourierSample(object):
         Z = np.dot(X, self._W.T) + self._b
 
         # evaluate the sample
-        F = np.dot(self._a * np.cos(Z), self._theta) + self._mean
+        F = np.dot(self._a * np.cos(Z), self._theta) + self._mean.get(X)
 
         if not grad:
             return F

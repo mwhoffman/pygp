@@ -26,7 +26,7 @@ class BaseMetaTest(object):
             'sn':  priors.Uniform(0.01, 1.0),
             'sf':  priors.Uniform(0.01, 5.0),
             'ell': priors.Uniform([0.01]*ndim, [1.0]*ndim),
-            'mu':  priors.Uniform([-2.0]*ndim, [2.0]*ndim)}
+            'bias':  priors.Uniform([-2.0]*ndim, [2.0]*ndim)}
 
         # create the model.
         model = pygp.BasicGP(0.5, 1, [1]*ndim)
