@@ -7,6 +7,7 @@ from . import inference
 from . import kernels
 from . import learning
 from . import likelihoods
+from . import means
 from . import meta
 from . import priors
 
