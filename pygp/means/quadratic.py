@@ -36,10 +36,10 @@ class Quadratic(Mean):
             else:
                 raise ValueError('ndim only usable with scalar widths')
 
-            # the following should really only be used when centering around
-            # the origin.
-            if np.size(centre) == 1:
-                self._centre = np.full(ndim, np.float(centre))
+        # the following should really only be used when centering around
+        # the origin.
+        if np.size(centre) == 1:
+            self._centre = np.full(self.ndim, np.float(centre))
 
         self.nhyper = 1 + self.ndim + np.size(self._widths)
         assert np.size(self._centre) == self.ndim, \
@@ -65,7 +65,7 @@ class Quadratic(Mean):
     def get(self, X):
         X0 = np.array(self._centre, ndmin=2)
         X, X0 = rescale(self._widths, X, X0)
-        return self._bias - sqdist(X, X0)
+        return self._bias - sqdist(X, X0).ravel()
 
     def grad(self, X):
         """Gradient wrt the value of the constant mean."""
