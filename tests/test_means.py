@@ -100,6 +100,11 @@ class TestQuadratic2D(MeanTest):
         MeanTest.__init__(self, pm.Quadratic(0.4, [0., 1.], [2.1, 0.9]))
 
 
+class TestHingeQuadraticIso2D(MeanTest):
+    def __init__(self):
+        MeanTest.__init__(self, pm.HingeQuadraticIso(0.1, [0.1, -0.3], 0.9, 0.2))
+
+
 ### INITIALIZATION TESTS ######################################################
 
 # the following tests attempt to initialize a few kernels with invalid
