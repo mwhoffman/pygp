@@ -13,7 +13,6 @@ from scipy.spatial.distance import cdist
 
 # local imports
 from ._base import Mean
-from ..kernels._distances import rescale, sqdist
 from ..utils.models import printable
 
 # exported symbols
@@ -22,10 +21,10 @@ __all__ = ['HingeQuadraticIso']
 
 @printable
 class HingeQuadraticIso(Mean):
-    def __init__(self, bias, centre, inner, shell, ndim=None):
+    def __init__(self, bias, centre, widths, shell, ndim=None):
         self._bias = bias
         self._centre = np.array(centre, ndmin=1)
-        self._inner = inner
+        self._widths = widths
         self._shell = shell
         self.ndim = np.size(self._centre)
 
@@ -41,28 +40,28 @@ class HingeQuadraticIso(Mean):
         return [
             ('bias', 1, False),
             ('centre', self.ndim, False),
-            ('inner', 1, False),
+            ('widths', 1, False),
             ('shell', 1, False)]
 
     def get_hyper(self):
         return np.r_[
             self._bias,
             self._centre,
-            self._inner,
+            self._widths,
             self._shell]
 
     def set_hyper(self, hyper):
         self._bias = hyper[0]
         self._centre = hyper[1:self.ndim+1]
-        self._inner = hyper[-2]
+        self._widths = hyper[-2]
         self._shell = hyper[-1]
 
     def get(self, X):
         X0 = np.array(self._centre, ndmin=2)
         D = cdist(X, X0, 'euclidean').ravel()
-        idx = (D > self._inner)
+        idx = (D > self._widths)
         mean = np.full(X.shape[0], self._bias)
-        mean[idx] -= ((D[idx] - self._inner) / (self._shell * self._inner)) ** 2
+        mean[idx] -= ((D[idx] - self._widths) / (self._shell * self._widths)) ** 2
         return mean
 
     def grad(self, X):
@@ -71,9 +70,9 @@ class HingeQuadraticIso(Mean):
 
         X0 = np.array(self._centre, ndmin=2)
         D = cdist(X, X0, 'euclidean').ravel()
-        idx = (D > self._inner)
-        dr = self._shell * self._inner
-        dist = D[idx] - self._inner
+        idx = (D > self._widths)
+        dr = self._shell * self._widths
+        dist = D[idx] - self._widths
 
         grad = np.zeros_like(X.T)
         chain1 = 2 * dist / dr ** 2
@@ -83,13 +82,13 @@ class HingeQuadraticIso(Mean):
 
         grad = np.zeros(X.shape[0])
         dist2 = dist**2
-        chain2 = 2 * dist2 / self._shell**2 / self._inner**3
+        chain2 = 2 * dist2 / self._shell**2 / self._widths**3
         grad[idx] += chain1
         grad[idx] += chain2
         yield grad                                      # derivative wrt inner
 
         grad = np.zeros(X.shape[0])
-        chain3 = 2 * dist2 / self._shell**3 / self._inner**2
+        chain3 = 2 * dist2 / self._shell**3 / self._widths**2
         grad[idx] += chain3
         yield grad                                      # derivative wrt shell
 
@@ -97,10 +96,10 @@ class HingeQuadraticIso(Mean):
         """Gradient wrt the inputs X."""
         X0 = np.array(self._centre, ndmin=2)
         D = cdist(X, X0, 'euclidean').ravel()
-        idx = (D > self._inner)
+        idx = (D > self._widths)
 
         grad = np.zeros_like(X)
-        chain1 = 2 * (D[idx] - self._inner) / (self._shell * self._inner)**2
+        chain1 = 2 * (D[idx] - self._widths) / (self._shell * self._widths)**2
         direction = (X[idx] - X0).T / D[idx]
         grad[idx] -= np.transpose(chain1 * direction)
         return grad
