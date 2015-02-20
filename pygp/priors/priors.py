@@ -98,8 +98,8 @@ class Gamma(object):
         if np.any(theta <= self._min):
             return -np.inf
 
-        logpdf = ss.gamma.logpdf(self._k,
-                                 theta,
+        logpdf = ss.gamma.logpdf(theta,
+                                 self._scale,
                                  scale=self._scale,
                                  loc=self._min)
 
